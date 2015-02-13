@@ -20,9 +20,13 @@ from javax.swing import JComboBox
 from javax.swing.border import LineBorder
 from javax.swing.table import AbstractTableModel;
 from java.awt.event import MouseAdapter
+from java.awt.event import ActionListener
 from java.awt.event import AdjustmentListener
 from java.awt import BorderLayout
 from java.awt import Color
+from java.awt import Toolkit;
+from java.awt.datatransfer import Clipboard;
+from java.awt.datatransfer import StringSelection
 from java.net import URL
 from java.util import ArrayList
 from threading import Lock
@@ -46,9 +50,10 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self._splitpane = JSplitPane(JSplitPane.HORIZONTAL_SPLIT)
         self._splitpane.setDividerLocation(1090 + self._splitpane.getInsets().right)
         
-        item = JMenuItem("Copy URL"); # fix that
+        copyURLitem = JMenuItem("Copy URL");
+        copyURLitem.addActionListener(copySelectedURL(self))
         self.menu = JPopupMenu("Popup")
-        self.menu.add(item)
+        self.menu.add(copyURLitem)
 
         self.intercept = 0
         self.logTable = Table(self)    
@@ -447,6 +452,13 @@ class Table(JTable):
         JTable.changeSelection(self, row, col, toggle, extend)
         return
 
+    def copyToClipboard(self, text):
+        r = Tk()
+        r.withdraw()
+        r.clipboard_clear()
+        r.clipboard_append(text)
+        r.destroy()
+
 class mouseclick(MouseAdapter):
 
     def __init__(self, extender):
@@ -464,6 +476,15 @@ class autoScrollListener(AdjustmentListener):
     def adjustmentValueChanged(self, e):
         if (self._extender.autoScroll.isSelected() == True):
             e.getAdjustable().setValue(e.getAdjustable().getMaximum())
+
+class copySelectedURL(ActionListener):
+    def __init__(self, extender):
+        self._extender = extender
+
+    def actionPerformed(self, e):
+        stringSelection = StringSelection(str(self._extender._helpers.analyzeRequest(self._extender._currentlyDisplayedItem).getUrl()));
+        clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clpbrd.setContents(stringSelection, None);     
 
 class LogEntry:
 
