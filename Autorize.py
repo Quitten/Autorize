@@ -8,6 +8,8 @@ from javax.swing import JSplitPane;
 from javax.swing import JTabbedPane;
 from javax.swing import JTable
 from javax.swing import JButton
+from javax.swing import JFrame
+from javax.swing import JFileChooser
 from javax.swing import JList
 from javax.swing import JLabel
 from javax.swing import DefaultListModel
@@ -30,6 +32,7 @@ from java.awt.datatransfer import StringSelection
 from java.net import URL
 from java.util import ArrayList
 from threading import Lock
+from java.io import File
 
 class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController, AbstractTableModel):
 
@@ -51,6 +54,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         self.initEnforcementDetector()
 
+        self.initExport()
+
         self.initConfigurationTab()
 
         self.initTabs()
@@ -61,6 +66,41 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         print 'by Barak Tawily'
         return
         
+
+    def initExport(self):
+        #
+        ## init enforcement detector tab
+        #
+
+        exportLType = JLabel("File Type:")
+        exportLType.setBounds(10, 10, 140, 30)
+
+        exportFileTypes = ["HTML"]
+        self.exportType = JComboBox(exportFileTypes)
+        self.exportType.setBounds(120, 10, 200, 30)
+       
+        exportLES = JLabel("Enforcement Statuses:")
+        exportLES.setBounds(10, 50, 140, 30)
+
+        exportES = ["All Statuses","Authorization bypass!","Authorization enforced??? (please configure enforcement detector)","Authorization enforced!"]
+        self.exportES = JComboBox(exportES)
+        self.exportES.setBounds(120, 50, 200, 30)
+
+        exportLES = JLabel("Enforcement Statuses:")
+        exportLES.setBounds(10, 50, 140, 30)
+
+        self.exportButton = JButton('Export',actionPerformed=self.exportToHTML)
+        self.exportButton.setBounds(390, 25, 100, 30)
+
+        self.exportPnl = JPanel()
+        self.exportPnl.setLayout(None);
+        self.exportPnl.setBounds(0, 0, 1000, 1000);
+        self.exportPnl.add(exportLType)
+        self.exportPnl.add(self.exportType)
+        self.exportPnl.add(exportLES)
+        self.exportPnl.add(self.exportES)
+        self.exportPnl.add(self.exportButton)
+
     def initEnforcementDetector(self):
         #
         ## init enforcement detector tab
@@ -172,7 +212,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.startButton.setBackground(Color(255, 100, 91, 255))
 
         self.clearButton = JButton('Clear List',actionPerformed=self.clearList)
-        self.clearButton.setBounds(120, 40, 100, 30)
+        self.clearButton.setBounds(10, 40, 100, 30)
 
         self.replaceString = JTextArea('Insert injected header here', 5, 30)
         self.replaceString.setWrapStyleWord(True);
@@ -182,6 +222,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.filtersTabs = JTabbedPane()
         self.filtersTabs.addTab("Enforcement Detector", self.EDPnl)
         self.filtersTabs.addTab("Interception Filters", self.filtersPnl)
+        self.filtersTabs.addTab("Export", self.exportPnl)
+
         self.filtersTabs.setBounds(0, 280, 2000, 700)
 
         self.pnl = JPanel()
@@ -226,6 +268,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.tabs.addTab("Original Response", self._originalresponseViewer.getComponent())
 
         self.tabs.addTab("Configuration", self.pnl)
+        self.tabs.setSelectedIndex(4)
         self._splitpane.setRightComponent(self.tabs)
 
     def initCallbacks(self):
@@ -286,6 +329,72 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.fireTableRowsInserted(row, row)
         self._lock.release()
 
+    def exportToHTML(self, event):#, tableContent, path):
+        parentFrame = JFrame()
+        fileChooser = JFileChooser()
+        fileChooser.setSelectedFile(File("AutorizeReprort.html"));
+        fileChooser.setDialogTitle("Save Autorize Report")
+        userSelection = fileChooser.showSaveDialog(parentFrame)
+        if userSelection == JFileChooser.APPROVE_OPTION:
+            fileToSave = fileChooser.getSelectedFile()
+
+        enforcementStatusFilter = self.exportES.getSelectedItem()
+        htmlContent = """<html><title>Autorize Report by Barak Tawily</title>
+        <style>
+        .datagrid table { border-collapse: collapse; text-align: left; width: 100%; }
+         .datagrid {font: normal 12px/150% Arial, Helvetica, sans-serif; background: #fff; overflow: hidden; border: 1px solid #006699; -webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; }
+         .datagrid table td, .datagrid table th { padding: 3px 10px; }
+         .datagrid table thead th {background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #006699), color-stop(1, #00557F) );background:-moz-linear-gradient( center top, #006699 5%, #00557F 100% );filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#006699', endColorstr='#00557F');background-color:#006699; color:#FFFFFF; font-size: 15px; font-weight: bold; border-left: 1px solid #0070A8; } .datagrid table thead th:first-child { border: none; }.datagrid table tbody td { color: #00496B; border-left: 1px solid #E1EEF4;font-size: 12px;font-weight: normal; }.datagrid table tbody .alt td { background: #E1EEF4; color: #00496B; }.datagrid table tbody td:first-child { border-left: none; }.datagrid table tbody tr:last-child td { border-bottom: none; }.datagrid table tfoot td div { border-top: 1px solid #006699;background: #E1EEF4;} .datagrid table tfoot td { padding: 0; font-size: 12px } .datagrid table tfoot td div{ padding: 2px; }.datagrid table tfoot td ul { margin: 0; padding:0; list-style: none; text-align: right; }.datagrid table tfoot  li { display: inline; }.datagrid table tfoot li a { text-decoration: none; display: inline-block;  padding: 2px 8px; margin: 1px;color: #FFFFFF;border: 1px solid #006699;-webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #006699), color-stop(1, #00557F) );background:-moz-linear-gradient( center top, #006699 5%, #00557F 100% );filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#006699', endColorstr='#00557F');background-color:#006699; }.datagrid table tfoot ul.active, .datagrid table tfoot ul a:hover { text-decoration: none;border-color: #006699; color: #FFFFFF; background: none; background-color:#00557F;}div.dhtmlx_window_active, div.dhx_modal_cover_dv { position: fixed !important; }
+        table {
+        width: 100%;
+        table-layout: fixed;
+        }
+        td {
+            border: 1px solid #35f;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        td.a {
+            width: 13%;
+            white-space: nowrap;
+        }
+        td.b {
+            width: 9%;
+            word-wrap: break-word;
+        }
+        </style>
+        <body>
+        <h1>Autorize Report<h1>
+        <div class="datagrid"><table>
+        <thead><tr><th>URL</th><th>Authorization Enforcement Status</th></tr></thead>
+        <tbody>"""
+
+        for i in range(0,self._log.size()):
+            #print self._log.get(i)._url
+            color = ""
+            if self._log.get(i)._enfocementStatus == "Authorization enforced??? (please configure enforcement detector)":
+                color = "yellow"
+            if self._log.get(i)._enfocementStatus == "Authorization bypass!":
+                color = "red"
+            if self._log.get(i)._enfocementStatus == "Authorization enforced!":
+                color = "LawnGreen"
+
+            if enforcementStatusFilter == "All Statuses":
+                htmlContent += "<tr bgcolor=\"%s\"><td><a href=\"%s\">%s</a></td><td>%s</td></tr>" % (color,self._log.get(i)._url,self._log.get(i)._url, self._log.get(i)._enfocementStatus)
+            else:
+                if enforcementStatusFilter == self._log.get(i)._enfocementStatus:
+                    htmlContent += "<tr bgcolor=\"%s\"><td><a href=\"%s\">%s</a></td><td>%s</td></tr>" % (color,self._log.get(i)._url,self._log.get(i)._url, self._log.get(i)._enfocementStatus)
+
+        htmlContent += "</tbody></table></div></body></html>"
+        f = open(fileToSave.getAbsolutePath(), 'w')
+        f.writelines(htmlContent)
+        f.close()
+
+
+
+
+
+
     #
     # implement ITab
     #
@@ -320,7 +429,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         if columnIndex == 0:
             return logEntry._url.toString()
         if columnIndex == 1:
-            return logEntry._firstImpression
+            return logEntry._enfocementStatus
         return ""
 
     #
@@ -474,11 +583,11 @@ class Table(JTable):
 
 class LogEntry:
 
-    def __init__(self, requestResponse, url, originalrequestResponse, firstImpression):
+    def __init__(self, requestResponse, url, originalrequestResponse, enforcementStatus):
         self._requestResponse = requestResponse
         self._originalrequestResponse = originalrequestResponse
         self._url = url
-        self._firstImpression =  firstImpression
+        self._enfocementStatus =  enforcementStatus
         return
 
 class mouseclick(MouseAdapter):
