@@ -29,7 +29,7 @@ from threading import Lock
 
 class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController, AbstractTableModel):
 
-    def	registerExtenderCallbacks(self, callbacks):
+    def registerExtenderCallbacks(self, callbacks):
         # keep a reference to our callbacks object
         self._callbacks = callbacks
         # obtain an extension helpers object
@@ -216,10 +216,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         
         # add the custom tab to Burp's UI
         callbacks.addSuiteTab(self)
-
-        self.startOrStop(self) #for debug. remove it.
         
-        print 'Thank you for installing Autorize extension'
+        print 'Thank you for installing Autorize v0.7 extension'
         print 'by Barak Tawily'
         return
         
