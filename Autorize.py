@@ -45,89 +45,25 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         # create the log and a lock on which to synchronize when adding log entries
         self._log = ArrayList()
         self._lock = Lock()
-        
-        # main split pane
-        self._splitpane = JSplitPane(JSplitPane.HORIZONTAL_SPLIT)
-        self._splitpane.setDividerLocation(1090 + self._splitpane.getInsets().right)
-        
-        copyURLitem = JMenuItem("Copy URL");
-        copyURLitem.addActionListener(copySelectedURL(self))
-        self.menu = JPopupMenu("Popup")
-        self.menu.add(copyURLitem)
-
         self.intercept = 0
-        self.logTable = Table(self)    
 
-        self.prevent304 = JCheckBox("Prevent 304 Not Modified status code");
-        self.prevent304.setBounds(250, 25, 240, 30)
+        self.initInterceptionFilters()
 
-        self.ignore304 = JCheckBox("Ignore 304/204 status code responses");
-        self.ignore304.setBounds(250, 5, 240, 30)
-        self.ignore304.setSelected(True)
+        self.initEnforcementDetector()
 
-        self.autoScroll = JCheckBox("Auto Scroll");
-        self.autoScroll.setBounds(250, 45, 140, 30)
+        self.initConfigurationTab()
 
-        startLabel = JLabel("Authorization checks:")
-        startLabel.setBounds(10, 10, 140, 30)
-        self.startButton = JButton('Intercept is off',actionPerformed=self.startOrStop)
-        self.startButton.setBounds(120, 10, 100, 30)
-        self.startButton.setBackground(Color(255, 100, 91, 255))
-
-        self.clearButton = JButton('Clear List',actionPerformed=self.clearList)
-        self.clearButton.setBounds(120, 40, 100, 30)
-
-        self.replaceString = JTextArea('Insert injected header here', 5, 30)
-        self.replaceString.setWrapStyleWord(True);
-        self.replaceString.setLineWrap(True)
-        self.replaceString.setBounds(10, 80, 470, 180)
-
-
+        self.initTabs()
+        
+        self.initCallbacks()
+        
+        print 'Thank you for installing Autorize v0.8 extension'
+        print 'by Barak Tawily'
+        return
+        
+    def initEnforcementDetector(self):
         #
-        ##  filters tabs
-        #
-
-        IFLType = JLabel("Type:")
-        IFLType.setBounds(10, 10, 140, 30)
-
-        IFStrings = ["URL Contains: "]
-        self.IFType = JComboBox(IFStrings)
-        self.IFType.setBounds(60, 10, 430, 30)
-       
-        IFLContent = JLabel("Content:")
-        IFLContent.setBounds(10, 50, 140, 30)
-
-        self.IFText = JTextArea('', 5, 30)
-        self.IFText.setBounds(60, 50, 300, 110)
-
-        self.IFAdd = JButton('Add filter',actionPerformed=self.addIFFilter)
-        self.IFAdd.setBounds(390, 85, 100, 30)
-        self.IFDel = JButton('Remove filter',actionPerformed=self.delIFFilter)
-        self.IFDel.setBounds(390, 210, 100, 30)
-
-        IFLabelList = JLabel("Filter List:")
-        IFLabelList.setBounds(10, 165, 140, 30)
-
-        self.IFModel = DefaultListModel();
-        self.IFList = JList(self.IFModel);
-        self.IFList.setBounds(60, 175, 300, 110)
-        self.IFList.setBorder(LineBorder(Color.BLACK))
-
-        self.filtersPnl = JPanel()
-        self.filtersPnl.setLayout(None);
-        self.filtersPnl.setBounds(0, 0, 1000, 1000);
-        self.filtersPnl.add(IFLType)
-        self.filtersPnl.add(self.IFType)
-        self.filtersPnl.add(IFLContent)
-        self.filtersPnl.add(self.IFText)
-        self.filtersPnl.add(self.IFAdd)
-        self.filtersPnl.add(self.IFDel)
-        self.filtersPnl.add(IFLabelList)
-        self.filtersPnl.add(self.IFList)
-
-
-        #
-        ## enforcement detector tab components 
+        ## init enforcement detector tab
         #
 
         self.EDFP = ArrayList()
@@ -171,11 +107,82 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.EDPnl.add(EDLabelList)
         self.EDPnl.add(self.EDList)
 
-        filtersTabs = JTabbedPane()
-        filtersTabs.addTab("Enforcement Detector", self.EDPnl)
-        filtersTabs.addTab("Interception Filters", self.filtersPnl)
-        filtersTabs.setBounds(0, 280, 2000, 700)
+    def initInterceptionFilters(self):
+        #
+        ##  init interception filters tab
+        #
 
+        IFLType = JLabel("Type:")
+        IFLType.setBounds(10, 10, 140, 30)
+
+        IFStrings = ["URL Contains: "]
+        self.IFType = JComboBox(IFStrings)
+        self.IFType.setBounds(60, 10, 430, 30)
+       
+        IFLContent = JLabel("Content:")
+        IFLContent.setBounds(10, 50, 140, 30)
+
+        self.IFText = JTextArea('', 5, 30)
+        self.IFText.setBounds(60, 50, 300, 110)
+
+        self.IFAdd = JButton('Add filter',actionPerformed=self.addIFFilter)
+        self.IFAdd.setBounds(390, 85, 100, 30)
+        self.IFDel = JButton('Remove filter',actionPerformed=self.delIFFilter)
+        self.IFDel.setBounds(390, 210, 100, 30)
+
+        IFLabelList = JLabel("Filter List:")
+        IFLabelList.setBounds(10, 165, 140, 30)
+
+        self.IFModel = DefaultListModel();
+        self.IFList = JList(self.IFModel);
+        self.IFList.setBounds(60, 175, 300, 110)
+        self.IFList.setBorder(LineBorder(Color.BLACK))
+
+        self.filtersPnl = JPanel()
+        self.filtersPnl.setLayout(None);
+        self.filtersPnl.setBounds(0, 0, 1000, 1000);
+        self.filtersPnl.add(IFLType)
+        self.filtersPnl.add(self.IFType)
+        self.filtersPnl.add(IFLContent)
+        self.filtersPnl.add(self.IFText)
+        self.filtersPnl.add(self.IFAdd)
+        self.filtersPnl.add(self.IFDel)
+        self.filtersPnl.add(IFLabelList)
+        self.filtersPnl.add(self.IFList)
+
+
+    def initConfigurationTab(self):
+        #
+        ##  init configuration tab
+        #
+        self.prevent304 = JCheckBox("Prevent 304 Not Modified status code");
+        self.prevent304.setBounds(250, 25, 240, 30)
+
+        self.ignore304 = JCheckBox("Ignore 304/204 status code responses");
+        self.ignore304.setBounds(250, 5, 240, 30)
+        self.ignore304.setSelected(True)
+
+        self.autoScroll = JCheckBox("Auto Scroll");
+        self.autoScroll.setBounds(250, 45, 140, 30)
+
+        startLabel = JLabel("Authorization checks:")
+        startLabel.setBounds(10, 10, 140, 30)
+        self.startButton = JButton('Intercept is off',actionPerformed=self.startOrStop)
+        self.startButton.setBounds(120, 10, 100, 30)
+        self.startButton.setBackground(Color(255, 100, 91, 255))
+
+        self.clearButton = JButton('Clear List',actionPerformed=self.clearList)
+        self.clearButton.setBounds(120, 40, 100, 30)
+
+        self.replaceString = JTextArea('Insert injected header here', 5, 30)
+        self.replaceString.setWrapStyleWord(True);
+        self.replaceString.setLineWrap(True)
+        self.replaceString.setBounds(10, 80, 470, 180)
+
+        self.filtersTabs = JTabbedPane()
+        self.filtersTabs.addTab("Enforcement Detector", self.EDPnl)
+        self.filtersTabs.addTab("Interception Filters", self.filtersPnl)
+        self.filtersTabs.setBounds(0, 280, 2000, 700)
 
         self.pnl = JPanel()
         self.pnl.setBounds(0, 0, 1000, 1000);
@@ -184,49 +191,62 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.pnl.add(self.clearButton)
         self.pnl.add(self.replaceString)
         self.pnl.add(startLabel)
-        self.pnl.add(self.menu)
         self.pnl.add(self.autoScroll)
         self.pnl.add(self.ignore304)
         self.pnl.add(self.prevent304)
-        self.pnl.add(filtersTabs)
+        self.pnl.add(self.filtersTabs)
 
+    def initTabs(self):
+        #
+        ##  init autorize tabs
+        #
         
-        scrollPane = JScrollPane(self.logTable)
-        self._splitpane.setLeftComponent(scrollPane)
-        scrollPane.getVerticalScrollBar().addAdjustmentListener(autoScrollListener(self))
+        self.logTable = Table(self)
+        self._splitpane = JSplitPane(JSplitPane.HORIZONTAL_SPLIT)
+        self._splitpane.setDividerLocation(1090 + self._splitpane.getInsets().right)
+        self.scrollPane = JScrollPane(self.logTable)
+        self._splitpane.setLeftComponent(self.scrollPane)
+        self.scrollPane.getVerticalScrollBar().addAdjustmentListener(autoScrollListener(self))
+        copyURLitem = JMenuItem("Copy URL");
+        copyURLitem.addActionListener(copySelectedURL(self))
+        self.menu = JPopupMenu("Popup")
+        self.menu.add(copyURLitem)
 
-        # tabs with request/response viewers
-        tabs = JTabbedPane()
-        self._requestViewer = callbacks.createMessageEditor(self, False)
-        self._responseViewer = callbacks.createMessageEditor(self, False)
+        self.tabs = JTabbedPane()
+        self._requestViewer = self._callbacks.createMessageEditor(self, False)
+        self._responseViewer = self._callbacks.createMessageEditor(self, False)
 
-        self._originalrequestViewer = callbacks.createMessageEditor(self, False)
-        self._originalresponseViewer = callbacks.createMessageEditor(self, False)
+        self._originalrequestViewer = self._callbacks.createMessageEditor(self, False)
+        self._originalresponseViewer = self._callbacks.createMessageEditor(self, False)
 
-        tabs.addTab("Modified Request", self._requestViewer.getComponent())
-        tabs.addTab("Modified Response", self._responseViewer.getComponent())
+        self.tabs.addTab("Modified Request", self._requestViewer.getComponent())
+        self.tabs.addTab("Modified Response", self._responseViewer.getComponent())
 
-        tabs.addTab("Original Request", self._originalrequestViewer.getComponent())
-        tabs.addTab("Original Response", self._originalresponseViewer.getComponent())
+        self.tabs.addTab("Original Request", self._originalrequestViewer.getComponent())
+        self.tabs.addTab("Original Response", self._originalresponseViewer.getComponent())
 
-        tabs.addTab("Configuration", self.pnl)
-        self._splitpane.setRightComponent(tabs)
-        
+        self.tabs.addTab("Configuration", self.pnl)
+        self._splitpane.setRightComponent(self.tabs)
+
+    def initCallbacks(self):
+        #
+        ##  init callbacks
+        #
+
         # customize our UI components
-        callbacks.customizeUiComponent(self._splitpane)
-        callbacks.customizeUiComponent(self.logTable)
-        callbacks.customizeUiComponent(scrollPane)
-        callbacks.customizeUiComponent(tabs)
-        callbacks.customizeUiComponent(filtersTabs)
+        self._callbacks.customizeUiComponent(self._splitpane)
+        self._callbacks.customizeUiComponent(self.logTable)
+        self._callbacks.customizeUiComponent(self.scrollPane)
+        self._callbacks.customizeUiComponent(self.tabs)
+        self._callbacks.customizeUiComponent(self.filtersTabs)
         
         # add the custom tab to Burp's UI
-        callbacks.addSuiteTab(self)
-        
-        print 'Thank you for installing Autorize v0.7 extension'
-        print 'by Barak Tawily'
-        return
-        
+        self._callbacks.addSuiteTab(self)
 
+
+    #
+    ## Events functions
+    #
     def startOrStop(self, event):
         if self.startButton.getText() == "Intercept is off":
             if self.replaceString.getText() == "Insert injected header here":
@@ -240,8 +260,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             self.startButton.setBackground(Color(255, 100, 91, 255))
             self.intercept = 0
             self._callbacks.removeHttpListener(self)
-
-
 
     def addEDFilter(self, event):
         typeName = self.EDType.getSelectedItem().split(":")[0]
@@ -261,7 +279,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         if not index == -1:
             self.IFModel.remove(index);
 
-
     def clearList(self, event):
         self._lock.acquire()
         self._log = ArrayList()
@@ -278,6 +295,49 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     def getUiComponent(self):
         return self._splitpane
         
+        #
+    # extend AbstractTableModel
+    #
+    
+    def getRowCount(self):
+        try:
+            return self._log.size()
+        except:
+            return 0
+
+    def getColumnCount(self):
+        return 2
+
+    def getColumnName(self, columnIndex):
+        if columnIndex == 0:
+            return "URL"
+        if columnIndex == 1:
+            return "Authorization Enforcement Status"
+        return ""
+
+    def getValueAt(self, rowIndex, columnIndex):
+        logEntry = self._log.get(rowIndex)
+        if columnIndex == 0:
+            return logEntry._url.toString()
+        if columnIndex == 1:
+            return logEntry._firstImpression
+        return ""
+
+    #
+    # implement IMessageEditorController
+    # this allows our request/response viewers to obtain details about the messages being displayed
+    #
+    
+    def getHttpService(self):
+        return self._currentlyDisplayedItem.getHttpService()
+
+    def getRequest(self):
+        return self._currentlyDisplayedItem.getRequest()
+
+    def getResponse(self):
+        return self._currentlyDisplayedItem.getResponse()
+
+
     #
     # implement IHttpListener
     #
@@ -374,47 +434,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             if "Content-Length:" in header:
                 return header;
         return 'null'
-    #
-    # extend AbstractTableModel
-    #
-    
-    def getRowCount(self):
-        try:
-            return self._log.size()
-        except:
-            return 0
-
-    def getColumnCount(self):
-        return 2
-
-    def getColumnName(self, columnIndex):
-        if columnIndex == 0:
-            return "URL"
-        if columnIndex == 1:
-            return "Authorization Enforcement Status"
-        return ""
-
-    def getValueAt(self, rowIndex, columnIndex):
-        logEntry = self._log.get(rowIndex)
-        if columnIndex == 0:
-            return logEntry._url.toString()
-        if columnIndex == 1:
-            return logEntry._firstImpression
-        return ""
-
-    #
-    # implement IMessageEditorController
-    # this allows our request/response viewers to obtain details about the messages being displayed
-    #
-    
-    def getHttpService(self):
-        return self._currentlyDisplayedItem.getHttpService()
-
-    def getRequest(self):
-        return self._currentlyDisplayedItem.getRequest()
-
-    def getResponse(self):
-        return self._currentlyDisplayedItem.getResponse()
 
 #
 # extend JTable to handle cell selection
@@ -452,12 +471,15 @@ class Table(JTable):
         JTable.changeSelection(self, row, col, toggle, extend)
         return
 
-    def copyToClipboard(self, text):
-        r = Tk()
-        r.withdraw()
-        r.clipboard_clear()
-        r.clipboard_append(text)
-        r.destroy()
+
+class LogEntry:
+
+    def __init__(self, requestResponse, url, originalrequestResponse, firstImpression):
+        self._requestResponse = requestResponse
+        self._originalrequestResponse = originalrequestResponse
+        self._url = url
+        self._firstImpression =  firstImpression
+        return
 
 class mouseclick(MouseAdapter):
 
@@ -484,13 +506,4 @@ class copySelectedURL(ActionListener):
     def actionPerformed(self, e):
         stringSelection = StringSelection(str(self._extender._helpers.analyzeRequest(self._extender._currentlyDisplayedItem).getUrl()));
         clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
-        clpbrd.setContents(stringSelection, None);     
-
-class LogEntry:
-
-    def __init__(self, requestResponse, url, originalrequestResponse, firstImpression):
-        self._requestResponse = requestResponse
-        self._originalrequestResponse = originalrequestResponse
-        self._url = url
-        self._firstImpression =  firstImpression
-        return
+        clpbrd.setContents(stringSelection, None);
