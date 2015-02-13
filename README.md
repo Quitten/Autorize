@@ -1,5 +1,5 @@
 # Autorize
-Automatic authorization enforcement detection extension for burp suite written in Python developed by Barak Tawily in order to ease application security people work and allow themm perform an automatic authorization tests
+Automatic authorization enforcement detection extension for burp suite written in Python developed by Barak Tawily in order to ease application security people work and allow them perform an automatic authorization tests
 # Installation 
 1. Download burp suite (obviously): http://portswigger.net/burp/download.html
 2. Download Jython standalone JAR: http://www.jython.org/downloads.html
