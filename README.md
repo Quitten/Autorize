@@ -7,7 +7,7 @@ Automatic authorization enforcement detection extension for burp suite written i
 2. Download Jython standalone JAR: http://www.jython.org/downloads.html
 3. Open burp -> Extender -> Options -> Python Environment -> Select File -> Choose the Jython standalone JAR
 4. Download Autorize from the BApp Store / keep follow the next steps:
-5. Downlado the Autorize.py file.
+5. Download the Autorize.py file.
 6. Open burp -> Extender -> Extensions -> Add -> Choose Autorize.py file.
 7. See the Autorize Tab and enjoy automatic authorization detection :)
 
