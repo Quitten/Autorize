@@ -1,5 +1,5 @@
 # Autorize
-Automatic authorization enforcement detection extension for burp suite written in Python developed by Barak Tawily in order to ease application security people work and allow them perform an automatic authorization tests
+Automatic authorization enforcement detection extension for burp suite written in Python developed by Barak Tawily, an application security expert at AppSec Labs in order to ease application security people work and allow them perform an automatic authorization tests
 
 ![alt tag](https://raw.githubusercontent.com/Quitten/Autorize/master/Autorize.png)
 # Installation 
