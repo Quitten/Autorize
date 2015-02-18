@@ -25,8 +25,11 @@ Autorize is an automatic authorization enforcement detection extension for Burp 
 
 # Authorization Enforcement Status
 There are 3 enforcement statuses:
+
 1.	Authorization bypass! - Red color
+
 2.	Authorization enforced! - Green color
+
 3.	Authorization enforced??? (please configure enforcement detector) - Yellow color
 
 The first 2 statuses are clear, so I won’t elaborate on them.
