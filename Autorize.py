@@ -1,40 +1,40 @@
-from burp import IBurpExtender
 from burp import ITab
+from burp import IBurpExtender
 from burp import IHttpListener
+from burp import IContextMenuFactory
 from burp import IMessageEditorController
-from burp import IHttpRequestResponse
-from javax.swing import JScrollPane;
-from javax.swing import JSplitPane;
-from javax.swing import JTabbedPane;
-from javax.swing import JTable
-from javax.swing import JButton
-from javax.swing import JFrame
-from javax.swing import JFileChooser
 from javax.swing import JList
+from javax.swing import JTable
+from javax.swing import JFrame
 from javax.swing import JLabel
-from javax.swing import DefaultListModel
-from javax.swing import JTextArea
-from javax.swing import JCheckBox
 from javax.swing import JPanel
-from javax.swing import JMenuItem
-from javax.swing import JPopupMenu
+from javax.swing import JButton
 from javax.swing import JComboBox
-from javax.swing.border import LineBorder
-from javax.swing.table import AbstractTableModel;
+from javax.swing import JCheckBox
+from javax.swing import JMenuItem
+from javax.swing import JTextArea
+from javax.swing import JPopupMenu
+from javax.swing import JSplitPane
+from javax.swing import JScrollPane
+from javax.swing import JTabbedPane
+from javax.swing import JFileChooser
+from javax.swing import DefaultListModel
+from threading import Lock
+from java.io import File
+from java.net import URL
+from java.awt import Color
+from java.awt import Toolkit
 from java.awt.event import MouseAdapter
 from java.awt.event import ActionListener
 from java.awt.event import AdjustmentListener
-from java.awt import BorderLayout
-from java.awt import Color
-from java.awt import Toolkit;
-from java.awt.datatransfer import Clipboard;
+from java.awt.datatransfer import Clipboard
 from java.awt.datatransfer import StringSelection
-from java.net import URL
+from javax.swing.border import LineBorder
+from javax.swing.table import AbstractTableModel
+from java.util import LinkedList
 from java.util import ArrayList
-from threading import Lock
-from java.io import File
 
-class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController, AbstractTableModel):
+class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController, AbstractTableModel, IContextMenuFactory):
 
     def registerExtenderCallbacks(self, callbacks):
         # keep a reference to our callbacks object
@@ -62,8 +62,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         
         self.initCallbacks()
         
-        print 'Thank you for installing Autorize v0.9 extension'
-        print 'by Barak Tawily'
+        print "Thank you for installing Autorize v0.9 extension"
+        print "by Barak Tawily"
         return
         
 
@@ -89,7 +89,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         exportLES = JLabel("Statuses:")
         exportLES.setBounds(10, 50, 100, 30)
 
-        self.exportButton = JButton('Export',actionPerformed=self.exportToHTML)
+        self.exportButton = JButton("Export",actionPerformed=self.exportToHTML)
         self.exportButton.setBounds(390, 25, 100, 30)
 
         self.exportPnl = JPanel()
@@ -122,7 +122,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.EDType = JComboBox(EDStrings)
         self.EDType.setBounds(80, 10, 430, 30)
        
-        self.EDText = JTextArea('', 5, 30)
+        self.EDText = JTextArea("", 5, 30)
         self.EDText.setBounds(80, 50, 300, 110)
 
         self.EDModel = DefaultListModel();
@@ -130,9 +130,9 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.EDList.setBounds(80, 175, 300, 110)
         self.EDList.setBorder(LineBorder(Color.BLACK))
 
-        self.EDAdd = JButton('Add filter',actionPerformed=self.addEDFilter)
+        self.EDAdd = JButton("Add filter",actionPerformed=self.addEDFilter)
         self.EDAdd.setBounds(390, 85, 120, 30)
-        self.EDDel = JButton('Remove filter',actionPerformed=self.delEDFilter)
+        self.EDDel = JButton("Remove filter",actionPerformed=self.delEDFilter)
         self.EDDel.setBounds(390, 210, 120, 30)
 
         self.EDPnl = JPanel()
@@ -161,7 +161,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.IFList.setBounds(80, 175, 300, 110)
         self.IFList.setBorder(LineBorder(Color.BLACK))
 
-        self.IFText = JTextArea('', 5, 30)
+        self.IFText = JTextArea("", 5, 30)
         self.IFText.setBounds(80, 50, 300, 110)
 
         IFLType = JLabel("Type:")
@@ -173,9 +173,9 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         IFLabelList = JLabel("Filter List:")
         IFLabelList.setBounds(10, 165, 140, 30)
 
-        self.IFAdd = JButton('Add filter',actionPerformed=self.addIFFilter)
+        self.IFAdd = JButton("Add filter",actionPerformed=self.addIFFilter)
         self.IFAdd.setBounds(390, 85, 120, 30)
-        self.IFDel = JButton('Remove filter',actionPerformed=self.delIFFilter)
+        self.IFDel = JButton("Remove filter",actionPerformed=self.delIFFilter)
         self.IFDel.setBounds(390, 210, 120, 30)
 
         self.filtersPnl = JPanel()
@@ -207,14 +207,14 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         startLabel = JLabel("Authorization checks:")
         startLabel.setBounds(10, 10, 140, 30)
-        self.startButton = JButton('Autorize is off',actionPerformed=self.startOrStop)
+        self.startButton = JButton("Autorize is off",actionPerformed=self.startOrStop)
         self.startButton.setBounds(160, 10, 120, 30)
         self.startButton.setBackground(Color(255, 100, 91, 255))
 
-        self.clearButton = JButton('Clear List',actionPerformed=self.clearList)
+        self.clearButton = JButton("Clear List",actionPerformed=self.clearList)
         self.clearButton.setBounds(10, 40, 100, 30)
 
-        self.replaceString = JTextArea('Insert injected header here', 5, 30)
+        self.replaceString = JTextArea("Cookie: Insert=injected; header=here;", 5, 30)
         self.replaceString.setWrapStyleWord(True);
         self.replaceString.setLineWrap(True)
         self.replaceString.setBounds(10, 80, 470, 180)
@@ -282,7 +282,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self._callbacks.customizeUiComponent(self.scrollPane)
         self._callbacks.customizeUiComponent(self.tabs)
         self._callbacks.customizeUiComponent(self.filtersTabs)
-        
+        self._callbacks.registerContextMenuFactory(self)
         # add the custom tab to Burp's UI
         self._callbacks.addSuiteTab(self)
 
@@ -292,8 +292,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     #
     def startOrStop(self, event):
         if self.startButton.getText() == "Autorize is off":
-            if self.replaceString.getText() == "Insert injected header here":
-                self.replaceString.setText("Cookie: test=test")
             self.startButton.setText("Autorize is on")
             self.startButton.setBackground(Color.GREEN)
             self.intercept = 1
@@ -329,7 +327,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.fireTableRowsInserted(row, row)
         self._lock.release()
 
-    def exportToHTML(self, event):#, tableContent, path):
+    def exportToHTML(self, event):
         parentFrame = JFrame()
         fileChooser = JFileChooser()
         fileChooser.setSelectedFile(File("AutorizeReprort.html"));
@@ -370,7 +368,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         <tbody>"""
 
         for i in range(0,self._log.size()):
-            #print self._log.get(i)._url
             color = ""
             if self._log.get(i)._enfocementStatus == "Authorization enforced??? (please configure enforcement detector)":
                 color = "yellow"
@@ -393,6 +390,21 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
 
 
+    #
+    # implement IContextMenuFactory
+    #
+    def createMenuItems(self, invocation):
+        responses = invocation.getSelectedMessages();
+        if responses > 0:
+            ret = LinkedList()
+            requestMenuItem = JMenuItem("Send request to Autorize");
+            cookieMenuItem = JMenuItem("Send cookie to Autorize");
+            requestMenuItem.addActionListener(handleMenuItems(self,responses[0], "request"))
+            cookieMenuItem.addActionListener(handleMenuItems(self, responses[0], "cookie"))   
+            ret.add(requestMenuItem);
+            ret.add(cookieMenuItem);
+            return(ret);
+        return null;
 
 
     #
@@ -472,7 +484,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                 if not self.replaceString.getText() in self._helpers.analyzeRequest(messageInfo).getHeaders():
                     if self.ignore304.isSelected():
                         firstHeader = self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders()[0]
-                        if '304' in firstHeader or '204' in firstHeader:
+                        if "304" in firstHeader or "204" in firstHeader:
                            return
                     if self.IFList.getModel().getSize() == 0:
                         self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
@@ -488,29 +500,33 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                                     self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
         return
 
-    def checkAuthorization(self, messageInfo, originalHeaders):
 
+    def makeRequest(self, messageInfo, message):
+        requestURL = self._helpers.analyzeRequest(messageInfo).getUrl()
+        return self._callbacks.makeHttpRequest(self._helpers.buildHttpService(str(requestURL.getHost()), int(requestURL.getPort()), requestURL.getProtocol() == "https"), message)
+
+    def makeMessage(self, messageInfo, removeOrNot):
         requestInfo = self._helpers.analyzeRequest(messageInfo)
         headers = requestInfo.getHeaders()
-        headers = list(headers)
-        removeHeaders = ArrayList()
-        removeHeaders.add(self.replaceString.getText()[0:self.replaceString.getText().index(":")])
+        if removeOrNot:
+            headers = list(headers)
+            removeHeaders = ArrayList()
+            removeHeaders.add(self.replaceString.getText()[0:self.replaceString.getText().index(":")])
 
-        
-        for header in headers[:]:
-            for removeHeader in removeHeaders:
-                if removeHeader in header:
-                    headers.remove(header)
+            for header in headers[:]:
+                for removeHeader in removeHeaders:
+                    if removeHeader in header:
+                        headers.remove(header)
 
-        headers.append(self.replaceString.getText())
+            headers.append(self.replaceString.getText())
 
         msgBody = messageInfo.getRequest()[requestInfo.getBodyOffset():]
-        message = self._helpers.buildHttpMessage(headers, msgBody)
-    
-        requestURL = requestInfo.getUrl()
-        requestResponse = self._callbacks.makeHttpRequest(self._helpers.buildHttpService(str(requestURL.getHost()), int(requestURL.getPort()), requestURL.getProtocol() == "https"), message)
-        analyzedResponse = self._helpers.analyzeResponse(requestResponse.getResponse())
+        return self._helpers.buildHttpMessage(headers, msgBody)
 
+    def checkAuthorization(self, messageInfo, originalHeaders):
+        message = self.makeMessage(messageInfo,True)
+        requestResponse = self.makeRequest(messageInfo, message)
+        analyzedResponse = self._helpers.analyzeResponse(requestResponse.getResponse())
         
         oldStatusCode = originalHeaders[0]
         newStatusCode = analyzedResponse.getHeaders()[0]
@@ -527,11 +543,9 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                 impression = "Authorization enforced??? (please configure enforcement detector)"
                 for filter in EDFilters:
                     if str(filter).startswith("Content-Length: "):
-                        print filter
                         if newContentLen == filter:
                             impression = "Authorization enforced!"
                     if str(filter).startswith("Finger Print: "):
-                        print filter[14:]
                         if filter[14:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
                             impression = "Authorization enforced!"               
         else:
@@ -547,7 +561,14 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         for header in analyzedResponseHeaders:
             if "Content-Length:" in header:
                 return header;
-        return 'null'
+        return "null"
+
+    def getCookieFromMessage(self, messageInfo):
+        headers = list(self._helpers.analyzeRequest(messageInfo.getRequest()).getHeaders())
+        for header in headers:
+            if "Cookie:" in header:
+                return header
+        return None
 
 #
 # extend JTable to handle cell selection
@@ -581,7 +602,6 @@ class Table(JTable):
         self._extender._originalrequestViewer.setMessage(logEntry._originalrequestResponse.getRequest(), True)
         self._extender._originalresponseViewer.setMessage(logEntry._originalrequestResponse.getResponse(), False)
         self._extender._currentlyDisplayedItem = logEntry._requestResponse
-        
         JTable.changeSelection(self, row, col, toggle, extend)
         return
 
@@ -621,3 +641,20 @@ class copySelectedURL(ActionListener):
         stringSelection = StringSelection(str(self._extender._helpers.analyzeRequest(self._extender._currentlyDisplayedItem).getUrl()));
         clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
         clpbrd.setContents(stringSelection, None);
+
+class handleMenuItems(ActionListener):
+    def __init__(self, extender, messageInfo, menuName):
+        self._extender = extender
+        self._menuName = menuName
+        self._messageInfo = messageInfo
+
+    def actionPerformed(self, e):
+        if self._menuName == "request":
+            if self._messageInfo.getResponse() == None:
+                message = self._extender.makeMessage(self._messageInfo,False)
+                requestResponse = self._extender.makeRequest(self._messageInfo, message)
+                self._extender.checkAuthorization(requestResponse,self._extender._helpers.analyzeResponse(requestResponse.getResponse()).getHeaders())
+            else:
+                self._extender.checkAuthorization(self._messageInfo,self._extender._helpers.analyzeResponse(self._messageInfo.getResponse()).getHeaders())
+        if self._menuName == "cookie":
+            self._extender.replaceString.setText(self._extender.getCookieFromMessage(self._messageInfo))
