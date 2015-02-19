@@ -62,7 +62,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         
         self.initCallbacks()
         
-        print 'Thank you for installing Autorize v0.8 extension'
+        print 'Thank you for installing Autorize v0.9 extension'
         print 'by Barak Tawily'
         return
         
@@ -73,21 +73,21 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         #
 
         exportLType = JLabel("File Type:")
-        exportLType.setBounds(10, 10, 140, 30)
+        exportLType.setBounds(10, 10, 100, 30)
+       
+        exportLES = JLabel("Enforcement Statuses:")
+        exportLES.setBounds(10, 50, 160, 30)
 
         exportFileTypes = ["HTML"]
         self.exportType = JComboBox(exportFileTypes)
-        self.exportType.setBounds(120, 10, 200, 30)
-       
-        exportLES = JLabel("Enforcement Statuses:")
-        exportLES.setBounds(10, 50, 140, 30)
+        self.exportType.setBounds(100, 10, 200, 30)
 
         exportES = ["All Statuses","Authorization bypass!","Authorization enforced??? (please configure enforcement detector)","Authorization enforced!"]
         self.exportES = JComboBox(exportES)
-        self.exportES.setBounds(120, 50, 200, 30)
+        self.exportES.setBounds(100, 50, 200, 30)
 
-        exportLES = JLabel("Enforcement Statuses:")
-        exportLES.setBounds(10, 50, 140, 30)
+        exportLES = JLabel("Statuses:")
+        exportLES.setBounds(10, 50, 100, 30)
 
         self.exportButton = JButton('Export',actionPerformed=self.exportToHTML)
         self.exportButton.setBounds(390, 25, 100, 30)
@@ -112,28 +112,28 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         EDLType = JLabel("Type:")
         EDLType.setBounds(10, 10, 140, 30)
 
-        EDStrings = ["Finger Print: (enforced message body contains)", "Content-Length: (constant Content-Length number of enforced response)"]
-        self.EDType = JComboBox(EDStrings)
-        self.EDType.setBounds(60, 10, 430, 30)
-       
         EDLContent = JLabel("Content:")
         EDLContent.setBounds(10, 50, 140, 30)
-
-        self.EDText = JTextArea('', 5, 30)
-        self.EDText.setBounds(60, 50, 300, 110)
-
-        self.EDAdd = JButton('Add filter',actionPerformed=self.addEDFilter)
-        self.EDAdd.setBounds(390, 85, 100, 30)
-        self.EDDel = JButton('Remove filter',actionPerformed=self.delEDFilter)
-        self.EDDel.setBounds(390, 210, 100, 30)
 
         EDLabelList = JLabel("Filter List:")
         EDLabelList.setBounds(10, 165, 140, 30)
 
+        EDStrings = ["Finger Print: (enforced message body contains)", "Content-Length: (constant Content-Length number of enforced response)"]
+        self.EDType = JComboBox(EDStrings)
+        self.EDType.setBounds(80, 10, 430, 30)
+       
+        self.EDText = JTextArea('', 5, 30)
+        self.EDText.setBounds(80, 50, 300, 110)
+
         self.EDModel = DefaultListModel();
         self.EDList = JList(self.EDModel);
-        self.EDList.setBounds(60, 175, 300, 110)
+        self.EDList.setBounds(80, 175, 300, 110)
         self.EDList.setBorder(LineBorder(Color.BLACK))
+
+        self.EDAdd = JButton('Add filter',actionPerformed=self.addEDFilter)
+        self.EDAdd.setBounds(390, 85, 120, 30)
+        self.EDDel = JButton('Remove filter',actionPerformed=self.delEDFilter)
+        self.EDDel.setBounds(390, 210, 120, 30)
 
         self.EDPnl = JPanel()
         self.EDPnl.setLayout(None);
@@ -152,31 +152,31 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         ##  init interception filters tab
         #
 
+        IFStrings = ["URL Contains: ", "Scope items only: (Content is not required)"]
+        self.IFType = JComboBox(IFStrings)
+        self.IFType.setBounds(80, 10, 430, 30)
+       
+        self.IFModel = DefaultListModel();
+        self.IFList = JList(self.IFModel);
+        self.IFList.setBounds(80, 175, 300, 110)
+        self.IFList.setBorder(LineBorder(Color.BLACK))
+
+        self.IFText = JTextArea('', 5, 30)
+        self.IFText.setBounds(80, 50, 300, 110)
+
         IFLType = JLabel("Type:")
         IFLType.setBounds(10, 10, 140, 30)
 
-        IFStrings = ["URL Contains: "]
-        self.IFType = JComboBox(IFStrings)
-        self.IFType.setBounds(60, 10, 430, 30)
-       
         IFLContent = JLabel("Content:")
         IFLContent.setBounds(10, 50, 140, 30)
-
-        self.IFText = JTextArea('', 5, 30)
-        self.IFText.setBounds(60, 50, 300, 110)
-
-        self.IFAdd = JButton('Add filter',actionPerformed=self.addIFFilter)
-        self.IFAdd.setBounds(390, 85, 100, 30)
-        self.IFDel = JButton('Remove filter',actionPerformed=self.delIFFilter)
-        self.IFDel.setBounds(390, 210, 100, 30)
 
         IFLabelList = JLabel("Filter List:")
         IFLabelList.setBounds(10, 165, 140, 30)
 
-        self.IFModel = DefaultListModel();
-        self.IFList = JList(self.IFModel);
-        self.IFList.setBounds(60, 175, 300, 110)
-        self.IFList.setBorder(LineBorder(Color.BLACK))
+        self.IFAdd = JButton('Add filter',actionPerformed=self.addIFFilter)
+        self.IFAdd.setBounds(390, 85, 120, 30)
+        self.IFDel = JButton('Remove filter',actionPerformed=self.delIFFilter)
+        self.IFDel.setBounds(390, 210, 120, 30)
 
         self.filtersPnl = JPanel()
         self.filtersPnl.setLayout(None);
@@ -196,19 +196,19 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         ##  init configuration tab
         #
         self.prevent304 = JCheckBox("Prevent 304 Not Modified status code");
-        self.prevent304.setBounds(250, 25, 240, 30)
+        self.prevent304.setBounds(290, 25, 300, 30)
 
         self.ignore304 = JCheckBox("Ignore 304/204 status code responses");
-        self.ignore304.setBounds(250, 5, 240, 30)
+        self.ignore304.setBounds(290, 5, 300, 30)
         self.ignore304.setSelected(True)
 
         self.autoScroll = JCheckBox("Auto Scroll");
-        self.autoScroll.setBounds(250, 45, 140, 30)
+        self.autoScroll.setBounds(290, 45, 140, 30)
 
         startLabel = JLabel("Authorization checks:")
         startLabel.setBounds(10, 10, 140, 30)
-        self.startButton = JButton('Intercept is off',actionPerformed=self.startOrStop)
-        self.startButton.setBounds(120, 10, 100, 30)
+        self.startButton = JButton('Autorize is off',actionPerformed=self.startOrStop)
+        self.startButton.setBounds(160, 10, 120, 30)
         self.startButton.setBackground(Color(255, 100, 91, 255))
 
         self.clearButton = JButton('Clear List',actionPerformed=self.clearList)
@@ -245,7 +245,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         
         self.logTable = Table(self)
         self._splitpane = JSplitPane(JSplitPane.HORIZONTAL_SPLIT)
-        self._splitpane.setDividerLocation(1090 + self._splitpane.getInsets().right)
+        self._splitpane.setResizeWeight(1)
         self.scrollPane = JScrollPane(self.logTable)
         self._splitpane.setLeftComponent(self.scrollPane)
         self.scrollPane.getVerticalScrollBar().addAdjustmentListener(autoScrollListener(self))
@@ -291,15 +291,15 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     ## Events functions
     #
     def startOrStop(self, event):
-        if self.startButton.getText() == "Intercept is off":
+        if self.startButton.getText() == "Autorize is off":
             if self.replaceString.getText() == "Insert injected header here":
                 self.replaceString.setText("Cookie: test=test")
-            self.startButton.setText("Intercept is on")
+            self.startButton.setText("Autorize is on")
             self.startButton.setBackground(Color.GREEN)
             self.intercept = 1
             self._callbacks.registerHttpListener(self)
         else:
-            self.startButton.setText("Intercept is off")
+            self.startButton.setText("Autorize is off")
             self.startButton.setBackground(Color(255, 100, 91, 255))
             self.intercept = 0
             self._callbacks.removeHttpListener(self)
@@ -476,10 +476,15 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                            return
                     if self.IFList.getModel().getSize() == 0:
                         self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
-                    else: 
+                    else:
+                        urlString = str(self._helpers.analyzeRequest(messageInfo).getUrl())
                         for i in range(0,self.IFList.getModel().getSize()):
+                            if self.IFList.getModel().getElementAt(i).split(":")[0] == "Scope items only":
+                                currentURL = URL(urlString)
+                                if self._callbacks.isInScope(currentURL):
+                                    self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Contains":
-                                if self.IFList.getModel().getElementAt(i)[14:] in str(self._helpers.analyzeRequest(messageInfo).getUrl()):
+                                if self.IFList.getModel().getElementAt(i)[14:] in urlString:
                                     self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
         return
 
