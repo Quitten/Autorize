@@ -19,11 +19,13 @@ from javax.swing import JScrollPane
 from javax.swing import JTabbedPane
 from javax.swing import JFileChooser
 from javax.swing import DefaultListModel
+from javax.swing import JCheckBoxMenuItem
 from threading import Lock
 from java.io import File
 from java.net import URL
 from java.awt import Color
 from java.awt import Toolkit
+from java.awt.event import ItemListener
 from java.awt.event import MouseAdapter
 from java.awt.event import ActionListener
 from java.awt.event import AdjustmentListener
@@ -48,6 +50,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         # create the log and a lock on which to synchronize when adding log entries
         self._log = ArrayList()
         self._lock = Lock()
+        self._enfocementStatuses = ["Authorization bypass!","Authorization enforced??? (please configure enforcement detector)","Authorization enforced!"]
         self.intercept = 0
 
         self.initInterceptionFilters()
@@ -82,7 +85,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.exportType = JComboBox(exportFileTypes)
         self.exportType.setBounds(100, 10, 200, 30)
 
-        exportES = ["All Statuses","Authorization bypass!","Authorization enforced??? (please configure enforcement detector)","Authorization enforced!"]
+        exportES = ["All Statuses", self._enfocementStatuses[0], self._enfocementStatuses[1], self._enfocementStatuses[2]]
         self.exportES = JComboBox(exportES)
         self.exportES.setBounds(100, 50, 200, 30)
 
@@ -249,10 +252,20 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.scrollPane = JScrollPane(self.logTable)
         self._splitpane.setLeftComponent(self.scrollPane)
         self.scrollPane.getVerticalScrollBar().addAdjustmentListener(autoScrollListener(self))
+        self.menuES0 = JCheckBoxMenuItem(self._enfocementStatuses[0],True)
+        self.menuES1 = JCheckBoxMenuItem(self._enfocementStatuses[1],True)
+        self.menuES2 = JCheckBoxMenuItem(self._enfocementStatuses[2],True)
+        self.menuES0.addItemListener(menuTableFilter(self))
+        self.menuES1.addItemListener(menuTableFilter(self))
+        self.menuES2.addItemListener(menuTableFilter(self))
+
         copyURLitem = JMenuItem("Copy URL");
         copyURLitem.addActionListener(copySelectedURL(self))
         self.menu = JPopupMenu("Popup")
         self.menu.add(copyURLitem)
+        self.menu.add(self.menuES0)
+        self.menu.add(self.menuES1)
+        self.menu.add(self.menuES2)
 
         self.tabs = JTabbedPane()
         self._requestViewer = self._callbacks.createMessageEditor(self, False)
@@ -369,11 +382,11 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         for i in range(0,self._log.size()):
             color = ""
-            if self._log.get(i)._enfocementStatus == "Authorization enforced??? (please configure enforcement detector)":
-                color = "yellow"
-            if self._log.get(i)._enfocementStatus == "Authorization bypass!":
+            if self._log.get(i)._enfocementStatus == self._enfocementStatuses[0]:
                 color = "red"
-            if self._log.get(i)._enfocementStatus == "Authorization enforced!":
+            if self._log.get(i)._enfocementStatus == self._enfocementStatuses[1]:
+                color = "yellow"
+            if self._log.get(i)._enfocementStatus == self._enfocementStatuses[2]:
                 color = "LawnGreen"
 
             if enforcementStatusFilter == "All Statuses":
@@ -538,18 +551,18 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         EDFilters = self.EDModel.toArray()
         if oldStatusCode == newStatusCode:
             if oldContentLen == newContentLen:
-                impression = "Authorization bypass!"
+                impression = self._enfocementStatuses[0]
             else:
-                impression = "Authorization enforced??? (please configure enforcement detector)"
+                impression = self._enfocementStatuses[1]
                 for filter in EDFilters:
                     if str(filter).startswith("Content-Length: "):
                         if newContentLen == filter:
-                            impression = "Authorization enforced!"
+                            impression = self._enfocementStatuses[2]
                     if str(filter).startswith("Finger Print: "):
                         if filter[14:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
-                            impression = "Authorization enforced!"               
+                            impression = self._enfocementStatuses[2]
         else:
-            impression = "Authorization enforced!"
+            impression = self._enfocementStatuses[2]
 
         self._lock.acquire()
         row = self._log.size()
@@ -585,9 +598,9 @@ class Table(JTable):
 
     def prepareRenderer(self, renderer, row, column):
         c = JTable.prepareRenderer(self,renderer, row, column)
-        impressionColor = {"Authorization bypass!":Color.RED,
-                            "Authorization enforced??? (please configure enforcement detector)":Color.YELLOW,
-                            "Authorization enforced!":Color.GREEN}
+        impressionColor = {self._extender._enfocementStatuses[0]:Color.RED,
+                            self._extender._enfocementStatuses[1]:Color.YELLOW,
+                            self._extender._enfocementStatuses[2]:Color.GREEN}
         for impression in impressionColor:
             if self._extender.getValueAt(row,1) == impression:
                 c.setBackground(impressionColor[impression]);
@@ -658,3 +671,24 @@ class handleMenuItems(ActionListener):
                 self._extender.checkAuthorization(self._messageInfo,self._extender._helpers.analyzeResponse(self._messageInfo.getResponse()).getHeaders())
         if self._menuName == "cookie":
             self._extender.replaceString.setText(self._extender.getCookieFromMessage(self._messageInfo))
+
+class menuTableFilter(ItemListener):
+    def __init__(self, extender):
+        self._extender = extender
+
+    def itemStateChanged(self, e):
+        oldLog = self._extender._log
+        newLog = ArrayList()
+        for logEntry in oldLog:
+            if self._extender.menuES0.getState() == True and self._extender.menuES0.getText() == logEntry._enfocementStatus:
+                newLog.add(logEntry)
+            if self._extender.menuES1.getState() == True and self._extender.menuES1.getText() == logEntry._enfocementStatus:
+                newLog.add(logEntry)
+            if self._extender.menuES2.getState() == True and self._extender.menuES2.getText() == logEntry._enfocementStatus:
+                newLog.add(logEntry)                
+
+        self._extender._log = newLog
+        self._extender._lock.acquire()
+        row = newLog.size()
+        self._extender.fireTableRowsInserted(row, row)
+        self._extender._lock.release()
