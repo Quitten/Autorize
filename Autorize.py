@@ -598,9 +598,9 @@ class Table(JTable):
 
     def prepareRenderer(self, renderer, row, column):
         c = JTable.prepareRenderer(self,renderer, row, column)
-        impressionColor = {self._extender._enfocementStatuses[0]:Color.RED,
-                            self._extender._enfocementStatuses[1]:Color.YELLOW,
-                            self._extender._enfocementStatuses[2]:Color.GREEN}
+        impressionColor = {"Authorization bypass!":Color(255,135,31),
+                            "Authorization enforced??? (please configure enforcement detector)":Color(255,255,133),
+                            "Authorization enforced!":Color(192,250,20)}
         for impression in impressionColor:
             if self._extender.getValueAt(row,1) == impression:
                 c.setBackground(impressionColor[impression]);
