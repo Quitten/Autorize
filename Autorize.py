@@ -67,7 +67,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.initCallbacks()
         
         print "Thank you for installing Autorize v0.9 extension"
-        print "by Barak Tawily"
+        print "by Barak Tawily\n\nGithub:\nhttps://github.com/Quitten/Autorize"
         return
         
 
