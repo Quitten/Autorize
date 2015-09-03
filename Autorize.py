@@ -19,6 +19,7 @@ from javax.swing import JScrollPane
 from javax.swing import JTabbedPane
 from javax.swing import JFileChooser
 from javax.swing import DefaultListModel
+from javax.swing import ScrollPaneConstants
 from javax.swing import JCheckBoxMenuItem
 from threading import Lock
 from java.io import File
@@ -199,14 +200,18 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         ##  init configuration tab
         #
         self.prevent304 = JCheckBox("Prevent 304 Not Modified status code");
-        self.prevent304.setBounds(290, 25, 300, 30)
+        self.prevent304.setBounds(290, 5, 300, 30)
 
         self.ignore304 = JCheckBox("Ignore 304/204 status code responses");
-        self.ignore304.setBounds(290, 5, 300, 30)
+        self.ignore304.setBounds(290, 25, 300, 30)
         self.ignore304.setSelected(True)
 
+        self.ignoreFiles = JCheckBox("Ignore js,css,image files");
+        self.ignoreFiles.setBounds(290, 45, 300, 30)
+        self.ignoreFiles.setSelected(True)
+        self.fileExtensionToIgnore = ["css","js","jpg","jpeg","png","gif","tif","ico"]
         self.autoScroll = JCheckBox("Auto Scroll");
-        self.autoScroll.setBounds(290, 45, 140, 30)
+        self.autoScroll.setBounds(290, 65, 140, 30)
 
         startLabel = JLabel("Authorization checks:")
         startLabel.setBounds(10, 10, 140, 30)
@@ -220,7 +225,10 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.replaceString = JTextArea("Cookie: Insert=injected; header=here;", 5, 30)
         self.replaceString.setWrapStyleWord(True);
         self.replaceString.setLineWrap(True)
-        self.replaceString.setBounds(10, 80, 470, 180)
+        self.replaceString.setBounds(10, 90, 470, 180)
+        replaceStringScroll = JScrollPane(self.replaceString)
+        replaceStringScroll.setBounds(10, 90, 470, 180)
+        replaceStringScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED)
 
         self.filtersTabs = JTabbedPane()
         self.filtersTabs.addTab("Enforcement Detector", self.EDPnl)
@@ -234,10 +242,11 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.pnl.setLayout(None);
         self.pnl.add(self.startButton)
         self.pnl.add(self.clearButton)
-        self.pnl.add(self.replaceString)
+        self.pnl.add(replaceStringScroll)
         self.pnl.add(startLabel)
         self.pnl.add(self.autoScroll)
         self.pnl.add(self.ignore304)
+        self.pnl.add(self.ignoreFiles)
         self.pnl.add(self.prevent304)
         self.pnl.add(self.filtersTabs)
 
@@ -318,6 +327,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     def addEDFilter(self, event):
         typeName = self.EDType.getSelectedItem().split(":")[0]
         self.EDModel.addElement(typeName + ": " + self.EDText.getText())
+        self.EDText.setText("")
 
     def delEDFilter(self, event):
         index = self.EDList.getSelectedIndex();
@@ -327,6 +337,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     def addIFFilter(self, event):
         typeName = self.IFType.getSelectedItem().split(":")[0]
         self.IFModel.addElement(typeName + ": " + self.IFText.getText())
+        self.IFText.setText("")
 
     def delIFFilter(self, event):
         index = self.IFList.getSelectedIndex();
@@ -499,10 +510,19 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                         firstHeader = self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders()[0]
                         if "304" in firstHeader or "204" in firstHeader:
                            return
+                    urlString = str(self._helpers.analyzeRequest(messageInfo).getUrl())
+                    if self.ignoreFiles.isSelected():
+                        extension = urlString.split("/")
+                        extension = extension[len(extension)-1]
+                        if "." in extension:
+                            extension = extension.split(".")[1]
+                            for ext in self.fileExtensionToIgnore:
+                                if extension.startswith(ext):
+                                    return
+
                     if self.IFList.getModel().getSize() == 0:
                         self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
                     else:
-                        urlString = str(self._helpers.analyzeRequest(messageInfo).getUrl())
                         for i in range(0,self.IFList.getModel().getSize()):
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "Scope items only":
                                 currentURL = URL(urlString)
