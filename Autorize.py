@@ -36,6 +36,7 @@ from javax.swing.table import AbstractTableModel
 from java.util import LinkedList
 from java.util import ArrayList
 #from java.lang import Integer
+import re
 
 class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController, AbstractTableModel, IContextMenuFactory):
 
@@ -122,7 +123,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         EDLabelList = JLabel("Filter List:")
         EDLabelList.setBounds(10, 165, 140, 30)
 
-        EDStrings = ["Finger Print: (enforced message body contains)", "Content-Length: (constant Content-Length number of enforced response)"]
+        #EDStrings = ["Finger Print: (enforced message body contains)", "Content-Length: (constant Content-Length number of enforced response)", "Headers: (enforced message headers contains)", "Regex: (headers + body)"]
+        EDStrings = ["Headers (simple string): (enforced message headers contains)", "Headers (regex): (enforced messege headers contains)", "Body (simple string): (enforced messege body contains)", "Body (regex): (enforced messege body contains)", "Full request (simple string): (enforced messege contains)", "Full request (regex): (enforced messege contains)", "Content-Length: (constant Content-Length number of enforced response)"]
         self.EDType = JComboBox(EDStrings)
         self.EDType.setBounds(80, 10, 430, 30)
        
@@ -156,7 +158,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         ##  init interception filters tab
         #
 
-        IFStrings = ["URL Contains: ", "Scope items only: (Content is not required)"]
+        IFStrings = ["Scope items only: (Content is not required)","URL Contains (simple string): ","URL Contains (regex): ","URL Not Contains (simple string): ","URL Not Contains (regex): "]
         self.IFType = JComboBox(IFStrings)
         self.IFType.setBounds(80, 10, 430, 30)
        
@@ -512,14 +514,40 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                         self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
                     else:
                         urlString = str(self._helpers.analyzeRequest(messageInfo).getUrl())
+                        
+                        do_the_check = 1
+
                         for i in range(0,self.IFList.getModel().getSize()):
+
+                            # IFStrings = ["Scope items only: (Content is not required)","URL Contains (simple string): ","URL Contains (regex): ","URL Not Contains (simple string): ","URL Not Contains (regex): "]
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "Scope items only":
                                 currentURL = URL(urlString)
-                                if self._callbacks.isInScope(currentURL):
-                                    self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
-                            if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Contains":
-                                if self.IFList.getModel().getElementAt(i)[14:] in urlString:
-                                    self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
+                                if not self._callbacks.isInScope(currentURL):
+                                    do_the_check = do_the_check and 0
+                                    #self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
+                            if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Contains (simple string)":
+                                if self.IFList.getModel().getElementAt(i)[30:] not in urlString:
+                                    do_the_check = do_the_check and 0
+                                    #self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
+                            if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Contains (regex)":
+                                regex_string = self.IFList.getModel().getElementAt(i)[22:]
+                                p = re.compile(regex_string, re.IGNORECASE)
+                                if not p.search(urlString):
+                                    do_the_check = do_the_check and 0
+                                    #self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())  
+                            if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Not Contains (simple string)":
+                                if self.IFList.getModel().getElementAt(i)[34:] in urlString:
+                                    do_the_check = do_the_check and 0
+                                    #self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
+                            if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Not Contains (regex)":
+                                regex_string = self.IFList.getModel().getElementAt(i)[26:]
+                                p = re.compile(regex_string, re.IGNORECASE)
+                                if p.search(urlString):
+                                    do_the_check = do_the_check and 0
+                                    #self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())                                                                        
+
+                        if do_the_check:
+                            self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
         return
 
 
@@ -562,14 +590,67 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             if oldContentLen == newContentLen:
                 impression = self._enfocementStatuses[0]
             else:
-                impression = self._enfocementStatuses[1]
+
+                auth_enforced = 1
+                
                 for filter in EDFilters:
+
+                    if str(filter).startswith("Headers (simple string): "):
+                        '''
+                        print filter[25:]
+                        print self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])
+
+                        if filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
+                            print "AAAA"
+                        else:
+                            print "BBBB"
+
+                        if not(filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
+                            print "CCCCC"
+                        else:
+                            print "DDDDD"
+                        '''
+
+                        if not(filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
+                            auth_enforced = 0
+
+                    if str(filter).startswith("Headers (regex): "):
+                        regex_string = filter[17:]
+                        p = re.compile(regex_string, re.IGNORECASE)
+                        if not p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
+                            auth_enforced = 0
+
+                    if str(filter).startswith("Body (simple string): "):
+                        if filter[22:] not in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
+                            auth_enforced = 0
+
+                    if str(filter).startswith("Body (regex): "):
+                        regex_string = filter[14:]
+                        p = re.compile(regex_string, re.IGNORECASE)
+                        if not p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
+                            auth_enforced = 0
+
+                    if str(filter).startswith("Full request (simple string): "):
+                        if filter[30:] not in self._helpers.bytesToString(requestResponse.getResponse()):
+                            auth_enforced = 0
+
+                    if str(filter).startswith("Full request (regex): "):
+                        regex_string = filter[22:]
+                        p = re.compile(regex_string, re.IGNORECASE)
+                        if not p.search(self._helpers.bytesToString(requestResponse.getResponse())):
+                            auth_enforced = 0
+
                     if str(filter).startswith("Content-Length: "):
-                        if newContentLen == filter:
-                            impression = self._enfocementStatuses[2]
-                    if str(filter).startswith("Finger Print: "):
-                        if filter[14:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
-                            impression = self._enfocementStatuses[2]
+                        if newContentLen != filter:
+                            auth_enforced = 0
+
+
+                
+                if auth_enforced:
+                    impression = self._enfocementStatuses[2]
+                else:
+                    impression = self._enfocementStatuses[1]
+                         
         else:
             impression = self._enfocementStatuses[2]
 
