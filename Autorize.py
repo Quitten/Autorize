@@ -686,17 +686,43 @@ class Table(JTable):
         self.getColumnModel().getColumn(0).setPreferredWidth(450)
         return
 
+    def prepareRenderer(self, renderer, row, col):
+        comp = JTable.prepareRenderer(self,renderer, row, col)
+        #value = self._extender.getValueAt(row,3)
+        value = self._extender.getValueAt(row,col)
+        #if (getSelectedRow() == row) {
+        if (value == "Authorization bypass!" and col == 3):
+            comp.setBackground(Color(255,135,31))
+        elif (value == "Authorization enforced??? (please configure enforcement detector)" and col == 3):
+            comp.setBackground(Color(255,255,133));
+        elif (value == "Authorization enforced!" and col == 3):
+            comp.setBackground(Color(192,250,20));
+        else:
+            comp.setBackground(Color.white);
+
+        return comp
+    
+
+    '''
     def prepareRenderer(self, renderer, row, column):
         c = JTable.prepareRenderer(self,renderer, row, column)
         impressionColor = {"Authorization bypass!":Color(255,135,31),
                             "Authorization enforced??? (please configure enforcement detector)":Color(255,255,133),
                             "Authorization enforced!":Color(192,250,20)}
         for impression in impressionColor:
+            #modelColumn = self.convertColumnIndexToModel(column)
             if self._extender.getValueAt(row,3) == impression:
-                c.setBackground(impressionColor[impression]);
+
+                #modelColumn = self.convertColumnIndexToModel(column)
+                #modelRow = self.convertRowIndexToModel(row)
+                #if modelColumn == 3:
+                #if (self.getSelectedRow() == row) and (column == 3):
+                #cellRenederer = self.getCellRenderer(row,3)
+                #cellRenederer.setBackground(impressionColor[impression])
+                c.setBackground(impressionColor[impression])
         
         return c
-
+    '''
     def changeSelection(self, row, col, toggle, extend):
         # show the log entry for the selected row
         logEntry = self._extender._log.get(row)
