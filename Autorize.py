@@ -35,7 +35,10 @@ from javax.swing.border import LineBorder
 from javax.swing.table import AbstractTableModel
 from java.util import LinkedList
 from java.util import ArrayList
-#from java.lang import Integer
+from java.lang import Integer
+from java.lang import String
+from java.lang import Math
+from java.awt import Dimension
 import re
 #import array
 
@@ -77,6 +80,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.initTabs()
         
         self.initCallbacks()
+
+        self.currentRequestNumber = 1
         
         print "Thank you for installing Autorize v0.11 extension"
         print "by Barak Tawily and Federico Dotta"
@@ -317,6 +322,18 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         #
         
         self.logTable = Table(self)
+
+        self.logTable.setAutoCreateRowSorter(True)        
+
+        tableWidth = self.logTable.getPreferredSize().width        
+        self.logTable.getColumn("ID").setPreferredWidth(Math.round(tableWidth / 50 * 2))
+        self.logTable.getColumn("URL").setPreferredWidth(Math.round(tableWidth / 50 * 24))
+        self.logTable.getColumn("Orig. Length").setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        self.logTable.getColumn("Modif. Length").setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        self.logTable.getColumn("Unauth. Length").setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        self.logTable.getColumn("Authorization Enforcement Status").setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        self.logTable.getColumn("Authorization Unauth. Status").setPreferredWidth(Math.round(tableWidth / 50 * 4))
+
         self._splitpane = JSplitPane(JSplitPane.HORIZONTAL_SPLIT)
         self._splitpane.setResizeWeight(1)
         self.scrollPane = JScrollPane(self.logTable)
@@ -525,39 +542,61 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             return 0
 
     def getColumnCount(self):
-        return 6
+        return 7
 
     def getColumnName(self, columnIndex):
         if columnIndex == 0:
-            return "URL"
+            return "ID"
         if columnIndex == 1:
-            return "Orig. Length"            
+            return "URL"
         if columnIndex == 2:
-            return "Modif. Length" 
+            return "Orig. Length"            
         if columnIndex == 3:
-            return "Unauth. Length"           
+            return "Modif. Length" 
         if columnIndex == 4:
-            return "Authorization Enforcement Status"
+            return "Unauth. Length"           
         if columnIndex == 5:
+            return "Authorization Enforcement Status"
+        if columnIndex == 6:
             return "Authorization Unauth. Status"
         return ""
+
+    def getColumnClass(self, columnIndex):
+        if columnIndex == 0:
+            return Integer
+        if columnIndex == 1:
+            return String
+        if columnIndex == 2:
+            return Integer           
+        if columnIndex == 3:
+            return Integer 
+        if columnIndex == 4:
+            return Integer          
+        if columnIndex == 5:
+            return String
+        if columnIndex == 6:
+            return String
+        return String
 
     def getValueAt(self, rowIndex, columnIndex):
         logEntry = self._log.get(rowIndex)
         if columnIndex == 0:
-            return logEntry._url.toString()
+            return logEntry._id
         if columnIndex == 1:
-            return str(len(logEntry._originalrequestResponse.getResponse()))
+            return logEntry._url.toString()
         if columnIndex == 2:
-            return str(len(logEntry._requestResponse.getResponse()))
+            return len(logEntry._originalrequestResponse.getResponse())
         if columnIndex == 3:
-            if logEntry._unauthorizedRequestResponse != None:
-                return str(len(logEntry._unauthorizedRequestResponse.getResponse()))
-            else:
-                return "-"
+            return len(logEntry._requestResponse.getResponse())
         if columnIndex == 4:
-            return logEntry._enfocementStatus   
+            if logEntry._unauthorizedRequestResponse != None:
+                return len(logEntry._unauthorizedRequestResponse.getResponse())
+            else:
+                #return "-"
+                return 0
         if columnIndex == 5:
+            return logEntry._enfocementStatus   
+        if columnIndex == 6:
             return logEntry._enfocementStatusUnauthorized        
         return ""
 
@@ -583,7 +622,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         #print "PROCESS HTTP MESSAGE"
 
-        if (self.intercept == 1) and (toolFlag != self._callbacks.TOOL_EXTENDER):
+        #if (self.intercept == 1) and (toolFlag != self._callbacks.TOOL_EXTENDER):
+        if (self.intercept == 1) and (toolFlag == self._callbacks.TOOL_PROXY):
             if self.prevent304.isSelected():
                 if messageIsRequest:
                     requestHeaders = list(self._helpers.analyzeRequest(messageInfo).getHeaders())
@@ -619,32 +659,30 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "Scope items only":
                                 currentURL = URL(urlString)
                                 if not self._callbacks.isInScope(currentURL):
-                                    do_the_check = do_the_check and 0
+                                    do_the_check = 0
                                     #self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Contains (simple string)":
                                 if self.IFList.getModel().getElementAt(i)[30:] not in urlString:
-                                    do_the_check = do_the_check and 0
+                                    do_the_check = 0
                                     #self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Contains (regex)":
                                 regex_string = self.IFList.getModel().getElementAt(i)[22:]
                                 p = re.compile(regex_string, re.IGNORECASE)
                                 if not p.search(urlString):
-                                    do_the_check = do_the_check and 0
+                                    do_the_check = 0
                                     #self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())  
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Not Contains (simple string)":
                                 if self.IFList.getModel().getElementAt(i)[34:] in urlString:
-                                    do_the_check = do_the_check and 0
+                                    do_the_check = 0
                                     #self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Not Contains (regex)":
                                 regex_string = self.IFList.getModel().getElementAt(i)[26:]
                                 p = re.compile(regex_string, re.IGNORECASE)
                                 if p.search(urlString):
-                                    do_the_check = do_the_check and 0
+                                    do_the_check = 0
                                     #self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())                                                                        
 
                         if do_the_check:
-                            print "TEST"
-                            print self.doUnauthorizedRequest.isSelected()
                             self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
 
                         # Unauthorized check
@@ -827,12 +865,13 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         row = self._log.size()
         
         if checkUnauthorized:
-            self._log.add(LogEntry(self._callbacks.saveBuffersToTempFiles(requestResponse), self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression,self._callbacks.saveBuffersToTempFiles(requestResponseUnauthorized),impressionUnauthorized)) # same requests not include again.
+            self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(requestResponse), self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression,self._callbacks.saveBuffersToTempFiles(requestResponseUnauthorized),impressionUnauthorized)) # same requests not include again.
         else:
-            self._log.add(LogEntry(self._callbacks.saveBuffersToTempFiles(requestResponse), self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression,None,"Disabled")) # same requests not include again.
+            self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(requestResponse), self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression,None,"Disabled")) # same requests not include again.
         
         #self._log.add(LogEntry(self._callbacks.saveBuffersToTempFiles(requestResponse), self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression)) # same requests not include again.
         self.fireTableRowsInserted(row, row)
+        self.currentRequestNumber = self.currentRequestNumber + 1
         self._lock.release()
 
     def getContentLength(self, analyzedResponseHeaders):
@@ -866,11 +905,11 @@ class Table(JTable):
         #value = self._extender.getValueAt(row,3)
         value = self._extender.getValueAt(row,col)
         #if (getSelectedRow() == row) {
-        if (value == "Authorization bypass!" and ((col == 4) or (col == 5))):
+        if (value == "Authorization bypass!" and ((col == 5) or (col == 6))):
             comp.setBackground(Color(255,135,31))
-        elif (value == "Authorization enforced??? (please configure enforcement detector)" and ((col == 4) or (col == 5))):
+        elif (value == "Authorization enforced??? (please configure enforcement detector)" and ((col == 5) or (col == 6))):
             comp.setBackground(Color(255,255,133));
-        elif (value == "Authorization enforced!" and ((col == 4) or (col == 5))):
+        elif (value == "Authorization enforced!" and ((col == 5) or (col == 6))):
             comp.setBackground(Color(192,250,20));
         else:
             comp.setBackground(Color.white);
@@ -930,7 +969,8 @@ class LogEntry:
 
 class LogEntry:
 
-    def __init__(self, requestResponse, url, originalrequestResponse, enforcementStatus, unauthorizedRequestResponse, enforcementStatusUnauthorized):
+    def __init__(self, id, requestResponse, url, originalrequestResponse, enforcementStatus, unauthorizedRequestResponse, enforcementStatusUnauthorized):
+        self._id = id
         self._requestResponse = requestResponse
         self._originalrequestResponse = originalrequestResponse
         self._url = url
