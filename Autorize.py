@@ -40,15 +40,6 @@ from java.lang import String
 from java.lang import Math
 from java.awt import Dimension
 import re
-#import array
-
-'''
-ToDo
-- Test "Enforcement detector" tab for unauthorized responses
-- Add one ID column with an incremental ID
-- Add autosorting to the columns of the table
-- Integrate export functionality with unauthorized checks
-'''
 
 class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController, AbstractTableModel, IContextMenuFactory):
 
@@ -479,23 +470,31 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         <body>
         <h1>Autorize Report<h1>
         <div class="datagrid"><table>
-        <thead><tr><th>URL</th><th>Authorization Enforcement Status</th></tr></thead>
+        <thead><tr><th width=\"4%\">ID</th><th width=\"50%\">URL</th><th width=\"8%\">Original length</th><th width=\"8%\">Modified length</th><th width=\"8%\">Unauthorized length</th><th width=\"11%\">Authorization Enforcement Status</th><th width=\"11%\">Authorization Unauthorized Status</th></tr></thead>
         <tbody>"""
 
         for i in range(0,self._log.size()):
-            color = ""
+            color_modified = ""
             if self._log.get(i)._enfocementStatus == self._enfocementStatuses[0]:
-                color = "red"
+                color_modified = "red"
             if self._log.get(i)._enfocementStatus == self._enfocementStatuses[1]:
-                color = "yellow"
+                color_modified = "yellow"
             if self._log.get(i)._enfocementStatus == self._enfocementStatuses[2]:
-                color = "LawnGreen"
+                color_modified = "LawnGreen"
+
+            color_unauthorized = ""
+            if self._log.get(i)._enfocementStatusUnauthorized == self._enfocementStatuses[0]:
+                color_unauthorized = "red"
+            if self._log.get(i)._enfocementStatusUnauthorized == self._enfocementStatuses[1]:
+                color_unauthorized = "yellow"
+            if self._log.get(i)._enfocementStatusUnauthorized == self._enfocementStatuses[2]:
+                color_unauthorized = "LawnGreen"
 
             if enforcementStatusFilter == "All Statuses":
-                htmlContent += "<tr bgcolor=\"%s\"><td><a href=\"%s\">%s</a></td><td>%s</td></tr>" % (color,self._log.get(i)._url,self._log.get(i)._url, self._log.get(i)._enfocementStatus)
+                htmlContent += "<tr><td>%d</td><td><a href=\"%s\">%s</a></td><td>%d</td><td>%d</td><td>%d</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td></tr>" % (self._log.get(i)._id,self._log.get(i)._url,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, color_modified, self._log.get(i)._enfocementStatus, color_unauthorized, self._log.get(i)._enfocementStatusUnauthorized)
             else:
-                if enforcementStatusFilter == self._log.get(i)._enfocementStatus:
-                    htmlContent += "<tr bgcolor=\"%s\"><td><a href=\"%s\">%s</a></td><td>%s</td></tr>" % (color,self._log.get(i)._url,self._log.get(i)._url, self._log.get(i)._enfocementStatus)
+                if (enforcementStatusFilter == self._log.get(i)._enfocementStatus) or (enforcementStatusFilter == self._log.get(i)._enfocementStatusUnauthorized):
+                    htmlContent += "<tr><td>%d</td><td><a href=\"%s\">%s</a></td><td>%d</td><td>%d</td><td>%d</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td></tr>" % (self._log.get(i)._id,self._log.get(i)._url,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, color_modified, self._log.get(i)._enfocementStatus, color_unauthorized, self._log.get(i)._enfocementStatusUnauthorized)
 
         htmlContent += "</tbody></table></div></body></html>"
         f = open(fileToSave.getAbsolutePath(), 'w')
@@ -620,8 +619,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     #
     def processHttpMessage(self, toolFlag, messageIsRequest, messageInfo):
 
-        #print "PROCESS HTTP MESSAGE"
-
         #if (self.intercept == 1) and (toolFlag != self._callbacks.TOOL_EXTENDER):
         if (self.intercept == 1) and (toolFlag == self._callbacks.TOOL_PROXY):
             if self.prevent304.isSelected():
@@ -655,40 +652,29 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
                         for i in range(0,self.IFList.getModel().getSize()):
 
-                            # IFStrings = ["Scope items only: (Content is not required)","URL Contains (simple string): ","URL Contains (regex): ","URL Not Contains (simple string): ","URL Not Contains (regex): "]
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "Scope items only":
                                 currentURL = URL(urlString)
                                 if not self._callbacks.isInScope(currentURL):
                                     do_the_check = 0
-                                    #self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Contains (simple string)":
                                 if self.IFList.getModel().getElementAt(i)[30:] not in urlString:
                                     do_the_check = 0
-                                    #self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Contains (regex)":
                                 regex_string = self.IFList.getModel().getElementAt(i)[22:]
                                 p = re.compile(regex_string, re.IGNORECASE)
                                 if not p.search(urlString):
-                                    do_the_check = 0
-                                    #self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())  
+                                    do_the_check = 0  
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Not Contains (simple string)":
                                 if self.IFList.getModel().getElementAt(i)[34:] in urlString:
                                     do_the_check = 0
-                                    #self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Not Contains (regex)":
                                 regex_string = self.IFList.getModel().getElementAt(i)[26:]
                                 p = re.compile(regex_string, re.IGNORECASE)
                                 if p.search(urlString):
-                                    do_the_check = 0
-                                    #self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders())                                                                        
+                                    do_the_check = 0                                                                       
 
                         if do_the_check:
                             self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
-
-                        # Unauthorized check
-                        #if self.doUnauthorizedRequest.isSelected():
-                        #    self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),False)
-
 
         return
 
@@ -801,66 +787,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             EDFiltersUnauth = self.EDModelUnauth.toArray()
             impressionUnauthorized = self.checkBypass(oldStatusCode,statusCodeUnauthorized,oldContentLen,contentLenUnauthorized,EDFiltersUnauth,requestResponseUnauthorized)
 
-        '''
-        impression = ""
-
-        EDFilters = self.EDModel.toArray()
-        if oldStatusCode == newStatusCode:
-            if oldContentLen == newContentLen:
-                impression = self._enfocementStatuses[0]
-            else:
-
-                auth_enforced = 1
-                
-                for filter in EDFilters:
-
-                    if str(filter).startswith("Headers (simple string): "):
-
-                        if not(filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
-                            auth_enforced = 0
-
-                    if str(filter).startswith("Headers (regex): "):
-                        regex_string = filter[17:]
-                        p = re.compile(regex_string, re.IGNORECASE)
-                        if not p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
-                            auth_enforced = 0
-
-                    if str(filter).startswith("Body (simple string): "):
-                        if filter[22:] not in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
-                            auth_enforced = 0
-
-                    if str(filter).startswith("Body (regex): "):
-                        regex_string = filter[14:]
-                        p = re.compile(regex_string, re.IGNORECASE)
-                        if not p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
-                            auth_enforced = 0
-
-                    if str(filter).startswith("Full request (simple string): "):
-                        if filter[30:] not in self._helpers.bytesToString(requestResponse.getResponse()):
-                            auth_enforced = 0
-
-                    if str(filter).startswith("Full request (regex): "):
-                        regex_string = filter[22:]
-                        p = re.compile(regex_string, re.IGNORECASE)
-                        if not p.search(self._helpers.bytesToString(requestResponse.getResponse())):
-                            auth_enforced = 0
-
-                    if str(filter).startswith("Content-Length: "):
-                        if newContentLen != filter:
-                            auth_enforced = 0
-
-
-                
-                if auth_enforced:
-                    impression = self._enfocementStatuses[2]
-                else:
-                    impression = self._enfocementStatuses[1]
-                         
-        else:
-            impression = self._enfocementStatuses[2]
-
-        '''
-
         self._lock.acquire()
         row = self._log.size()
         
@@ -869,7 +795,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         else:
             self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(requestResponse), self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression,None,"Disabled")) # same requests not include again.
         
-        #self._log.add(LogEntry(self._callbacks.saveBuffersToTempFiles(requestResponse), self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression)) # same requests not include again.
         self.fireTableRowsInserted(row, row)
         self.currentRequestNumber = self.currentRequestNumber + 1
         self._lock.release()
@@ -902,9 +827,8 @@ class Table(JTable):
 
     def prepareRenderer(self, renderer, row, col):
         comp = JTable.prepareRenderer(self,renderer, row, col)
-        #value = self._extender.getValueAt(row,3)
         value = self._extender.getValueAt(row,col)
-        #if (getSelectedRow() == row) {
+        
         if (value == "Authorization bypass!" and ((col == 5) or (col == 6))):
             comp.setBackground(Color(255,135,31))
         elif (value == "Authorization enforced??? (please configure enforcement detector)" and ((col == 5) or (col == 6))):
@@ -916,27 +840,6 @@ class Table(JTable):
 
         return comp
     
-
-    '''
-    def prepareRenderer(self, renderer, row, column):
-        c = JTable.prepareRenderer(self,renderer, row, column)
-        impressionColor = {"Authorization bypass!":Color(255,135,31),
-                            "Authorization enforced??? (please configure enforcement detector)":Color(255,255,133),
-                            "Authorization enforced!":Color(192,250,20)}
-        for impression in impressionColor:
-            #modelColumn = self.convertColumnIndexToModel(column)
-            if self._extender.getValueAt(row,3) == impression:
-
-                #modelColumn = self.convertColumnIndexToModel(column)
-                #modelRow = self.convertRowIndexToModel(row)
-                #if modelColumn == 3:
-                #if (self.getSelectedRow() == row) and (column == 3):
-                #cellRenederer = self.getCellRenderer(row,3)
-                #cellRenederer.setBackground(impressionColor[impression])
-                c.setBackground(impressionColor[impression])
-        
-        return c
-    '''
     def changeSelection(self, row, col, toggle, extend):
         # show the log entry for the selected row
         logEntry = self._extender._log.get(row)
@@ -955,17 +858,6 @@ class Table(JTable):
         self._extender._currentlyDisplayedItem = logEntry._requestResponse
         JTable.changeSelection(self, row, col, toggle, extend)
         return
-
-'''
-class LogEntry:
-
-    def __init__(self, requestResponse, url, originalrequestResponse, enforcementStatus):
-        self._requestResponse = requestResponse
-        self._originalrequestResponse = originalrequestResponse
-        self._url = url
-        self._enfocementStatus =  enforcementStatus
-        return
-'''
 
 class LogEntry:
 
