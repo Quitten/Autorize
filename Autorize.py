@@ -43,9 +43,6 @@ import re
 
 class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController, AbstractTableModel, IContextMenuFactory):
 
-    # TODO
-    # FIX enforcement: The search for string in body fails
-
     def registerExtenderCallbacks(self, callbacks):
         # keep a reference to our callbacks object
         self._callbacks = callbacks
@@ -534,7 +531,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     def getUiComponent(self):
         return self._splitpane
         
-        #
+    #
     # extend AbstractTableModel
     #
     
@@ -722,7 +719,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                 for filter in filters:
 
                     if str(filter).startswith("Headers (simple string): "):
-
                         if not(filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
                             auth_enforced = 0
 
@@ -733,10 +729,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                             auth_enforced = 0
 
                     if str(filter).startswith("Body (simple string): "):
-                        print filter[22:].strip()
-                        print self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])
-                        if filter[22:] not in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
-                            print "ok"
+                        if not(filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
                             auth_enforced = 0
 
                     if str(filter).startswith("Body (regex): "):
@@ -746,7 +739,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                             auth_enforced = 0
 
                     if str(filter).startswith("Full request (simple string): "):
-                        if filter[30:] not in self._helpers.bytesToString(requestResponse.getResponse()):
+                        if not(filter[30:] in self._helpers.bytesToString(requestResponse.getResponse())):
                             auth_enforced = 0
 
                     if str(filter).startswith("Full request (regex): "):
