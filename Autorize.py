@@ -43,6 +43,9 @@ import re
 
 class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController, AbstractTableModel, IContextMenuFactory):
 
+    # TODO
+    # FIX enforcement: The search for string in body fails
+
     def registerExtenderCallbacks(self, callbacks):
         # keep a reference to our callbacks object
         self._callbacks = callbacks
@@ -75,7 +78,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.currentRequestNumber = 1
         
         print "Thank you for installing Autorize v0.11 extension"
-        print "by Barak Tawily and Federico Dotta"
+        print "Created by Barak Tawily" 
+        print "Contributors: Barak Tawily, Federico Dotta"
         return
         
 
@@ -428,9 +432,9 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
     def clearList(self, event):
         self._lock.acquire()
-        self._log = ArrayList()
-        row = self._log.size()
-        self.fireTableRowsInserted(row, row)
+        oldSize = self._log.size()
+        self._log.clear()
+        self.fireTableRowsDeleted(0, oldSize - 1)
         self._lock.release()
 
     def exportToHTML(self, event):
@@ -729,7 +733,10 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                             auth_enforced = 0
 
                     if str(filter).startswith("Body (simple string): "):
+                        print filter[22:].strip()
+                        print self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])
                         if filter[22:] not in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
+                            print "ok"
                             auth_enforced = 0
 
                     if str(filter).startswith("Body (regex): "):
@@ -788,6 +795,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             impressionUnauthorized = self.checkBypass(oldStatusCode,statusCodeUnauthorized,oldContentLen,contentLenUnauthorized,EDFiltersUnauth,requestResponseUnauthorized)
 
         self._lock.acquire()
+        
         row = self._log.size()
         
         if checkUnauthorized:
@@ -798,7 +806,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.fireTableRowsInserted(row, row)
         self.currentRequestNumber = self.currentRequestNumber + 1
         self._lock.release()
-
+        
     def getContentLength(self, analyzedResponseHeaders):
         for header in analyzedResponseHeaders:
             if "Content-Length:" in header:
@@ -842,7 +850,7 @@ class Table(JTable):
     
     def changeSelection(self, row, col, toggle, extend):
         # show the log entry for the selected row
-        logEntry = self._extender._log.get(row)
+        logEntry = self._extender._log.get(self._extender.logTable.convertRowIndexToModel(row))
         self._extender._requestViewer.setMessage(logEntry._requestResponse.getRequest(), True)
         self._extender._responseViewer.setMessage(logEntry._requestResponse.getResponse(), False)
         self._extender._originalrequestViewer.setMessage(logEntry._originalrequestResponse.getRequest(), True)
