@@ -92,7 +92,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         exportLES = JLabel("Enforcement Statuses:")
         exportLES.setBounds(10, 50, 160, 30)
 
-        exportFileTypes = ["HTML"]
+        exportFileTypes = ["HTML","CSV"]
         self.exportType = JComboBox(exportFileTypes)
         self.exportType.setBounds(100, 10, 200, 30)
 
@@ -103,7 +103,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         exportLES = JLabel("Statuses:")
         exportLES.setBounds(10, 50, 100, 30)
 
-        self.exportButton = JButton("Export",actionPerformed=self.exportToHTML)
+        self.exportButton = JButton("Export",actionPerformed=self.export)
         self.exportButton.setBounds(390, 25, 100, 30)
 
         self.exportPnl = JPanel()
@@ -435,7 +435,39 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.fireTableRowsDeleted(0, oldSize - 1)
         self._lock.release()
 
-    def exportToHTML(self, event):
+    def export(self, event):
+        if self.exportType.getSelectedItem() == "HTML":
+            self.exportToHTML()
+        else:
+            self.exportToCSV()
+
+    def exportToCSV(self):
+        parentFrame = JFrame()
+        fileChooser = JFileChooser()
+        fileChooser.setSelectedFile(File("AutorizeReprort.csv"));
+        fileChooser.setDialogTitle("Save Autorize Report")
+        userSelection = fileChooser.showSaveDialog(parentFrame)
+        if userSelection == JFileChooser.APPROVE_OPTION:
+            fileToSave = fileChooser.getSelectedFile()
+
+        enforcementStatusFilter = self.exportES.getSelectedItem()
+        csvContent = "id\tURL\tOriginal length\tModified length\tUnauthorized length\tAuthorization Enforcement Status\tAuthorization Unauthenticated Status\n"
+
+        for i in range(0,self._log.size()):
+
+            if enforcementStatusFilter == "All Statuses":
+                csvContent += "%d\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
+                
+            else:
+                if (enforcementStatusFilter == self._log.get(i)._enfocementStatus) or (enforcementStatusFilter == self._log.get(i)._enfocementStatusUnauthorized):
+                    csvContent += "%d\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
+        
+        f = open(fileToSave.getAbsolutePath(), 'w')
+        f.writelines(csvContent)
+        f.close()
+
+
+    def exportToHTML(self):
         parentFrame = JFrame()
         fileChooser = JFileChooser()
         fileChooser.setSelectedFile(File("AutorizeReprort.html"));
@@ -472,7 +504,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         <body>
         <h1>Autorize Report<h1>
         <div class="datagrid"><table>
-        <thead><tr><th width=\"4%\">ID</th><th width=\"50%\">URL</th><th width=\"8%\">Original length</th><th width=\"8%\">Modified length</th><th width=\"8%\">Unauthorized length</th><th width=\"11%\">Authorization Enforcement Status</th><th width=\"11%\">Authorization Unauthenticated Status</th></tr></thead>
+        <thead><tr><th width=\"3%\">ID</th><th width=\"48%\">URL</th><th width=\"9%\">Original length</th><th width=\"9%\">Modified length</th><th width=\"9%\">Unauthorized length</th><th width=\"11%\">Authorization Enforcement Status</th><th width=\"11%\">Authorization Unauthenticated Status</th></tr></thead>
         <tbody>"""
 
         for i in range(0,self._log.size()):
