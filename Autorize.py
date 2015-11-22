@@ -40,6 +40,7 @@ from java.lang import String
 from java.lang import Math
 from java.awt import Dimension
 import re
+from thread import start_new_thread
 
 class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController, AbstractTableModel, IContextMenuFactory):
 
@@ -269,7 +270,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         #self.autoScroll.setBounds(290, 45, 140, 30)
         self.autoScroll.setBounds(160, 40, 140, 30)
 
-        self.doUnauthorizedRequest = JCheckBox("Check unauthorized")
+        self.doUnauthorizedRequest = JCheckBox("Check unauthenticated")
         self.doUnauthorizedRequest.setBounds(290, 45, 300, 30)
         self.doUnauthorizedRequest.setSelected(True)
 
@@ -289,7 +290,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         self.filtersTabs = JTabbedPane()
         self.filtersTabs.addTab("Enforcement Detector", self.EDPnl)
-        self.filtersTabs.addTab("Detector Unauthorized", self.EDPnlUnauth)
+        self.filtersTabs.addTab("Detector Unauthenticated", self.EDPnlUnauth)
         self.filtersTabs.addTab("Interception Filters", self.filtersPnl)
         self.filtersTabs.addTab("Export", self.exportPnl)
 
@@ -362,8 +363,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.tabs.addTab("Original Request", self._originalrequestViewer.getComponent())
         self.tabs.addTab("Original Response", self._originalresponseViewer.getComponent())
 
-        self.tabs.addTab("Unauthorized Request", self._unauthorizedrequestViewer.getComponent())
-        self.tabs.addTab("Unauthorized Response", self._unauthorizedresponseViewer.getComponent())        
+        self.tabs.addTab("Unauthenticated Request", self._unauthorizedrequestViewer.getComponent())
+        self.tabs.addTab("Unauthenticated Response", self._unauthorizedresponseViewer.getComponent())        
 
         self.tabs.addTab("Configuration", self.pnl)
         self.tabs.setSelectedIndex(6)
@@ -471,7 +472,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         <body>
         <h1>Autorize Report<h1>
         <div class="datagrid"><table>
-        <thead><tr><th width=\"4%\">ID</th><th width=\"50%\">URL</th><th width=\"8%\">Original length</th><th width=\"8%\">Modified length</th><th width=\"8%\">Unauthorized length</th><th width=\"11%\">Authorization Enforcement Status</th><th width=\"11%\">Authorization Unauthorized Status</th></tr></thead>
+        <thead><tr><th width=\"4%\">ID</th><th width=\"50%\">URL</th><th width=\"8%\">Original length</th><th width=\"8%\">Modified length</th><th width=\"8%\">Unauthorized length</th><th width=\"11%\">Authorization Enforcement Status</th><th width=\"11%\">Authorization Unauthenticated Status</th></tr></thead>
         <tbody>"""
 
         for i in range(0,self._log.size()):
@@ -678,6 +679,15 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                             self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
 
         return
+
+    def sendRequestToAuthorizeWork(self,messageInfo):
+
+        if messageInfo.getResponse() == None:
+            message = self.makeMessage(messageInfo,False,False)
+            requestResponse = self.makeRequest(messageInfo, message)
+            self.checkAuthorization(requestResponse,self._helpers.analyzeResponse(requestResponse.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
+        else:
+            self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
 
 
     def makeRequest(self, messageInfo, message):
@@ -907,12 +917,8 @@ class handleMenuItems(ActionListener):
 
     def actionPerformed(self, e):
         if self._menuName == "request":
-            if self._messageInfo.getResponse() == None:
-                message = self._extender.makeMessage(self._messageInfo,False,True)
-                requestResponse = self._extender.makeRequest(self._messageInfo, message)
-                self._extender.checkAuthorization(requestResponse,self._extender._helpers.analyzeResponse(requestResponse.getResponse()).getHeaders(),False)
-            else:
-                self._extender.checkAuthorization(self._messageInfo,self._extender._helpers.analyzeResponse(self._messageInfo.getResponse()).getHeaders(),False)
+            start_new_thread(self._extender.sendRequestToAuthorizeWork,(self._messageInfo,))
+
         if self._menuName == "cookie":
             self._extender.replaceString.setText(self._extender.getCookieFromMessage(self._messageInfo))
 
