@@ -75,7 +75,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         self.currentRequestNumber = 1
         
-        print "Thank you for installing Autorize v0.11 extension"
+        print "Thank you for installing Autorize v0.12 extension"
         print "Created by Barak Tawily" 
         print "Contributors: Barak Tawily, Federico Dotta"
         print "\nGithub:\nhttps://github.com/Quitten/Autorize"
@@ -134,7 +134,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         EDLabelList = JLabel("Filter List:")
         EDLabelList.setBounds(10, 165, 140, 30)
 
-        #EDStrings = ["Finger Print: (enforced message body contains)", "Content-Length: (constant Content-Length number of enforced response)", "Headers: (enforced message headers contains)", "Regex: (headers + body)"]
         EDStrings = ["Headers (simple string): (enforced message headers contains)", "Headers (regex): (enforced messege headers contains)", "Body (simple string): (enforced messege body contains)", "Body (regex): (enforced messege body contains)", "Full request (simple string): (enforced messege contains)", "Full request (regex): (enforced messege contains)", "Content-Length: (constant Content-Length number of enforced response)"]
         self.EDType = JComboBox(EDStrings)
         self.EDType.setBounds(80, 10, 430, 30)
@@ -169,10 +168,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         ## init enforcement detector tab
         #
 
-        # These two variable appears to be unused...
-        #self.EDFP = ArrayList()
-        #self.EDCT = ArrayList()
-
         EDLType = JLabel("Type:")
         EDLType.setBounds(10, 10, 140, 30)
 
@@ -182,7 +177,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         EDLabelList = JLabel("Filter List:")
         EDLabelList.setBounds(10, 165, 140, 30)
 
-        #EDStrings = ["Finger Print: (enforced message body contains)", "Content-Length: (constant Content-Length number of enforced response)", "Headers: (enforced message headers contains)", "Regex: (headers + body)"]
         EDStrings = ["Headers (simple string): (enforced message headers contains)", "Headers (regex): (enforced messege headers contains)", "Body (simple string): (enforced messege body contains)", "Body (regex): (enforced messege body contains)", "Full request (simple string): (enforced messege contains)", "Full request (regex): (enforced messege contains)", "Content-Length: (constant Content-Length number of enforced response)"]
         self.EDTypeUnauth = JComboBox(EDStrings)
         self.EDTypeUnauth.setBounds(80, 10, 430, 30)
@@ -713,7 +707,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         return
 
-    def sendRequestToAuthorizeWork(self,messageInfo):
+    def sendRequestToAutorizeWork(self,messageInfo):
 
         if messageInfo.getResponse() == None:
             message = self.makeMessage(messageInfo,False,False)
@@ -741,7 +735,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                         headers.remove(header)
 
             if authorizeOrNot:
-                #print self.replaceString.getText()
                 headers.append(self.replaceString.getText())
 
         msgBody = messageInfo.getRequest()[requestInfo.getBodyOffset():]
@@ -950,7 +943,7 @@ class handleMenuItems(ActionListener):
 
     def actionPerformed(self, e):
         if self._menuName == "request":
-            start_new_thread(self._extender.sendRequestToAuthorizeWork,(self._messageInfo,))
+            start_new_thread(self._extender.sendRequestToAutorizeWork,(self._messageInfo,))
 
         if self._menuName == "cookie":
             self._extender.replaceString.setText(self._extender.getCookieFromMessage(self._messageInfo))
