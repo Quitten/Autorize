@@ -75,9 +75,9 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         self.currentRequestNumber = 1
         
-        print "Thank you for installing Autorize v0.12 extension"
+        print "Thank you for installing Autorize v0.13 extension"
         print "Created by Barak Tawily" 
-        print "Contributors: Barak Tawily, Federico Dotta"
+        print "Contributors: Barak Tawily, Federico Dotta, Marcin Woloszyn"
         print "\nGithub:\nhttps://github.com/Quitten/Autorize"
         return
         
@@ -799,22 +799,25 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         return impression
 
     def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
+        oldResponse = messageInfo.getResponse()
         message = self.makeMessage(messageInfo,True,True)
         requestResponse = self.makeRequest(messageInfo, message)
-        analyzedResponse = self._helpers.analyzeResponse(requestResponse.getResponse())
+        newResponse = requestResponse.getResponse()
+        analyzedResponse = self._helpers.analyzeResponse(newResponse)
         
         oldStatusCode = originalHeaders[0]
         newStatusCode = analyzedResponse.getHeaders()[0]
-        oldContentLen = self.getContentLength(originalHeaders)
-        newContentLen = self.getContentLength(analyzedResponse.getHeaders())
+        oldContentLen = self.getResponseContentLength(oldResponse)
+        newContentLen = self.getResponseContentLength(newResponse)
 
         # Check unauthorized request
         if checkUnauthorized:
             messageUnauthorized = self.makeMessage(messageInfo,True,False)
             requestResponseUnauthorized = self.makeRequest(messageInfo, messageUnauthorized)
-            analyzedResponseUnauthorized = self._helpers.analyzeResponse(requestResponseUnauthorized.getResponse())  
+            unauthorizedResponse = requestResponseUnauthorized.getResponse()
+            analyzedResponseUnauthorized = self._helpers.analyzeResponse(unauthorizedResponse)  
             statusCodeUnauthorized = analyzedResponseUnauthorized.getHeaders()[0]
-            contentLenUnauthorized = self.getContentLength(analyzedResponseUnauthorized.getHeaders())
+            contentLenUnauthorized = self.getResponseContentLength(unauthorizedResponse)
 
         EDFilters = self.EDModel.toArray()
         impression = self.checkBypass(oldStatusCode,newStatusCode,oldContentLen,newContentLen,EDFilters,requestResponse)
@@ -836,11 +839,14 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.currentRequestNumber = self.currentRequestNumber + 1
         self._lock.release()
         
-    def getContentLength(self, analyzedResponseHeaders):
-        for header in analyzedResponseHeaders:
-            if "Content-Length:" in header:
-                return header;
-        return "null"
+    def getResponseContentLength(self, response):
+        return len(response) - self._helpers.analyzeResponse(response).getBodyOffset()
+
+    #def getContentLength(self, analyzedResponseHeaders):
+    #    for header in analyzedResponseHeaders:
+    #        if "Content-Length:" in header:
+    #            return header;
+    #    return "null"
 
     def getCookieFromMessage(self, messageInfo):
         headers = list(self._helpers.analyzeRequest(messageInfo.getRequest()).getHeaders())
