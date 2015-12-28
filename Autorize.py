@@ -134,7 +134,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         EDLabelList = JLabel("Filter List:")
         EDLabelList.setBounds(10, 165, 140, 30)
 
-        EDStrings = ["Headers (simple string): (enforced message headers contains)", "Headers (regex): (enforced messege headers contains)", "Body (simple string): (enforced messege body contains)", "Body (regex): (enforced messege body contains)", "Full request (simple string): (enforced messege contains)", "Full request (regex): (enforced messege contains)", "Content-Length: (constant Content-Length number of enforced response)"]
+        EDStrings = ["Headers (simple string): (enforced message headers contains)", "Headers (regex): (enforced message headers contains)", "Body (simple string): (enforced message body contains)", "Body (regex): (enforced message body contains)", "Full request (simple string): (enforced message contains)", "Full request (regex): (enforced message contains)", "Content-Length: (constant Content-Length number of enforced response)"]
         self.EDType = JComboBox(EDStrings)
         self.EDType.setBounds(80, 10, 430, 30)
        
@@ -177,7 +177,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         EDLabelList = JLabel("Filter List:")
         EDLabelList.setBounds(10, 165, 140, 30)
 
-        EDStrings = ["Headers (simple string): (enforced message headers contains)", "Headers (regex): (enforced messege headers contains)", "Body (simple string): (enforced messege body contains)", "Body (regex): (enforced messege body contains)", "Full request (simple string): (enforced messege contains)", "Full request (regex): (enforced messege contains)", "Content-Length: (constant Content-Length number of enforced response)"]
+        EDStrings = ["Headers (simple string): (enforced message headers contains)", "Headers (regex): (enforced message headers contains)", "Body (simple string): (enforced message body contains)", "Body (regex): (enforced message body contains)", "Full request (simple string): (enforced message contains)", "Full request (regex): (enforced message contains)", "Content-Length: (constant Content-Length number of enforced response)"]
         self.EDTypeUnauth = JComboBox(EDStrings)
         self.EDTypeUnauth.setBounds(80, 10, 430, 30)
        
