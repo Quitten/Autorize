@@ -750,43 +750,50 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                 impression = self._enfocementStatuses[0]
             else:
 
-                auth_enforced = 1
+                # Check logic has been inverted. It is enough for one rule to match in order to yield auth_enforced = 1
+
+                auth_enforced = 0
                 
                 for filter in filters:
 
-                    if str(filter).startswith("Headers (simple string): "):
-                        if not(filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
-                            auth_enforced = 0
+                    if auth_enforced == 0 and str(filter).startswith("Headers (simple string): "):
+                        if filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
+                            auth_enforced = 1
 
-                    if str(filter).startswith("Headers (regex): "):
+                    if auth_enforced == 0 and str(filter).startswith("Headers (regex): "):
                         regex_string = filter[17:]
                         p = re.compile(regex_string, re.IGNORECASE)
-                        if not p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
-                            auth_enforced = 0
+                        if p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
+                            auth_enforced = 1
 
-                    if str(filter).startswith("Body (simple string): "):
-                        if not(filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
-                            auth_enforced = 0
+                    if auth_enforced == 0 and str(filter).startswith("Body (simple string): "):
+                        if filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
+                            auth_enforced = 1
 
-                    if str(filter).startswith("Body (regex): "):
+                    if auth_enforced == 0 and str(filter).startswith("Body (regex): "):
                         regex_string = filter[14:]
                         p = re.compile(regex_string, re.IGNORECASE)
-                        if not p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
-                            auth_enforced = 0
+                        if p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
+                            auth_enforced = 1
 
-                    if str(filter).startswith("Full request (simple string): "):
-                        if not(filter[30:] in self._helpers.bytesToString(requestResponse.getResponse())):
-                            auth_enforced = 0
+                    if auth_enforced == 0 and str(filter).startswith("Full request (simple string): "):
+                        if filter[30:] in self._helpers.bytesToString(requestResponse.getResponse()):
+                            auth_enforced = 1
 
-                    if str(filter).startswith("Full request (regex): "):
+                    if auth_enforced == 0 and str(filter).startswith("Full request (regex): "):
                         regex_string = filter[22:]
                         p = re.compile(regex_string, re.IGNORECASE)
-                        if not p.search(self._helpers.bytesToString(requestResponse.getResponse())):
-                            auth_enforced = 0
+                        if p.search(self._helpers.bytesToString(requestResponse.getResponse())):
+                            auth_enforced = 1
 
-                    if str(filter).startswith("Content-Length: "):
-                        if newContentLen != filter:
-                            auth_enforced = 0
+                    if auth_enforced == 0 and str(filter).startswith("Content-Length: "):
+                        filterLen = None
+                        try:
+                            filterLen = int(filter[16:])
+                        except ValueError:
+                            pass
+                        if filterLen != None and newContentLen == filterLen:
+                            auth_enforced = 1
                 
                 if auth_enforced:
                     impression = self._enfocementStatuses[2]
