@@ -398,7 +398,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
     def addEDFilter(self, event):
         typeName = self.EDType.getSelectedItem().split(":")[0]
-        self.EDModel.addElement(typeName + ": " + self.EDText.getText())
+        self.EDModel.addElement(typeName + ": " + self.EDText.getText().strip())
 
     def delEDFilter(self, event):
         index = self.EDList.getSelectedIndex();
@@ -407,7 +407,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
     def addEDFilterUnauth(self, event):
         typeName = self.EDTypeUnauth.getSelectedItem().split(":")[0]
-        self.EDModelUnauth.addElement(typeName + ": " + self.EDTextUnauth.getText())
+        self.EDModelUnauth.addElement(typeName + ": " + self.EDTextUnauth.getText().strip())
 
     def delEDFilterUnauth(self, event):
         index = self.EDListUnauth.getSelectedIndex();
@@ -416,7 +416,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
     def addIFFilter(self, event):
         typeName = self.IFType.getSelectedItem().split(":")[0]
-        self.IFModel.addElement(typeName + ": " + self.IFText.getText())
+        self.IFModel.addElement(typeName + ": " + self.IFText.getText().strip())
 
     def delIFFilter(self, event):
         index = self.IFList.getSelectedIndex();
