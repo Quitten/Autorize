@@ -876,8 +876,8 @@ class Table(JTable):
         return
 
     def prepareRenderer(self, renderer, row, col):
-        comp = JTable.prepareRenderer(self,renderer, row, col)
-        value = self._extender.getValueAt(row,col)
+        comp = JTable.prepareRenderer(self, renderer, row, col)
+        value = self._extender.getValueAt(self._extender.logTable.convertRowIndexToModel(row), col)
         
         if (value == "Authorization bypass!" and ((col == 5) or (col == 6))):
             comp.setBackground(Color(255,135,31))
