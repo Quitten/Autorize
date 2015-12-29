@@ -787,12 +787,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                             auth_enforced = 1
 
                     if auth_enforced == 0 and str(filter).startswith("Content-Length: "):
-                        filterLen = None
-                        try:
-                            filterLen = int(filter[16:])
-                        except ValueError:
-                            pass
-                        if filterLen != None and newContentLen == filterLen:
+                        if str(newContentLen) == filter[16:].strip():
                             auth_enforced = 1
                 
                 if auth_enforced:
