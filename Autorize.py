@@ -134,7 +134,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         EDLabelList = JLabel("Filter List:")
         EDLabelList.setBounds(10, 165, 140, 30)
 
-        EDStrings = ["Headers (simple string): (enforced message headers contains)", "Headers (regex): (enforced message headers contains)", "Body (simple string): (enforced message body contains)", "Body (regex): (enforced message body contains)", "Full request (simple string): (enforced message contains)", "Full request (regex): (enforced message contains)", "Content-Length: (constant Content-Length number of enforced response)"]
+        EDStrings = ["Headers (simple string): (enforced message headers contains)", "Headers (regex): (enforced message headers contains)", "Body (simple string): (enforced message body contains)", "Body (regex): (enforced message body contains)", "Full response (simple string): (enforced message contains)", "Full response (regex): (enforced message contains)", "Content-Length: (constant Content-Length number of enforced response)"]
         self.EDType = JComboBox(EDStrings)
         self.EDType.setBounds(80, 10, 430, 30)
        
@@ -177,7 +177,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         EDLabelList = JLabel("Filter List:")
         EDLabelList.setBounds(10, 165, 140, 30)
 
-        EDStrings = ["Headers (simple string): (enforced message headers contains)", "Headers (regex): (enforced message headers contains)", "Body (simple string): (enforced message body contains)", "Body (regex): (enforced message body contains)", "Full request (simple string): (enforced message contains)", "Full request (regex): (enforced message contains)", "Content-Length: (constant Content-Length number of enforced response)"]
+        EDStrings = ["Headers (simple string): (enforced message headers contains)", "Headers (regex): (enforced message headers contains)", "Body (simple string): (enforced message body contains)", "Body (regex): (enforced message body contains)", "Full response (simple string): (enforced message contains)", "Full response (regex): (enforced message contains)", "Content-Length: (constant Content-Length number of enforced response)"]
         self.EDTypeUnauth = JComboBox(EDStrings)
         self.EDTypeUnauth.setBounds(80, 10, 430, 30)
        
@@ -776,12 +776,12 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                         if p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
                             auth_enforced = 1
 
-                    if auth_enforced == 0 and str(filter).startswith("Full request (simple string): "):
-                        if filter[30:] in self._helpers.bytesToString(requestResponse.getResponse()):
+                    if auth_enforced == 0 and str(filter).startswith("Full response (simple string): "):
+                        if filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()):
                             auth_enforced = 1
 
-                    if auth_enforced == 0 and str(filter).startswith("Full request (regex): "):
-                        regex_string = filter[22:]
+                    if auth_enforced == 0 and str(filter).startswith("Full response (regex): "):
+                        regex_string = filter[23:]
                         p = re.compile(regex_string, re.IGNORECASE)
                         if p.search(self._helpers.bytesToString(requestResponse.getResponse())):
                             auth_enforced = 1
