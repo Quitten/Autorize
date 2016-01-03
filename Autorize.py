@@ -1201,6 +1201,16 @@ class Table(JTable):
             self._extender._unauthorizedresponseViewer.setMessage("Response disabled", False)
 
         self._extender._currentlyDisplayedItem = logEntry._requestResponse
+
+        if col == 3:
+            self._extender.tabs.setSelectedIndex(3)
+        elif ((col == 4) or (col == 6)):
+            self._extender.tabs.setSelectedIndex(1)
+        elif ((col == 5) or (col == 7)):
+            self._extender.tabs.setSelectedIndex(5)
+        else:
+            self._extender.tabs.setSelectedIndex(2)
+
         JTable.changeSelection(self, row, col, toggle, extend)
         return
 
