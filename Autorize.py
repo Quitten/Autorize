@@ -447,14 +447,14 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         #self.logTable.setAutoCreateRowSorter(True)        
 
         tableWidth = self.logTable.getPreferredSize().width        
-        self.logTable.getColumn("ID").setPreferredWidth(Math.round(tableWidth / 50 * 0.75))
-        self.logTable.getColumn("Method").setPreferredWidth(Math.round(tableWidth / 50 * 0.50))
-        self.logTable.getColumn("URL").setPreferredWidth(Math.round(tableWidth / 50 * 38))
-        self.logTable.getColumn("Orig. Length").setPreferredWidth(Math.round(tableWidth / 50 * 0.5))
-        self.logTable.getColumn("Modif. Length").setPreferredWidth(Math.round(tableWidth / 50 * 0.5))
-        self.logTable.getColumn("Unauth. Length").setPreferredWidth(Math.round(tableWidth / 50 * 0.5))
-        self.logTable.getColumn("Authorization Enforcement Status").setPreferredWidth(Math.round(tableWidth / 50 * 3))
-        self.logTable.getColumn("Authorization Unauth. Status").setPreferredWidth(Math.round(tableWidth / 50 * 3))
+        self.logTable.getColumn("ID").setPreferredWidth(Math.round(tableWidth / 50 * 2))
+        self.logTable.getColumn("Method").setPreferredWidth(Math.round(tableWidth / 50 * 3))
+        self.logTable.getColumn("URL").setPreferredWidth(Math.round(tableWidth / 50 * 25))
+        self.logTable.getColumn("Orig. Length").setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        self.logTable.getColumn("Modif. Length").setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        self.logTable.getColumn("Unauth. Length").setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        self.logTable.getColumn("Authorization Enforcement Status").setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        self.logTable.getColumn("Authorization Unauth. Status").setPreferredWidth(Math.round(tableWidth / 50 * 4))
 
         self.tableSorter = TableRowSorter(self)
         filter = tableFilter(self)
