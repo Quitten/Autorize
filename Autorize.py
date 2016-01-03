@@ -58,6 +58,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self._lock = Lock()
         self._enfocementStatuses = ["Authorization bypass!","Authorization enforced??? (please configure enforcement detector)","Authorization enforced!"]
         self.intercept = 0
+        self.lastCookies = ""
 
         self.initInterceptionFilters()
 
@@ -150,6 +151,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.EDAdd.setBounds(390, 85, 120, 30)
         self.EDDel = JButton("Remove filter",actionPerformed=self.delEDFilter)
         self.EDDel.setBounds(390, 210, 120, 30)
+        self.EDMod = JButton("Modify filter",actionPerformed=self.modEDFilter)
+        self.EDMod.setBounds(390, 250, 120, 30)
 
         self.EDPnl = JPanel()
         self.EDPnl.setLayout(None);
@@ -160,6 +163,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.EDPnl.add(self.EDText)
         self.EDPnl.add(self.EDAdd)
         self.EDPnl.add(self.EDDel)
+        self.EDPnl.add(self.EDMod)
         self.EDPnl.add(EDLabelList)
         self.EDPnl.add(self.EDList)
 
@@ -193,6 +197,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.EDAddUnauth.setBounds(390, 85, 120, 30)
         self.EDDelUnauth = JButton("Remove filter",actionPerformed=self.delEDFilterUnauth)
         self.EDDelUnauth.setBounds(390, 210, 120, 30)
+        self.EDModUnauth = JButton("Modify filter",actionPerformed=self.modEDFilterUnauth)
+        self.EDModUnauth.setBounds(390, 250, 120, 30)
 
         self.EDPnlUnauth = JPanel()
         self.EDPnlUnauth.setLayout(None);
@@ -203,6 +209,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.EDPnlUnauth.add(self.EDTextUnauth)
         self.EDPnlUnauth.add(self.EDAddUnauth)
         self.EDPnlUnauth.add(self.EDDelUnauth)
+        self.EDPnlUnauth.add(self.EDModUnauth)
         self.EDPnlUnauth.add(EDLabelList)
         self.EDPnlUnauth.add(self.EDListUnauth)        
 
@@ -220,6 +227,10 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.IFList.setBounds(80, 175, 300, 110)
         self.IFList.setBorder(LineBorder(Color.BLACK))
 
+        # Adding some default interception filters
+        self.IFModel.addElement("Scope items only: (Content is not required)")
+        self.IFModel.addElement("URL Not Contains (regex): \\.js|css|png|jpg|jpeg|gif|woff|map|bmp|ico$")
+
         self.IFText = JTextArea("", 5, 30)
         self.IFText.setBounds(80, 50, 300, 110)
 
@@ -236,6 +247,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.IFAdd.setBounds(390, 85, 120, 30)
         self.IFDel = JButton("Remove filter",actionPerformed=self.delIFFilter)
         self.IFDel.setBounds(390, 210, 120, 30)
+        self.IFMod = JButton("Modify filter",actionPerformed=self.modIFFilter)
+        self.IFMod.setBounds(390, 250, 120, 30)
 
         self.filtersPnl = JPanel()
         self.filtersPnl.setLayout(None);
@@ -246,6 +259,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.filtersPnl.add(self.IFText)
         self.filtersPnl.add(self.IFAdd)
         self.filtersPnl.add(self.IFDel)
+        self.filtersPnl.add(self.IFMod)
         self.filtersPnl.add(IFLabelList)
         self.filtersPnl.add(self.IFList)
 
@@ -281,7 +295,11 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.replaceString = JTextArea("Cookie: Insert=injected; header=here;", 5, 30)
         self.replaceString.setWrapStyleWord(True);
         self.replaceString.setLineWrap(True)
-        self.replaceString.setBounds(10, 80, 470, 180)
+        self.replaceString.setBounds(10, 80, 470, 150)
+
+        self.fetchButton = JButton("Fetch cookies from last request", actionPerformed=self.fetchCookies)
+        self.fetchButton.setEnabled(False)
+        self.fetchButton.setBounds(10, 235, 250, 30)
 
         self.filtersTabs = JTabbedPane()
         self.filtersTabs.addTab("Enforcement Detector", self.EDPnl)
@@ -297,6 +315,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.pnl.add(self.startButton)
         self.pnl.add(self.clearButton)
         self.pnl.add(self.replaceString)
+        self.pnl.add(self.fetchButton)
         self.pnl.add(startLabel)
         self.pnl.add(self.autoScroll)
         self.pnl.add(self.ignore304)
@@ -314,13 +333,14 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.logTable.setAutoCreateRowSorter(True)        
 
         tableWidth = self.logTable.getPreferredSize().width        
-        self.logTable.getColumn("ID").setPreferredWidth(Math.round(tableWidth / 50 * 2))
-        self.logTable.getColumn("URL").setPreferredWidth(Math.round(tableWidth / 50 * 24))
-        self.logTable.getColumn("Orig. Length").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self.logTable.getColumn("Modif. Length").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self.logTable.getColumn("Unauth. Length").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self.logTable.getColumn("Authorization Enforcement Status").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self.logTable.getColumn("Authorization Unauth. Status").setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        self.logTable.getColumn("ID").setPreferredWidth(Math.round(tableWidth / 50 * 0.75))
+        self.logTable.getColumn("Method").setPreferredWidth(Math.round(tableWidth / 50 * 0.50))
+        self.logTable.getColumn("URL").setPreferredWidth(Math.round(tableWidth / 50 * 38))
+        self.logTable.getColumn("Orig. Length").setPreferredWidth(Math.round(tableWidth / 50 * 0.5))
+        self.logTable.getColumn("Modif. Length").setPreferredWidth(Math.round(tableWidth / 50 * 0.5))
+        self.logTable.getColumn("Unauth. Length").setPreferredWidth(Math.round(tableWidth / 50 * 0.5))
+        self.logTable.getColumn("Authorization Enforcement Status").setPreferredWidth(Math.round(tableWidth / 50 * 3))
+        self.logTable.getColumn("Authorization Unauth. Status").setPreferredWidth(Math.round(tableWidth / 50 * 3))
 
         self._splitpane = JSplitPane(JSplitPane.HORIZONTAL_SPLIT)
         self._splitpane.setResizeWeight(1)
@@ -399,29 +419,59 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     def addEDFilter(self, event):
         typeName = self.EDType.getSelectedItem().split(":")[0]
         self.EDModel.addElement(typeName + ": " + self.EDText.getText().strip())
+        self.EDText.setText("")
 
     def delEDFilter(self, event):
         index = self.EDList.getSelectedIndex();
         if not index == -1:
             self.EDModel.remove(index);
 
+    def modEDFilter(self, event):
+        index = self.EDList.getSelectedIndex();
+        if not index == -1:
+            valt = self.EDList.getSelectedValue()
+            val = valt.split(":")[1].strip()
+            if ("Scope items" not in valt) and ("Content-Len" not in valt):
+                self.EDText.setText(val)
+            self.EDModel.remove(index)
+
     def addEDFilterUnauth(self, event):
         typeName = self.EDTypeUnauth.getSelectedItem().split(":")[0]
         self.EDModelUnauth.addElement(typeName + ": " + self.EDTextUnauth.getText().strip())
+        self.EDTextUnauth.setText("")
 
     def delEDFilterUnauth(self, event):
         index = self.EDListUnauth.getSelectedIndex();
         if not index == -1:
             self.EDModelUnauth.remove(index);            
 
+    def modEDFilterUnauth(self, event):
+        index = self.EDListUnauth.getSelectedIndex();
+        if not index == -1:
+            valt = self.EDListUnauth.getSelectedValue()
+            val = valt.split(":")[1].strip()
+            if ("Scope items" not in valt) and ("Content-Len" not in valt):
+                self.EDTextUnauth.setText(val)
+            self.EDModelUnauth.remove(index)
+
     def addIFFilter(self, event):
         typeName = self.IFType.getSelectedItem().split(":")[0]
         self.IFModel.addElement(typeName + ": " + self.IFText.getText().strip())
+        self.IFText.setText("")
 
     def delIFFilter(self, event):
         index = self.IFList.getSelectedIndex();
         if not index == -1:
             self.IFModel.remove(index);
+
+    def modIFFilter(self, event):
+        index = self.IFList.getSelectedIndex();
+        if not index == -1:
+            valt = self.IFList.getSelectedValue()
+            val = valt.split(":")[1].strip()
+            if ("Scope items" not in valt) and ("Content-Len" not in valt):
+                self.IFText.setText(val)
+            self.IFModel.remove(index)
 
     def clearList(self, event):
         self._lock.acquire()
@@ -429,6 +479,10 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self._log.clear()
         self.fireTableRowsDeleted(0, oldSize - 1)
         self._lock.release()
+
+    def fetchCookies(self, event):
+        if len(self.lastCookies) > 0:
+            self.replaceString.setText(self.lastCookies)
 
     def export(self, event):
         if self.exportType.getSelectedItem() == "HTML":
@@ -451,11 +505,11 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         for i in range(0,self._log.size()):
 
             if enforcementStatusFilter == "All Statuses":
-                csvContent += "%d\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
+                csvContent += "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id,self._log.get(i)._method,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
                 
             else:
                 if (enforcementStatusFilter == self._log.get(i)._enfocementStatus) or (enforcementStatusFilter == self._log.get(i)._enfocementStatusUnauthorized):
-                    csvContent += "%d\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
+                    csvContent += "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id,self._log.get(i)._method,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
         
         f = open(fileToSave.getAbsolutePath(), 'w')
         f.writelines(csvContent)
@@ -520,10 +574,10 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                 color_unauthorized = "LawnGreen"
 
             if enforcementStatusFilter == "All Statuses":
-                htmlContent += "<tr><td>%d</td><td><a href=\"%s\">%s</a></td><td>%d</td><td>%d</td><td>%d</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td></tr>" % (self._log.get(i)._id,self._log.get(i)._url,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, color_modified, self._log.get(i)._enfocementStatus, color_unauthorized, self._log.get(i)._enfocementStatusUnauthorized)
+                htmlContent += "<tr><td>%d</td><td>%s</td><td><a href=\"%s\">%s</a></td><td>%d</td><td>%d</td><td>%d</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td></tr>" % (self._log.get(i)._id,self._log.get(i)._method,self._log.get(i)._url,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, color_modified, self._log.get(i)._enfocementStatus, color_unauthorized, self._log.get(i)._enfocementStatusUnauthorized)
             else:
                 if (enforcementStatusFilter == self._log.get(i)._enfocementStatus) or (enforcementStatusFilter == self._log.get(i)._enfocementStatusUnauthorized):
-                    htmlContent += "<tr><td>%d</td><td><a href=\"%s\">%s</a></td><td>%d</td><td>%d</td><td>%d</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td></tr>" % (self._log.get(i)._id,self._log.get(i)._url,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, color_modified, self._log.get(i)._enfocementStatus, color_unauthorized, self._log.get(i)._enfocementStatusUnauthorized)
+                    htmlContent += "<tr><td>%d</td><td>%s</td><td><a href=\"%s\">%s</a></td><td>%d</td><td>%d</td><td>%d</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td></tr>" % (self._log.get(i)._id,self._log.get(i)._method,self._log.get(i)._url,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, color_modified, self._log.get(i)._enfocementStatus, color_unauthorized, self._log.get(i)._enfocementStatusUnauthorized)
 
         htmlContent += "</tbody></table></div></body></html>"
         f = open(fileToSave.getAbsolutePath(), 'w')
@@ -570,22 +624,24 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             return 0
 
     def getColumnCount(self):
-        return 7
+        return 8
 
     def getColumnName(self, columnIndex):
         if columnIndex == 0:
             return "ID"
         if columnIndex == 1:
-            return "URL"
+            return "Method"
         if columnIndex == 2:
-            return "Orig. Length"            
+            return "URL"
         if columnIndex == 3:
-            return "Modif. Length" 
+            return "Orig. Length"            
         if columnIndex == 4:
-            return "Unauth. Length"           
+            return "Modif. Length" 
         if columnIndex == 5:
-            return "Authorization Enforcement Status"
+            return "Unauth. Length"           
         if columnIndex == 6:
+            return "Authorization Enforcement Status"
+        if columnIndex == 7:
             return "Authorization Unauth. Status"
         return ""
 
@@ -595,14 +651,16 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         if columnIndex == 1:
             return String
         if columnIndex == 2:
-            return Integer           
-        if columnIndex == 3:
-            return Integer 
-        if columnIndex == 4:
-            return Integer          
-        if columnIndex == 5:
             return String
+        if columnIndex == 3:
+            return Integer           
+        if columnIndex == 4:
+            return Integer 
+        if columnIndex == 5:
+            return Integer          
         if columnIndex == 6:
+            return String
+        if columnIndex == 7:
             return String
         return String
 
@@ -611,20 +669,22 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         if columnIndex == 0:
             return logEntry._id
         if columnIndex == 1:
-            return logEntry._url.toString()
+            return logEntry._method
         if columnIndex == 2:
-            return len(logEntry._originalrequestResponse.getResponse())
+            return logEntry._url.toString()
         if columnIndex == 3:
-            return len(logEntry._requestResponse.getResponse())
+            return len(logEntry._originalrequestResponse.getResponse())
         if columnIndex == 4:
+            return len(logEntry._requestResponse.getResponse())
+        if columnIndex == 5:
             if logEntry._unauthorizedRequestResponse != None:
                 return len(logEntry._unauthorizedRequestResponse.getResponse())
             else:
                 #return "-"
                 return 0
-        if columnIndex == 5:
-            return logEntry._enfocementStatus   
         if columnIndex == 6:
+            return logEntry._enfocementStatus   
+        if columnIndex == 7:
             return logEntry._enfocementStatusUnauthorized        
         return ""
 
@@ -672,11 +732,17 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                         firstHeader = self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders()[0]
                         if "304" in firstHeader or "204" in firstHeader:
                            return
+
                     if self.IFList.getModel().getSize() == 0:
                         self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
                     else:
                         urlString = str(self._helpers.analyzeRequest(messageInfo).getUrl())
-                        
+
+                        cookies = self.getCookieFromMessage(messageInfo)
+                        if cookies:
+                            self.lastCookies = cookies
+                            self.fetchButton.setEnabled(True)
+
                         do_the_check = 1
 
                         for i in range(0,self.IFList.getModel().getSize()):
@@ -704,6 +770,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
                         if do_the_check:
                             self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
+
 
         return
 
@@ -832,11 +899,12 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self._lock.acquire()
         
         row = self._log.size()
+        method = self._helpers.analyzeRequest(messageInfo.getRequest()).getMethod()
         
         if checkUnauthorized:
-            self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(requestResponse), self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression,self._callbacks.saveBuffersToTempFiles(requestResponseUnauthorized),impressionUnauthorized)) # same requests not include again.
+            self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(requestResponse), method, self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression,self._callbacks.saveBuffersToTempFiles(requestResponseUnauthorized),impressionUnauthorized)) # same requests not include again.
         else:
-            self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(requestResponse), self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression,None,"Disabled")) # same requests not include again.
+            self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(requestResponse), method, self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression,None,"Disabled")) # same requests not include again.
         
         self.fireTableRowsInserted(row, row)
         self.currentRequestNumber = self.currentRequestNumber + 1
@@ -869,17 +937,18 @@ class Table(JTable):
         self.setModel(extender)
         self.addMouseListener(mouseclick(self._extender))
         self.getColumnModel().getColumn(0).setPreferredWidth(450)
+        self.setRowSelectionAllowed(True)
         return
 
     def prepareRenderer(self, renderer, row, col):
         comp = JTable.prepareRenderer(self, renderer, row, col)
         value = self._extender.getValueAt(self._extender.logTable.convertRowIndexToModel(row), col)
         
-        if (value == "Authorization bypass!" and ((col == 5) or (col == 6))):
+        if (value == "Authorization bypass!" and ((col == 6) or (col == 7))):
             comp.setBackground(Color(255,135,31))
-        elif (value == "Authorization enforced??? (please configure enforcement detector)" and ((col == 5) or (col == 6))):
+        elif (value == "Authorization enforced??? (please configure enforcement detector)" and ((col == 6) or (col == 7))):
             comp.setBackground(Color(255,255,133));
-        elif (value == "Authorization enforced!" and ((col == 5) or (col == 6))):
+        elif (value == "Authorization enforced!" and ((col == 6) or (col == 7))):
             comp.setBackground(Color(192,250,20));
         else:
             comp.setBackground(Color.white);
@@ -907,10 +976,11 @@ class Table(JTable):
 
 class LogEntry:
 
-    def __init__(self, id, requestResponse, url, originalrequestResponse, enforcementStatus, unauthorizedRequestResponse, enforcementStatusUnauthorized):
+    def __init__(self, id, requestResponse, method, url, originalrequestResponse, enforcementStatus, unauthorizedRequestResponse, enforcementStatusUnauthorized):
         self._id = id
         self._requestResponse = requestResponse
         self._originalrequestResponse = originalrequestResponse
+        self._method = method
         self._url = url
         self._enfocementStatus =  enforcementStatus
         self._unauthorizedRequestResponse = unauthorizedRequestResponse
