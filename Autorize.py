@@ -43,6 +43,7 @@ import re
 from thread import start_new_thread
 from javax.swing import RowFilter
 from javax.swing.table import TableRowSorter
+from javax.swing import JScrollPane
 
 class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController, AbstractTableModel, IContextMenuFactory):
 
@@ -197,12 +198,18 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.EDType.setBounds(80, 10, 430, 30)
        
         self.EDText = JTextArea("", 5, 30)
-        self.EDText.setBounds(80, 50, 300, 110)
+
+        scrollEDText = JScrollPane(self.EDText)
+        scrollEDText.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
+        scrollEDText.setBounds(80, 50, 300, 110)  
 
         self.EDModel = DefaultListModel();
         self.EDList = JList(self.EDModel);
-        self.EDList.setBounds(80, 175, 300, 110)
-        self.EDList.setBorder(LineBorder(Color.BLACK))
+
+        scrollEDList = JScrollPane(self.EDList)
+        scrollEDList.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
+        scrollEDList.setBounds(80, 175, 300, 110)
+        scrollEDList.setBorder(LineBorder(Color.BLACK)) 
 
         self.EDAdd = JButton("Add filter",actionPerformed=self.addEDFilter)
         self.EDAdd.setBounds(390, 85, 120, 30)
@@ -217,12 +224,12 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.EDPnl.add(EDLType)
         self.EDPnl.add(self.EDType)
         self.EDPnl.add(EDLContent)
-        self.EDPnl.add(self.EDText)
+        self.EDPnl.add(scrollEDText)
         self.EDPnl.add(self.EDAdd)
         self.EDPnl.add(self.EDDel)
         self.EDPnl.add(self.EDMod)
         self.EDPnl.add(EDLabelList)
-        self.EDPnl.add(self.EDList)
+        self.EDPnl.add(scrollEDList)
 
     def initEnforcementDetectorUnauthorized(self):
         #
@@ -243,12 +250,18 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.EDTypeUnauth.setBounds(80, 10, 430, 30)
        
         self.EDTextUnauth = JTextArea("", 5, 30)
-        self.EDTextUnauth.setBounds(80, 50, 300, 110)
+
+        scrollEDTextUnauth = JScrollPane(self.EDTextUnauth)
+        scrollEDTextUnauth.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
+        scrollEDTextUnauth.setBounds(80, 50, 300, 110)     
 
         self.EDModelUnauth = DefaultListModel();
         self.EDListUnauth = JList(self.EDModelUnauth);
-        self.EDListUnauth.setBounds(80, 175, 300, 110)
-        self.EDListUnauth.setBorder(LineBorder(Color.BLACK))
+
+        scrollEDListUnauth = JScrollPane(self.EDListUnauth)
+        scrollEDListUnauth.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
+        scrollEDListUnauth.setBounds(80, 175, 300, 110)
+        scrollEDListUnauth.setBorder(LineBorder(Color.BLACK))    
 
         self.EDAddUnauth = JButton("Add filter",actionPerformed=self.addEDFilterUnauth)
         self.EDAddUnauth.setBounds(390, 85, 120, 30)
@@ -263,12 +276,12 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.EDPnlUnauth.add(EDLType)
         self.EDPnlUnauth.add(self.EDTypeUnauth)
         self.EDPnlUnauth.add(EDLContent)
-        self.EDPnlUnauth.add(self.EDTextUnauth)
+        self.EDPnlUnauth.add(scrollEDTextUnauth)
         self.EDPnlUnauth.add(self.EDAddUnauth)
         self.EDPnlUnauth.add(self.EDDelUnauth)
         self.EDPnlUnauth.add(self.EDModUnauth)
         self.EDPnlUnauth.add(EDLabelList)
-        self.EDPnlUnauth.add(self.EDListUnauth)        
+        self.EDPnlUnauth.add(scrollEDListUnauth)        
 
     def initInterceptionFilters(self):
         #
@@ -281,15 +294,21 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
        
         self.IFModel = DefaultListModel();
         self.IFList = JList(self.IFModel);
-        self.IFList.setBounds(80, 175, 300, 110)
-        self.IFList.setBorder(LineBorder(Color.BLACK))
+
+        scrollIFList = JScrollPane(self.IFList)
+        scrollIFList.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
+        scrollIFList.setBounds(80, 175, 300, 110)
+        scrollIFList.setBorder(LineBorder(Color.BLACK))
 
         # Adding some default interception filters
         self.IFModel.addElement("Scope items only: (Content is not required)")
         self.IFModel.addElement("URL Not Contains (regex): \\.js|css|png|jpg|jpeg|gif|woff|map|bmp|ico$")
 
         self.IFText = JTextArea("", 5, 30)
-        self.IFText.setBounds(80, 50, 300, 110)
+
+        scrollIFText = JScrollPane(self.IFText)
+        scrollIFText.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
+        scrollIFText.setBounds(80, 50, 300, 110)
 
         IFLType = JLabel("Type:")
         IFLType.setBounds(10, 10, 140, 30)
@@ -313,12 +332,12 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.filtersPnl.add(IFLType)
         self.filtersPnl.add(self.IFType)
         self.filtersPnl.add(IFLContent)
-        self.filtersPnl.add(self.IFText)
+        self.filtersPnl.add(scrollIFText)
         self.filtersPnl.add(self.IFAdd)
         self.filtersPnl.add(self.IFDel)
         self.filtersPnl.add(self.IFMod)
         self.filtersPnl.add(IFLabelList)
-        self.filtersPnl.add(self.IFList)
+        self.filtersPnl.add(scrollIFList)
 
 
     def initConfigurationTab(self):
@@ -350,9 +369,11 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.clearButton.setBounds(10, 40, 100, 30)
 
         self.replaceString = JTextArea("Cookie: Insert=injected; header=here;", 5, 30)
-        self.replaceString.setWrapStyleWord(True);
+        self.replaceString.setWrapStyleWord(True)
         self.replaceString.setLineWrap(True)
-        self.replaceString.setBounds(10, 80, 470, 150)
+        scrollReplaceString = JScrollPane(self.replaceString)
+        scrollReplaceString.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
+        scrollReplaceString.setBounds(10, 80, 470, 180)
 
         self.fetchButton = JButton("Fetch cookies from last request", actionPerformed=self.fetchCookies)
         self.fetchButton.setEnabled(False)
@@ -372,7 +393,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.pnl.setLayout(None);
         self.pnl.add(self.startButton)
         self.pnl.add(self.clearButton)
-        self.pnl.add(self.replaceString)
+        self.pnl.add(scrollReplaceString)
         self.pnl.add(self.fetchButton)
         self.pnl.add(startLabel)
         self.pnl.add(self.autoScroll)
