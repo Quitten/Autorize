@@ -50,17 +50,10 @@ import csv
 import sys
 import base64
 
-'''
-TODO
-- Add "As table filters" to Export -> Statuses
-'''
-
 # This code is necessary to maximize the csv field limit for the save and restore functionality
 maxInt = sys.maxsize
 decrement = True
-
 while decrement:
-
     decrement = False
     try:
         csv.field_size_limit(maxInt)
@@ -188,7 +181,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.exportType = JComboBox(exportFileTypes)
         self.exportType.setBounds(100, 50, 200, 30)
 
-        exportES = ["All Statuses", self._enfocementStatuses[0], self._enfocementStatuses[1], self._enfocementStatuses[2]]
+        exportES = ["All Statuses", "As table filter", self._enfocementStatuses[0], self._enfocementStatuses[1], self._enfocementStatuses[2]]
         self.exportES = JComboBox(exportES)
         self.exportES.setBounds(100, 90, 200, 30)
 
@@ -627,13 +620,21 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             fileToSave = fileChooser.getSelectedFile()
 
         enforcementStatusFilter = self.exportES.getSelectedItem()
-        csvContent = "id\tURL\tOriginal length\tModified length\tUnauthorized length\tAuthorization Enforcement Status\tAuthorization Unauthenticated Status\n"
+        csvContent = "id\tMethod\tURL\tOriginal length\tModified length\tUnauthorized length\tAuthorization Enforcement Status\tAuthorization Unauthenticated Status\n"
 
         for i in range(0,self._log.size()):
 
             if enforcementStatusFilter == "All Statuses":
                 csvContent += "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id,self._log.get(i)._method,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
-                
+            elif enforcementStatusFilter == "As table filter":                
+                if ((self.showAuthBypassModified.isSelected() and "Authorization bypass!" == self._log.get(i)._enfocementStatus) or
+                    (self.showAuthPotentiallyEnforcedModified.isSelected() and "Authorization enforced???" == self._log.get(i)._enfocementStatus) or
+                    (self.showAuthEnforcedModified.isSelected() and "Authorization enforced!" == self._log.get(i)._enfocementStatus) or
+                    (self.showAuthBypassUnauthenticated.isSelected() and "Authorization bypass!" == self._log.get(i)._enfocementStatusUnauthorized) or
+                    (self.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and "Authorization enforced???" == self._log.get(i)._enfocementStatusUnauthorized) or
+                    (self.showAuthEnforcedUnauthenticated.isSelected() and "Authorization enforced!" == self._log.get(i)._enfocementStatusUnauthorized) or
+                    (self.showDisabledUnauthenticated.isSelected() and "Disabled" == self._log.get(i)._enfocementStatusUnauthorized)):
+                    csvContent += "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id,self._log.get(i)._method,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
             else:
                 if (enforcementStatusFilter == self._log.get(i)._enfocementStatus) or (enforcementStatusFilter == self._log.get(i)._enfocementStatusUnauthorized):
                     csvContent += "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id,self._log.get(i)._method,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
@@ -680,7 +681,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         <body>
         <h1>Autorize Report<h1>
         <div class="datagrid"><table>
-        <thead><tr><th width=\"3%\">ID</th><th width=\"48%\">URL</th><th width=\"9%\">Original length</th><th width=\"9%\">Modified length</th><th width=\"9%\">Unauthorized length</th><th width=\"11%\">Authorization Enforcement Status</th><th width=\"11%\">Authorization Unauthenticated Status</th></tr></thead>
+        <thead><tr><th width=\"3%\">ID</th><th width=\"4%\">Method</th><th width=\"44%\">URL</th><th width=\"9%\">Original length</th><th width=\"9%\">Modified length</th><th width=\"9%\">Unauthorized length</th><th width=\"11%\">Authorization Enforcement Status</th><th width=\"11%\">Authorization Unauthenticated Status</th></tr></thead>
         <tbody>"""
 
         for i in range(0,self._log.size()):
@@ -702,6 +703,15 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
             if enforcementStatusFilter == "All Statuses":
                 htmlContent += "<tr><td>%d</td><td>%s</td><td><a href=\"%s\">%s</a></td><td>%d</td><td>%d</td><td>%d</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td></tr>" % (self._log.get(i)._id,self._log.get(i)._method,self._log.get(i)._url,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, color_modified, self._log.get(i)._enfocementStatus, color_unauthorized, self._log.get(i)._enfocementStatusUnauthorized)
+            elif enforcementStatusFilter == "As table filter":
+                if ((self.showAuthBypassModified.isSelected() and "Authorization bypass!" == self._log.get(i)._enfocementStatus) or
+                    (self.showAuthPotentiallyEnforcedModified.isSelected() and "Authorization enforced???" == self._log.get(i)._enfocementStatus) or
+                    (self.showAuthEnforcedModified.isSelected() and "Authorization enforced!" == self._log.get(i)._enfocementStatus) or
+                    (self.showAuthBypassUnauthenticated.isSelected() and "Authorization bypass!" == self._log.get(i)._enfocementStatusUnauthorized) or
+                    (self.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and "Authorization enforced???" == self._log.get(i)._enfocementStatusUnauthorized) or
+                    (self.showAuthEnforcedUnauthenticated.isSelected() and "Authorization enforced!" == self._log.get(i)._enfocementStatusUnauthorized) or
+                    (self.showDisabledUnauthenticated.isSelected() and "Disabled" == self._log.get(i)._enfocementStatusUnauthorized)):
+                    htmlContent += "<tr><td>%d</td><td>%s</td><td><a href=\"%s\">%s</a></td><td>%d</td><td>%d</td><td>%d</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td></tr>" % (self._log.get(i)._id,self._log.get(i)._method,self._log.get(i)._url,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, color_modified, self._log.get(i)._enfocementStatus, color_unauthorized, self._log.get(i)._enfocementStatusUnauthorized)
             else:
                 if (enforcementStatusFilter == self._log.get(i)._enfocementStatus) or (enforcementStatusFilter == self._log.get(i)._enfocementStatusUnauthorized):
                     htmlContent += "<tr><td>%d</td><td>%s</td><td><a href=\"%s\">%s</a></td><td>%d</td><td>%d</td><td>%d</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td></tr>" % (self._log.get(i)._id,self._log.get(i)._method,self._log.get(i)._url,self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse != None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse != None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse != None else 0, color_modified, self._log.get(i)._enfocementStatus, color_unauthorized, self._log.get(i)._enfocementStatusUnauthorized)
