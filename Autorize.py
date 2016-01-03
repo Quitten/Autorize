@@ -412,7 +412,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.replaceString.setLineWrap(True)
         scrollReplaceString = JScrollPane(self.replaceString)
         scrollReplaceString.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
-        scrollReplaceString.setBounds(10, 80, 470, 180)
+        scrollReplaceString.setBounds(10, 80, 470, 150)
 
         self.fetchButton = JButton("Fetch cookies from last request", actionPerformed=self.fetchCookies)
         self.fetchButton.setEnabled(False)
