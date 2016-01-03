@@ -681,7 +681,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         <body>
         <h1>Autorize Report<h1>
         <div class="datagrid"><table>
-        <thead><tr><th width=\"3%\">ID</th><th width=\"4%\">Method</th><th width=\"44%\">URL</th><th width=\"9%\">Original length</th><th width=\"9%\">Modified length</th><th width=\"9%\">Unauthorized length</th><th width=\"11%\">Authorization Enforcement Status</th><th width=\"11%\">Authorization Unauthenticated Status</th></tr></thead>
+        <thead><tr><th width=\"3%\">ID</th><th width=\"5%\">Method</th><th width=\"43%\">URL</th><th width=\"9%\">Original length</th><th width=\"9%\">Modified length</th><th width=\"9%\">Unauthorized length</th><th width=\"11%\">Authorization Enforcement Status</th><th width=\"11%\">Authorization Unauthenticated Status</th></tr></thead>
         <tbody>"""
 
         for i in range(0,self._log.size()):
