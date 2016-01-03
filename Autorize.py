@@ -50,6 +50,11 @@ import csv
 import sys
 import base64
 
+'''
+TODO
+- Add "As table filters" to Export -> Statuses
+'''
+
 # This code is necessary to maximize the csv field limit for the save and restore functionality
 maxInt = sys.maxsize
 decrement = True
@@ -146,6 +151,11 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.showAuthEnforcedUnauthenticated.setSelected(True)
         self.showAuthEnforcedUnauthenticated.addItemListener(tabTableFilter(self))
 
+        self.showDisabledUnauthenticated = JCheckBox("Disabled")
+        self.showDisabledUnauthenticated.setBounds(250, 110, 200, 30)
+        self.showDisabledUnauthenticated.setSelected(True)
+        self.showDisabledUnauthenticated.addItemListener(tabTableFilter(self))        
+
         self.filterPnl = JPanel()
         self.filterPnl.setLayout(None);
         self.filterPnl.setBounds(0, 0, 1000, 1000);
@@ -158,6 +168,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.filterPnl.add(self.showAuthBypassUnauthenticated)
         self.filterPnl.add(self.showAuthPotentiallyEnforcedUnauthenticated)
         self.filterPnl.add(self.showAuthEnforcedUnauthenticated)                
+        self.filterPnl.add(self.showDisabledUnauthenticated)
 
     def initExport(self):
         #
@@ -1292,7 +1303,9 @@ class tableFilter(RowFilter):
         elif self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and "Authorization enforced???" == entry.getValue(7):
             return True
         elif self._extender.showAuthEnforcedUnauthenticated.isSelected() and "Authorization enforced!" == entry.getValue(7):
-            return True            
+            return True 
+        elif self._extender.showDisabledUnauthenticated.isSelected() and "Disabled" == entry.getValue(7):
+            return True                        
         else:
             return False
 
