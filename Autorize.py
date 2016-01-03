@@ -41,6 +41,8 @@ from java.lang import Math
 from java.awt import Dimension
 import re
 from thread import start_new_thread
+from javax.swing import RowFilter
+from javax.swing.table import TableRowSorter
 
 class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController, AbstractTableModel, IContextMenuFactory):
 
@@ -68,6 +70,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         self.initExport()
 
+        self.initFilter()        
+
         self.initConfigurationTab()
 
         self.initTabs()
@@ -81,7 +85,60 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         print "Contributors: Barak Tawily, Federico Dotta, mgeeky, Marcin Woloszyn"
         print "\nGithub:\nhttps://github.com/Quitten/Autorize"
         return
-        
+
+    def initFilter(self):
+        #
+        ## initi show tab
+        #
+
+        filterLModified = JLabel("Modified:")
+        filterLModified.setBounds(10, 10, 100, 30)
+
+        filterLUnauthenticated = JLabel("Unauthenticated:")
+        filterLUnauthenticated.setBounds(250, 10, 100, 30)
+
+        self.showAuthBypassModified = JCheckBox("Authorization bypass!")
+        self.showAuthBypassModified.setBounds(10, 35, 200, 30)
+        self.showAuthBypassModified.setSelected(True)
+        self.showAuthBypassModified.addItemListener(tabTableFilter(self))
+
+        self.showAuthPotentiallyEnforcedModified = JCheckBox("Authorization enforced???")
+        self.showAuthPotentiallyEnforcedModified.setBounds(10, 60, 200, 30)
+        self.showAuthPotentiallyEnforcedModified.setSelected(True)
+        self.showAuthPotentiallyEnforcedModified.addItemListener(tabTableFilter(self))
+
+        self.showAuthEnforcedModified = JCheckBox("Authorization enforced!")
+        self.showAuthEnforcedModified.setBounds(10, 85, 200, 30)
+        self.showAuthEnforcedModified.setSelected(True)
+        self.showAuthEnforcedModified.addItemListener(tabTableFilter(self))
+
+        self.showAuthBypassUnauthenticated = JCheckBox("Authorization bypass!")
+        self.showAuthBypassUnauthenticated.setBounds(250, 35, 200, 30)
+        self.showAuthBypassUnauthenticated.setSelected(True)
+        self.showAuthBypassUnauthenticated.addItemListener(tabTableFilter(self))
+
+        self.showAuthPotentiallyEnforcedUnauthenticated = JCheckBox("Authorization enforced???")
+        self.showAuthPotentiallyEnforcedUnauthenticated.setBounds(250, 60, 200, 30)
+        self.showAuthPotentiallyEnforcedUnauthenticated.setSelected(True)
+        self.showAuthPotentiallyEnforcedUnauthenticated.addItemListener(tabTableFilter(self))
+
+        self.showAuthEnforcedUnauthenticated = JCheckBox("Authorization enforced!")
+        self.showAuthEnforcedUnauthenticated.setBounds(250, 85, 200, 30)
+        self.showAuthEnforcedUnauthenticated.setSelected(True)
+        self.showAuthEnforcedUnauthenticated.addItemListener(tabTableFilter(self))
+
+        self.filterPnl = JPanel()
+        self.filterPnl.setLayout(None);
+        self.filterPnl.setBounds(0, 0, 1000, 1000);
+
+        self.filterPnl.add(filterLModified)
+        self.filterPnl.add(filterLUnauthenticated)
+        self.filterPnl.add(self.showAuthBypassModified)
+        self.filterPnl.add(self.showAuthPotentiallyEnforcedModified)
+        self.filterPnl.add(self.showAuthEnforcedModified)
+        self.filterPnl.add(self.showAuthBypassUnauthenticated)
+        self.filterPnl.add(self.showAuthPotentiallyEnforcedUnauthenticated)
+        self.filterPnl.add(self.showAuthEnforcedUnauthenticated)                
 
     def initExport(self):
         #
@@ -305,6 +362,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.filtersTabs.addTab("Enforcement Detector", self.EDPnl)
         self.filtersTabs.addTab("Detector Unauthenticated", self.EDPnlUnauth)
         self.filtersTabs.addTab("Interception Filters", self.filtersPnl)
+        self.filtersTabs.addTab("Table Filter", self.filterPnl)
         self.filtersTabs.addTab("Export", self.exportPnl)
 
         self.filtersTabs.setBounds(0, 280, 2000, 700)
@@ -330,7 +388,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         
         self.logTable = Table(self)
 
-        self.logTable.setAutoCreateRowSorter(True)        
+        #self.logTable.setAutoCreateRowSorter(True)        
 
         tableWidth = self.logTable.getPreferredSize().width        
         self.logTable.getColumn("ID").setPreferredWidth(Math.round(tableWidth / 50 * 0.75))
@@ -342,25 +400,21 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.logTable.getColumn("Authorization Enforcement Status").setPreferredWidth(Math.round(tableWidth / 50 * 3))
         self.logTable.getColumn("Authorization Unauth. Status").setPreferredWidth(Math.round(tableWidth / 50 * 3))
 
+        self.tableSorter = TableRowSorter(self)
+        filter = tableFilter(self)
+        self.tableSorter.setRowFilter(filter)
+        self.logTable.setRowSorter(self.tableSorter)
+
         self._splitpane = JSplitPane(JSplitPane.HORIZONTAL_SPLIT)
         self._splitpane.setResizeWeight(1)
         self.scrollPane = JScrollPane(self.logTable)
         self._splitpane.setLeftComponent(self.scrollPane)
         self.scrollPane.getVerticalScrollBar().addAdjustmentListener(autoScrollListener(self))
-        self.menuES0 = JCheckBoxMenuItem(self._enfocementStatuses[0],True)
-        self.menuES1 = JCheckBoxMenuItem(self._enfocementStatuses[1],True)
-        self.menuES2 = JCheckBoxMenuItem(self._enfocementStatuses[2],True)
-        self.menuES0.addItemListener(menuTableFilter(self))
-        self.menuES1.addItemListener(menuTableFilter(self))
-        self.menuES2.addItemListener(menuTableFilter(self))
 
         copyURLitem = JMenuItem("Copy URL");
         copyURLitem.addActionListener(copySelectedURL(self))
         self.menu = JPopupMenu("Popup")
         self.menu.add(copyURLitem)
-        self.menu.add(self.menuES0)
-        self.menu.add(self.menuES1)
-        self.menu.add(self.menuES2)
 
         self.tabs = JTabbedPane()
         self._requestViewer = self._callbacks.createMessageEditor(self, False)
@@ -1027,23 +1081,31 @@ class handleMenuItems(ActionListener):
         if self._menuName == "cookie":
             self._extender.replaceString.setText(self._extender.getCookieFromMessage(self._messageInfo))
 
-class menuTableFilter(ItemListener):
+class tabTableFilter(ItemListener):
     def __init__(self, extender):
         self._extender = extender
 
     def itemStateChanged(self, e):
-        oldLog = self._extender._log
-        newLog = ArrayList()
-        for logEntry in oldLog:
-            if self._extender.menuES0.getState() == True and self._extender.menuES0.getText() == logEntry._enfocementStatus:
-                newLog.add(logEntry)
-            if self._extender.menuES1.getState() == True and self._extender.menuES1.getText() == logEntry._enfocementStatus:
-                newLog.add(logEntry)
-            if self._extender.menuES2.getState() == True and self._extender.menuES2.getText() == logEntry._enfocementStatus:
-                newLog.add(logEntry)                
+        self._extender.tableSorter.sort()
 
-        self._extender._log = newLog
-        self._extender._lock.acquire()
-        row = newLog.size()
-        self._extender.fireTableRowsInserted(row, row)
-        self._extender._lock.release()
+class tableFilter(RowFilter):
+
+    def __init__(self, extender):
+        self._extender = extender
+
+    def include(self, entry):
+
+        if self._extender.showAuthBypassModified.isSelected() and "Authorization bypass!" == entry.getValue(6):
+            return True
+        elif self._extender.showAuthPotentiallyEnforcedModified.isSelected() and "Authorization enforced???" == entry.getValue(6):
+            return True
+        elif self._extender.showAuthEnforcedModified.isSelected() and "Authorization enforced!" == entry.getValue(6):
+            return True
+        elif self._extender.showAuthBypassUnauthenticated.isSelected() and "Authorization bypass!" == entry.getValue(7):
+            return True
+        elif self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and "Authorization enforced???" == entry.getValue(7):
+            return True
+        elif self._extender.showAuthEnforcedUnauthenticated.isSelected() and "Authorization enforced!" == entry.getValue(7):
+            return True            
+        else:
+            return False
