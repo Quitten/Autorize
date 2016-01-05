@@ -52,7 +52,7 @@ import base64
 
 '''
 TODO
-- Add and/or in enforcement detector
+- Fix bug in filters
 '''
 
 # This code is necessary to maximize the csv field limit for the save and restore functionality
@@ -262,6 +262,10 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.EDMod = JButton("Modify filter",actionPerformed=self.modEDFilter)
         self.EDMod.setBounds(390, 250, 120, 30)
 
+        AndOrStrings = ["And","Or"]
+        self.AndOrType = JComboBox(AndOrStrings)
+        self.AndOrType.setBounds(390, 170, 120, 30)       
+
         self.EDPnl = JPanel()
         self.EDPnl.setLayout(None);
         self.EDPnl.setBounds(0, 0, 1000, 1000);
@@ -270,6 +274,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.EDPnl.add(EDLContent)
         self.EDPnl.add(scrollEDText)
         self.EDPnl.add(self.EDAdd)
+        self.EDPnl.add(self.AndOrType)
         self.EDPnl.add(self.EDDel)
         self.EDPnl.add(self.EDMod)
         self.EDPnl.add(EDLabelList)
@@ -314,6 +319,10 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.EDModUnauth = JButton("Modify filter",actionPerformed=self.modEDFilterUnauth)
         self.EDModUnauth.setBounds(390, 250, 120, 30)
 
+        AndOrStrings = ["And","Or"]
+        self.AndOrTypeUnauth = JComboBox(AndOrStrings)
+        self.AndOrTypeUnauth.setBounds(390, 170, 120, 30)        
+
         self.EDPnlUnauth = JPanel()
         self.EDPnlUnauth.setLayout(None);
         self.EDPnlUnauth.setBounds(0, 0, 1000, 1000);
@@ -322,6 +331,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.EDPnlUnauth.add(EDLContent)
         self.EDPnlUnauth.add(scrollEDTextUnauth)
         self.EDPnlUnauth.add(self.EDAddUnauth)
+        self.EDPnlUnauth.add(self.AndOrTypeUnauth)
         self.EDPnlUnauth.add(self.EDDelUnauth)
         self.EDPnlUnauth.add(self.EDModUnauth)
         self.EDPnlUnauth.add(EDLabelList)
@@ -1066,7 +1076,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         msgBody = messageInfo.getRequest()[requestInfo.getBodyOffset():]
         return self._helpers.buildHttpMessage(headers, msgBody)
 
-    def checkBypass(self,oldStatusCode,newStatusCode,oldContentLen,newContentLen,filters,requestResponse):
+    def checkBypass(self,oldStatusCode,newStatusCode,oldContentLen,newContentLen,filters,requestResponse,andOrEnforcement):
 
         response = requestResponse.getResponse()
         analyzedResponse = self._helpers.analyzeResponse(response)
@@ -1077,45 +1087,76 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                 impression = self._enfocementStatuses[0]
             else:
 
-                # Check logic has been inverted. It is enough for one rule to match in order to yield auth_enforced = 1
-
-                auth_enforced = 0
+                if andOrEnforcement == "And":
+                    andEnforcementCheck = True
+                    auth_enforced = 1
+                else:
+                    andEnforcementCheck = False
+                    auth_enforced = 0
                 
                 for filter in filters:
 
-                    if auth_enforced == 0 and str(filter).startswith("Headers (simple string): "):
-                        if filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
-                            auth_enforced = 1
+                    if str(filter).startswith("Headers (simple string): "):
+                        if andEnforcementCheck:
+                            if auth_enforced == 1 and not filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
+                                auth_enforced = 0
+                        else:
+                            if auth_enforced == 0 and filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
+                                auth_enforced = 1
 
-                    if auth_enforced == 0 and str(filter).startswith("Headers (regex): "):
+                    if str(filter).startswith("Headers (regex): "):
                         regex_string = filter[17:]
-                        p = re.compile(regex_string, re.IGNORECASE)
-                        if p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
-                            auth_enforced = 1
+                        p = re.compile(regex_string, re.IGNORECASE)                        
+                        if andEnforcementCheck:
+                            if auth_enforced == 1 and not p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
+                                auth_enforced = 0
+                        else:
+                            if auth_enforced == 0 and p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
+                                auth_enforced = 1
 
-                    if auth_enforced == 0 and str(filter).startswith("Body (simple string): "):
-                        if filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
-                            auth_enforced = 1
+                    if str(filter).startswith("Body (simple string): "):
+                        if andEnforcementCheck:
+                            if auth_enforced == 1 and not filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
+                                auth_enforced = 0
+                        else:
+                            if auth_enforced == 0 and filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
+                                auth_enforced = 1
 
-                    if auth_enforced == 0 and str(filter).startswith("Body (regex): "):
+                    if str(filter).startswith("Body (regex): "):
                         regex_string = filter[14:]
                         p = re.compile(regex_string, re.IGNORECASE)
-                        if p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
-                            auth_enforced = 1
+                        if andEnforcementCheck:
+                            if auth_enforced == 1 and not p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
+                                auth_enforced = 0
+                        else:
+                            if auth_enforced == 0 and p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
+                                auth_enforced = 1
 
-                    if auth_enforced == 0 and str(filter).startswith("Full response (simple string): "):
-                        if filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()):
-                            auth_enforced = 1
+                    if str(filter).startswith("Full response (simple string): "):
+                        if andEnforcementCheck:
+                            if auth_enforced == 1 and not filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()):
+                                auth_enforced = 0
+                        else:
+                            if auth_enforced == 0 and filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()):
+                                auth_enforced = 1
 
-                    if auth_enforced == 0 and str(filter).startswith("Full response (regex): "):
+                    if str(filter).startswith("Full response (regex): "):
                         regex_string = filter[23:]
                         p = re.compile(regex_string, re.IGNORECASE)
-                        if p.search(self._helpers.bytesToString(requestResponse.getResponse())):
-                            auth_enforced = 1
+                        if andEnforcementCheck:
+                            if auth_enforced == 1 and not p.search(self._helpers.bytesToString(requestResponse.getResponse())):
+                                auth_enforced = 0
+                        else:
+                            if auth_enforced == 0 and p.search(self._helpers.bytesToString(requestResponse.getResponse())):
+                                auth_enforced = 1
 
-                    if auth_enforced == 0 and str(filter).startswith("Full response length: "):
-                        if str(len(response)) == filter[22:].strip():
-                            auth_enforced = 1
+                    if str(filter).startswith("Full response length: "):
+                        if andEnforcementCheck:
+                            if auth_enforced == 1 and not str(len(response)) == filter[22:].strip():
+                                auth_enforced = 0
+                        else:
+                            if auth_enforced == 0 and str(len(response)) == filter[22:].strip():
+                                auth_enforced = 1
                 
                 if auth_enforced:
                     impression = self._enfocementStatuses[2]
@@ -1149,11 +1190,12 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             contentLenUnauthorized = self.getResponseContentLength(unauthorizedResponse)
 
         EDFilters = self.EDModel.toArray()
-        impression = self.checkBypass(oldStatusCode,newStatusCode,oldContentLen,newContentLen,EDFilters,requestResponse)
+
+        impression = self.checkBypass(oldStatusCode,newStatusCode,oldContentLen,newContentLen,EDFilters,requestResponse,self.AndOrType.getSelectedItem())
 
         if checkUnauthorized:
             EDFiltersUnauth = self.EDModelUnauth.toArray()
-            impressionUnauthorized = self.checkBypass(oldStatusCode,statusCodeUnauthorized,oldContentLen,contentLenUnauthorized,EDFiltersUnauth,requestResponseUnauthorized)
+            impressionUnauthorized = self.checkBypass(oldStatusCode,statusCodeUnauthorized,oldContentLen,contentLenUnauthorized,EDFiltersUnauth,requestResponseUnauthorized,self.AndOrTypeUnauth.getSelectedItem())
 
         self._lock.acquire()
         
