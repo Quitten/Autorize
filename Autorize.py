@@ -50,11 +50,6 @@ import csv
 import sys
 import base64
 
-'''
-TODO
-- Fix bug in filters
-'''
-
 # This code is necessary to maximize the csv field limit for the save and restore functionality
 maxInt = sys.maxsize
 decrement = True
@@ -1354,13 +1349,13 @@ class tableFilter(RowFilter):
 
         if self._extender.showAuthBypassModified.isSelected() and "Authorization bypass!" == entry.getValue(6):
             return True
-        elif self._extender.showAuthPotentiallyEnforcedModified.isSelected() and "Authorization enforced???" == entry.getValue(6):
+        elif self._extender.showAuthPotentiallyEnforcedModified.isSelected() and "Authorization enforced??? (please configure enforcement detector)" == entry.getValue(6):
             return True
         elif self._extender.showAuthEnforcedModified.isSelected() and "Authorization enforced!" == entry.getValue(6):
             return True
         elif self._extender.showAuthBypassUnauthenticated.isSelected() and "Authorization bypass!" == entry.getValue(7):
             return True
-        elif self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and "Authorization enforced???" == entry.getValue(7):
+        elif self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and "Authorization enforced??? (please configure enforcement detector)" == entry.getValue(7):
             return True
         elif self._extender.showAuthEnforcedUnauthenticated.isSelected() and "Authorization enforced!" == entry.getValue(7):
             return True 
