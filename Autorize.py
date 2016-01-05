@@ -847,6 +847,12 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                     self.currentRequestNumber = self.currentRequestNumber + 1
                     self._lock.release()
 
+                lastRow = self._log.size()
+                if lastRow > 0:
+                    cookies = self.getCookieFromMessage(self._log.get(lastRow - 1)._originalrequestResponse)
+                    if cookies:
+                        self.lastCookies = cookies
+                        self.fetchButton.setEnabled(True)
 
     #
     # implement IContextMenuFactory
