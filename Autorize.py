@@ -50,6 +50,11 @@ import csv
 import sys
 import base64
 
+'''
+TODO
+- Add and/or in enforcement detector
+'''
+
 # This code is necessary to maximize the csv field limit for the save and restore functionality
 maxInt = sys.maxsize
 decrement = True
@@ -1173,7 +1178,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     def getCookieFromMessage(self, messageInfo):
         headers = list(self._helpers.analyzeRequest(messageInfo.getRequest()).getHeaders())
         for header in headers:
-            if "Cookie:" in header:
+            if header.strip().lower().startswith("cookie:"):
                 return header
         return None
 
