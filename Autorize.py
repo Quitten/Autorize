@@ -983,6 +983,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
 
             if not messageIsRequest:
+                # Requests with the same cookies of the Autorize cookies are not intercepted
                 if not self.replaceString.getText() in self._helpers.analyzeRequest(messageInfo).getHeaders():
                     if self.ignore304.isSelected():
                         firstHeader = self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders()[0]
@@ -993,11 +994,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                         self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
                     else:
                         urlString = str(self._helpers.analyzeRequest(messageInfo).getUrl())
-
-                        cookies = self.getCookieFromMessage(messageInfo)
-                        if cookies:
-                            self.lastCookies = cookies
-                            self.fetchButton.setEnabled(True)
 
                         do_the_check = 1
 
@@ -1025,6 +1021,13 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                                     do_the_check = 0                                                                       
 
                         if do_the_check:
+
+                            # In this position only the cookies of intercepted requests are taken
+                            cookies = self.getCookieFromMessage(messageInfo)
+                            if cookies:
+                                self.lastCookies = cookies
+                                self.fetchButton.setEnabled(True)
+
                             self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
 
 
