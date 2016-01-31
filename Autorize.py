@@ -1002,7 +1002,14 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                            return
 
                     if self.IFList.getModel().getSize() == 0:
+
+                        cookies = self.getCookieFromMessage(messageInfo)
+                        if cookies:
+                            self.lastCookies = cookies
+                            self.fetchButton.setEnabled(True)
+
                         self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
+                    
                     else:
                         urlString = str(self._helpers.analyzeRequest(messageInfo).getUrl())
 
