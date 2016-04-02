@@ -516,6 +516,9 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         ##  init callbacks
         #
 
+        # register HTTP listener
+        self._callbacks.registerHttpListener(self)
+
         # customize our UI components
         self._callbacks.customizeUiComponent(self._splitpane)
         self._callbacks.customizeUiComponent(self.logTable)
@@ -535,12 +538,12 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             self.startButton.setText("Autorize is on")
             self.startButton.setBackground(Color.GREEN)
             self.intercept = 1
-            self._callbacks.registerHttpListener(self)
+            #self._callbacks.registerHttpListener(self)
         else:
             self.startButton.setText("Autorize is off")
             self.startButton.setBackground(Color(255, 100, 91, 255))
             self.intercept = 0
-            self._callbacks.removeHttpListener(self)
+            #self._callbacks.removeHttpListener(self)
 
     def addEDFilter(self, event):
         typeName = self.EDType.getSelectedItem().split(":")[0]
@@ -853,7 +856,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
                 lastRow = self._log.size()
                 if lastRow > 0:
-                    cookies = self.getCookieFromMessage(self._log.get(lastRow - 1)._originalrequestResponse)
+                    cookies = self.getCookieFromMessage(self._log.get(lastRow - 1)._requestResponse)
                     if cookies:
                         self.lastCookies = cookies
                         self.fetchButton.setEnabled(True)
@@ -979,6 +982,11 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     #
     def processHttpMessage(self, toolFlag, messageIsRequest, messageInfo):
 
+        cookies = self.getCookieFromMessage(messageInfo)
+        if cookies:
+            self.lastCookies = cookies
+            self.fetchButton.setEnabled(True)        
+
         #if (self.intercept == 1) and (toolFlag != self._callbacks.TOOL_EXTENDER):
         if (self.intercept == 1) and (toolFlag == self._callbacks.TOOL_PROXY):
             if self.prevent304.isSelected():
@@ -1007,10 +1015,10 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
                     if self.IFList.getModel().getSize() == 0:
 
-                        cookies = self.getCookieFromMessage(messageInfo)
-                        if cookies:
-                            self.lastCookies = cookies
-                            self.fetchButton.setEnabled(True)
+                        #cookies = self.getCookieFromMessage(messageInfo)
+                        #if cookies:
+                            #self.lastCookies = cookies
+                            #self.fetchButton.setEnabled(True)
 
                         self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
                     
@@ -1045,10 +1053,10 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                         if do_the_check:
 
                             # In this position only the cookies of intercepted requests are taken
-                            cookies = self.getCookieFromMessage(messageInfo)
-                            if cookies:
-                                self.lastCookies = cookies
-                                self.fetchButton.setEnabled(True)
+                            #cookies = self.getCookieFromMessage(messageInfo)
+                            #if cookies:
+                                #self.lastCookies = cookies
+                                #self.fetchButton.setEnabled(True)
 
                             self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
 
