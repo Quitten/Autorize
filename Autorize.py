@@ -49,6 +49,8 @@ from java.awt import Font
 import csv
 import sys
 import base64
+from javax.swing import SwingUtilities
+from java.lang import Runnable
 
 # This code is necessary to maximize the csv field limit for the save and restore functionality
 maxInt = sys.maxsize
@@ -601,7 +603,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self._lock.acquire()
         oldSize = self._log.size()
         self._log.clear()
-        self.fireTableRowsDeleted(0, oldSize - 1)
+        SwingUtilities.invokeLater(UpdateTableEDT(self,"delete",0, oldSize - 1))
+        #self.fireTableRowsDeleted(0, oldSize - 1)
         self._lock.release()
 
     def fetchCookies(self, event):
@@ -842,8 +845,9 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                         self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(tempRequestResponse), self._helpers.analyzeRequest(tempRequestResponse).getMethod(), self._helpers.analyzeRequest(tempRequestResponse).getUrl(), self._callbacks.saveBuffersToTempFiles(tempOriginalRequestResponse),tempEnforcementStatus,self._callbacks.saveBuffersToTempFiles(tempUnauthorizedRequestResponse),tempEnforcementStatusUnauthorized))
                     else:
                         self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(tempRequestResponse), self._helpers.analyzeRequest(tempRequestResponse).getMethod(), self._helpers.analyzeRequest(tempRequestResponse).getUrl(), self._callbacks.saveBuffersToTempFiles(tempOriginalRequestResponse),tempEnforcementStatus,None,tempEnforcementStatusUnauthorized))
-                    
-                    self.fireTableRowsInserted(row, row)
+
+                    SwingUtilities.invokeLater(UpdateTableEDT(self,"insert",row,row))
+                    #self.fireTableRowsInserted(row, row)
                     self.currentRequestNumber = self.currentRequestNumber + 1
                     self._lock.release()
 
@@ -1215,7 +1219,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         else:
             self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(requestResponse), method, self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression,None,"Disabled")) # same requests not include again.
         
-        self.fireTableRowsInserted(row, row)
+        SwingUtilities.invokeLater(UpdateTableEDT(self,"insert",row,row))
+        #self.fireTableRowsInserted(row, row)
         self.currentRequestNumber = self.currentRequestNumber + 1
         self._lock.release()
         
@@ -1426,3 +1431,25 @@ class IHttpRequestResponseImplementation(IHttpRequestResponse):
     def setResponse(self,res):
 
         self._response = res
+
+
+class UpdateTableEDT(Runnable):
+    def __init__(self,extender,action,firstRow,lastRow):
+        self._extender=extender
+        self._action=action
+        self._firstRow=firstRow
+        self._lastRow=lastRow
+
+    def run(self):
+        #print SwingUtilities.isEventDispatchThread()
+        if self._action == "insert":
+            self._extender.fireTableRowsInserted(self._firstRow, self._lastRow)
+        elif self._action == "update":
+            self._extender.fireTableRowsUpdated(self._firstRow, self._lastRow)
+        elif self._action == "delete":
+            self._extender.fireTableRowsDeleted(self._firstRow, self._lastRow)
+        else:
+            print "Invalid action in UpdateTableEDT"
+
+
+        
