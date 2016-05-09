@@ -52,6 +52,12 @@ import base64
 from javax.swing import SwingUtilities
 from java.lang import Runnable
 
+#TODO
+# - Disable buttons when saving state/restoring state/export
+# - Change length in table, from full length to body length
+# - Change messages from "Authorization enforced" to "Enforced"
+# - Add full headers in addition to cookies
+
 # This code is necessary to maximize the csv field limit for the save and restore functionality
 maxInt = sys.maxsize
 decrement = True
@@ -1107,76 +1113,82 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                 impression = self._enfocementStatuses[0]
             else:
 
-                if andOrEnforcement == "And":
-                    andEnforcementCheck = True
-                    auth_enforced = 1
-                else:
-                    andEnforcementCheck = False
-                    auth_enforced = 0
+                if len(filters) > 0:
+
+                    if andOrEnforcement == "And":
+                        andEnforcementCheck = True
+                        auth_enforced = 1
+                    else:
+                        andEnforcementCheck = False
+                        auth_enforced = 0
+                    
+                    for filter in filters:
+
+                        if str(filter).startswith("Headers (simple string): "):
+                            if andEnforcementCheck:
+                                if auth_enforced == 1 and not filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
+                                    auth_enforced = 0
+                            else:
+                                if auth_enforced == 0 and filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
+                                    auth_enforced = 1
+
+                        if str(filter).startswith("Headers (regex): "):
+                            regex_string = filter[17:]
+                            p = re.compile(regex_string, re.IGNORECASE)                        
+                            if andEnforcementCheck:
+                                if auth_enforced == 1 and not p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
+                                    auth_enforced = 0
+                            else:
+                                if auth_enforced == 0 and p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
+                                    auth_enforced = 1
+
+                        if str(filter).startswith("Body (simple string): "):
+                            if andEnforcementCheck:
+                                if auth_enforced == 1 and not filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
+                                    auth_enforced = 0
+                            else:
+                                if auth_enforced == 0 and filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
+                                    auth_enforced = 1
+
+                        if str(filter).startswith("Body (regex): "):
+                            regex_string = filter[14:]
+                            p = re.compile(regex_string, re.IGNORECASE)
+                            if andEnforcementCheck:
+                                if auth_enforced == 1 and not p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
+                                    auth_enforced = 0
+                            else:
+                                if auth_enforced == 0 and p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
+                                    auth_enforced = 1
+
+                        if str(filter).startswith("Full response (simple string): "):
+                            if andEnforcementCheck:
+                                if auth_enforced == 1 and not filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()):
+                                    auth_enforced = 0
+                            else:
+                                if auth_enforced == 0 and filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()):
+                                    auth_enforced = 1
+
+                        if str(filter).startswith("Full response (regex): "):
+                            regex_string = filter[23:]
+                            p = re.compile(regex_string, re.IGNORECASE)
+                            if andEnforcementCheck:
+                                if auth_enforced == 1 and not p.search(self._helpers.bytesToString(requestResponse.getResponse())):
+                                    auth_enforced = 0
+                            else:
+                                if auth_enforced == 0 and p.search(self._helpers.bytesToString(requestResponse.getResponse())):
+                                    auth_enforced = 1
+
+                        if str(filter).startswith("Full response length: "):
+                            if andEnforcementCheck:
+                                if auth_enforced == 1 and not str(len(response)) == filter[22:].strip():
+                                    auth_enforced = 0
+                            else:
+                                if auth_enforced == 0 and str(len(response)) == filter[22:].strip():
+                                    auth_enforced = 1
                 
-                for filter in filters:
-
-                    if str(filter).startswith("Headers (simple string): "):
-                        if andEnforcementCheck:
-                            if auth_enforced == 1 and not filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
-                                auth_enforced = 0
-                        else:
-                            if auth_enforced == 0 and filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
-                                auth_enforced = 1
-
-                    if str(filter).startswith("Headers (regex): "):
-                        regex_string = filter[17:]
-                        p = re.compile(regex_string, re.IGNORECASE)                        
-                        if andEnforcementCheck:
-                            if auth_enforced == 1 and not p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
-                                auth_enforced = 0
-                        else:
-                            if auth_enforced == 0 and p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
-                                auth_enforced = 1
-
-                    if str(filter).startswith("Body (simple string): "):
-                        if andEnforcementCheck:
-                            if auth_enforced == 1 and not filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
-                                auth_enforced = 0
-                        else:
-                            if auth_enforced == 0 and filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
-                                auth_enforced = 1
-
-                    if str(filter).startswith("Body (regex): "):
-                        regex_string = filter[14:]
-                        p = re.compile(regex_string, re.IGNORECASE)
-                        if andEnforcementCheck:
-                            if auth_enforced == 1 and not p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
-                                auth_enforced = 0
-                        else:
-                            if auth_enforced == 0 and p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
-                                auth_enforced = 1
-
-                    if str(filter).startswith("Full response (simple string): "):
-                        if andEnforcementCheck:
-                            if auth_enforced == 1 and not filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()):
-                                auth_enforced = 0
-                        else:
-                            if auth_enforced == 0 and filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()):
-                                auth_enforced = 1
-
-                    if str(filter).startswith("Full response (regex): "):
-                        regex_string = filter[23:]
-                        p = re.compile(regex_string, re.IGNORECASE)
-                        if andEnforcementCheck:
-                            if auth_enforced == 1 and not p.search(self._helpers.bytesToString(requestResponse.getResponse())):
-                                auth_enforced = 0
-                        else:
-                            if auth_enforced == 0 and p.search(self._helpers.bytesToString(requestResponse.getResponse())):
-                                auth_enforced = 1
-
-                    if str(filter).startswith("Full response length: "):
-                        if andEnforcementCheck:
-                            if auth_enforced == 1 and not str(len(response)) == filter[22:].strip():
-                                auth_enforced = 0
-                        else:
-                            if auth_enforced == 0 and str(len(response)) == filter[22:].strip():
-                                auth_enforced = 1
+                else:
+                    # If no enforcement detectors are set and the HTTP response is the same, the impression is yellow
+                    auth_enforced = 0
                 
                 if auth_enforced:
                     impression = self._enfocementStatuses[2]
