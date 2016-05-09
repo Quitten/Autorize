@@ -54,7 +54,6 @@ from java.lang import Runnable
 
 #TODO
 # - Disable buttons when saving state/restoring state/export
-# - Change length in table, from full length to body length
 # - Change messages from "Authorization enforced" to "Enforced"
 # - Add full headers in addition to cookies
 
@@ -953,12 +952,15 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         if columnIndex == 2:
             return logEntry._url.toString()
         if columnIndex == 3:
-            return len(logEntry._originalrequestResponse.getResponse())
+            response = logEntry._originalrequestResponse.getResponse()
+            return len(logEntry._originalrequestResponse.getResponse()) - self._helpers.analyzeResponse(response).getBodyOffset()
         if columnIndex == 4:
-            return len(logEntry._requestResponse.getResponse())
+            response = logEntry._requestResponse.getResponse()
+            return len(logEntry._requestResponse.getResponse()) - self._helpers.analyzeResponse(response).getBodyOffset()
         if columnIndex == 5:
             if logEntry._unauthorizedRequestResponse != None:
-                return len(logEntry._unauthorizedRequestResponse.getResponse())
+                response = logEntry._unauthorizedRequestResponse.getResponse()
+                return len(logEntry._unauthorizedRequestResponse.getResponse()) - self._helpers.analyzeResponse(response).getBodyOffset()
             else:
                 #return "-"
                 return 0
