@@ -1070,14 +1070,17 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         return
 
     def sendRequestToAutorizeWork(self,messageInfo):
-
         if messageInfo.getResponse() == None:
             message = self.makeMessage(messageInfo,False,False)
             requestResponse = self.makeRequest(messageInfo, message)
             self.checkAuthorization(requestResponse,self._helpers.analyzeResponse(requestResponse.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
         else:
-            self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
-
+            request = messageInfo.getRequest()
+            response = messageInfo.getResponse()
+            httpService = messageInfo.getHttpService()
+            newHttpRequestResponse = IHttpRequestResponseImplementation(httpService,request,response)
+            newHttpRequestResponsePersisted = self._callbacks.saveBuffersToTempFiles(newHttpRequestResponse)
+            self.checkAuthorization(newHttpRequestResponsePersisted,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
 
     def makeRequest(self, messageInfo, message):
         requestURL = self._helpers.analyzeRequest(messageInfo).getUrl()
