@@ -1,11 +1,11 @@
 # Autorize
-Autorize is an automatic authorization enforcement detection extension for Burp Suite. It was written in Python by Barak Tawily, an application security expert at AppSec Labs, and Federico Dotta, a security expert at @ Mediaservice.net. Autorize was designed to help security testers by performing automatic authorization tests. With the last release now Autorize also perform automatic authentication tests.
+Autorize is an automatic authorization enforcement detection extension for Burp Suite. It was written in Python by Barak Tawily, an application security expert, and Federico Dotta, a security expert at Mediaservice.net. Autorize was designed to help security testers by performing automatic authorization tests. With the last release now Autorize also perform automatic authentication tests.
 
 ![alt tag](https://raw.githubusercontent.com/Quitten/Autorize/master/Autorize.png)
 
 # Authors
 - Barak Tawily, Application Security Expert at AppSec Labs
-- Federico Dotta, Security Expert at @ Mediaservice.net
+- Federico Dotta, Security Expert at Mediaservice.net
 
 # Installation 
 1.	Download Burp Suite (obviously): http://portswigger.net/burp/download.html
