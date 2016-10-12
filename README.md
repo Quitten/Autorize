@@ -4,7 +4,7 @@ Autorize is an automatic authorization enforcement detection extension for Burp 
 ![alt tag](https://raw.githubusercontent.com/Quitten/Autorize/master/Autorize.png)
 
 # Authors
-- Barak Tawily, Application Security Expert at AppSec Labs
+- Barak Tawily, Application Security Expert
 - Federico Dotta, Security Expert at Mediaservice.net
 
 # Installation 
