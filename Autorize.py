@@ -14,16 +14,23 @@ from javax.swing import JComboBox
 from javax.swing import JCheckBox
 from javax.swing import JMenuItem
 from javax.swing import JTextArea
+from javax.swing import RowFilter
 from javax.swing import JPopupMenu
 from javax.swing import JSplitPane
 from javax.swing import JScrollPane
 from javax.swing import JTabbedPane
+from javax.swing import JScrollPane
 from javax.swing import JFileChooser
+from javax.swing import SwingUtilities
 from javax.swing import DefaultListModel
 from javax.swing import JCheckBoxMenuItem
+from javax.swing.border import LineBorder
+from javax.swing.table import TableRowSorter
+from javax.swing.table import AbstractTableModel
 from threading import Lock
 from java.io import File
 from java.net import URL
+from java.awt import Font
 from java.awt import Color
 from java.awt import Toolkit
 from java.awt.event import ItemListener
@@ -32,25 +39,14 @@ from java.awt.event import ActionListener
 from java.awt.event import AdjustmentListener
 from java.awt.datatransfer import Clipboard
 from java.awt.datatransfer import StringSelection
-from javax.swing.border import LineBorder
-from javax.swing.table import AbstractTableModel
 from java.util import LinkedList
 from java.util import ArrayList
+from java.lang import Runnable
 from java.lang import Integer
 from java.lang import String
 from java.lang import Math
-from java.awt import Dimension
-import re
 from thread import start_new_thread
-from javax.swing import RowFilter
-from javax.swing.table import TableRowSorter
-from javax.swing import JScrollPane
-from java.awt import Font
-import csv
-import sys
-import base64
-from javax.swing import SwingUtilities
-from java.lang import Runnable
+import re, csv, sys, base64
 
 #TODO
 # - Disable buttons when saving state/restoring state/export
@@ -194,7 +190,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         exportLES.setBounds(10, 90, 100, 30)
 
         self.exportButton = JButton("Export",actionPerformed=self.export)
-        self.exportButton.setBounds(390, 65, 100, 30)
+        self.exportButton.setBounds(390, 50, 100, 30)
 
         saveRestoreLabel = JLabel("Save / Restore:")
         saveRestoreLabel.setBounds(10, 150, 100, 30)    
@@ -222,10 +218,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     def initEnforcementDetector(self):
         """ init enforcement detector tab
         """
-
-        # These two variable appears to be unused...
-        self.EDFP = ArrayList()
-        self.EDCT = ArrayList()
 
         EDLType = JLabel("Type:")
         EDLType.setBounds(10, 10, 140, 30)
@@ -352,9 +344,9 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         scrollIFList.setBorder(LineBorder(Color.BLACK))
 
         # Adding some default interception filters
-        self.IFModel.addElement("Scope items only: (Content is not required)")
+        # self.IFModel.addElement("Scope items only: (Content is not required)") # commented for better first impression.
         self.IFModel.addElement("URL Not Contains (regex): \\.js|css|png|jpg|jpeg|gif|woff|map|bmp|ico$")
-
+        
         self.IFText = JTextArea("", 5, 30)
 
         scrollIFText = JScrollPane(self.IFText)
@@ -403,7 +395,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.ignore304.setSelected(True)
 
         self.autoScroll = JCheckBox("Auto Scroll")
-        #self.autoScroll.setBounds(290, 45, 140, 30)
         self.autoScroll.setBounds(160, 40, 140, 30)
 
         self.doUnauthorizedRequest = JCheckBox("Check unauthenticated")
@@ -537,12 +528,10 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             self.startButton.setText("Autorize is on")
             self.startButton.setBackground(Color.GREEN)
             self.intercept = 1
-            #self._callbacks.registerHttpListener(self)
         else:
             self.startButton.setText("Autorize is off")
             self.startButton.setBackground(Color(255, 100, 91, 255))
             self.intercept = 0
-            #self._callbacks.removeHttpListener(self)
 
     def addEDFilter(self, event):
         typeName = self.EDType.getSelectedItem().split(":")[0]
@@ -745,15 +734,10 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         userSelection = fileChooser.showSaveDialog(parentFrame)
         
         if userSelection == JFileChooser.APPROVE_OPTION:
-            
             exportFile = fileChooser.getSelectedFile()
-
             with open(exportFile.getAbsolutePath(), 'wb') as csvfile:
-
                 csvwriter = csv.writer(csvfile, delimiter='\t', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-
                 for i in range(0,self._log.size()):
-
                     tempRequestResponseHost = self._log.get(i)._requestResponse.getHttpService().getHost()
                     tempRequestResponsePort = self._log.get(i)._requestResponse.getHttpService().getPort()
                     tempRequestResponseProtocol = self._log.get(i)._requestResponse.getHttpService().getProtocol()
@@ -849,7 +833,6 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                         self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(tempRequestResponse), self._helpers.analyzeRequest(tempRequestResponse).getMethod(), self._helpers.analyzeRequest(tempRequestResponse).getUrl(), self._callbacks.saveBuffersToTempFiles(tempOriginalRequestResponse),tempEnforcementStatus,None,tempEnforcementStatusUnauthorized))
 
                     SwingUtilities.invokeLater(UpdateTableEDT(self,"insert",row,row))
-                    #self.fireTableRowsInserted(row, row)
                     self.currentRequestNumber = self.currentRequestNumber + 1
                     self._lock.release()
 
@@ -961,9 +944,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         cookies = self.getCookieFromMessage(messageInfo)
         if cookies:
             self.lastCookies = cookies
-            self.fetchButton.setEnabled(True)        
+            self.fetchButton.setEnabled(True)
 
-        #if (self.intercept == 1) and (toolFlag != self._callbacks.TOOL_EXTENDER):
         if (self.intercept == 1) and (toolFlag == self._callbacks.TOOL_PROXY):
             if self.prevent304.isSelected():
                 if messageIsRequest:
@@ -990,50 +972,37 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                            return
 
                     if self.IFList.getModel().getSize() == 0:
-
-                        #cookies = self.getCookieFromMessage(messageInfo)
-                        #if cookies:
-                            #self.lastCookies = cookies
-                            #self.fetchButton.setEnabled(True)
-
                         self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
                     
                     else:
                         urlString = str(self._helpers.analyzeRequest(messageInfo).getUrl())
-
                         do_the_check = 1
-
                         for i in range(0,self.IFList.getModel().getSize()):
-
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "Scope items only":
                                 currentURL = URL(urlString)
                                 if not self._callbacks.isInScope(currentURL):
                                     do_the_check = 0
+
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Contains (simple string)":
                                 if self.IFList.getModel().getElementAt(i)[30:] not in urlString:
                                     do_the_check = 0
+
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Contains (regex)":
                                 regex_string = self.IFList.getModel().getElementAt(i)[22:]
-                                if not re.match(regex_string, urlString, re.IGNORECASE) is None:
-                                    do_the_check = 0  
+                                if re.search(regex_string, urlString, re.IGNORECASE) is None:
+                                    do_the_check = 0
+
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Not Contains (simple string)":
                                 if self.IFList.getModel().getElementAt(i)[34:] in urlString:
                                     do_the_check = 0
+
                             if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Not Contains (regex)":
                                 regex_string = self.IFList.getModel().getElementAt(i)[26:]
-                                if re.match(regex_string, urlString, re.IGNORECASE) is None:
-                                    do_the_check = 0                                                                       
+                                if not re.search(regex_string, urlString, re.IGNORECASE) is None:
+                                    do_the_check = 0
 
                         if do_the_check:
-
-                            # In this position only the cookies of intercepted requests are taken
-                            #cookies = self.getCookieFromMessage(messageInfo)
-                            #if cookies:
-                                #self.lastCookies = cookies
-                                #self.fetchButton.setEnabled(True)
-
                             self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
-
 
     def sendRequestToAutorizeWork(self,messageInfo):
         if messageInfo.getResponse() is None:
@@ -1208,18 +1177,11 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(requestResponse), method, self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression,None,"Disabled")) # same requests not include again.
         
         SwingUtilities.invokeLater(UpdateTableEDT(self,"insert",row,row))
-        #self.fireTableRowsInserted(row, row)
         self.currentRequestNumber = self.currentRequestNumber + 1
         self._lock.release()
         
     def getResponseContentLength(self, response):
         return len(response) - self._helpers.analyzeResponse(response).getBodyOffset()
-
-    #def getContentLength(self, analyzedResponseHeaders):
-    #    for header in analyzedResponseHeaders:
-    #        if "Content-Length:" in header:
-    #            return header;
-    #    return "null"
 
     def getCookieFromMessage(self, messageInfo):
         headers = list(self._helpers.analyzeRequest(messageInfo.getRequest()).getHeaders())
@@ -1421,7 +1383,6 @@ class UpdateTableEDT(Runnable):
         self._lastRow=lastRow
 
     def run(self):
-        #print SwingUtilities.isEventDispatchThread()
         if self._action == "insert":
             self._extender.fireTableRowsInserted(self._firstRow, self._lastRow)
         elif self._action == "update":
@@ -1430,6 +1391,3 @@ class UpdateTableEDT(Runnable):
             self._extender.fireTableRowsDeleted(self._firstRow, self._lastRow)
         else:
             print("Invalid action in UpdateTableEDT")
-
-
-        
