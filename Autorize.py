@@ -78,7 +78,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         # create the log and a lock on which to synchronize when adding log entries
         self._log = ArrayList()
         self._lock = Lock()
-        self._enfocementStatuses = ["Authorization bypass!","Authorization enforced??? (please configure enforcement detector)","Authorization enforced!"]
+        self._enfocementStatuses = ["Bypassed!","Is enforced??? (please configure enforcement detector)","Enforced!"]
         self.intercept = 0
         self.lastCookies = ""
 
@@ -116,32 +116,32 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         filterLUnauthenticated = JLabel("Unauthenticated:")
         filterLUnauthenticated.setBounds(250, 10, 100, 30)
 
-        self.showAuthBypassModified = JCheckBox("Authorization bypass!")
+        self.showAuthBypassModified = JCheckBox("Bypassed!")
         self.showAuthBypassModified.setBounds(10, 35, 200, 30)
         self.showAuthBypassModified.setSelected(True)
         self.showAuthBypassModified.addItemListener(tabTableFilter(self))
 
-        self.showAuthPotentiallyEnforcedModified = JCheckBox("Authorization enforced???")
+        self.showAuthPotentiallyEnforcedModified = JCheckBox("Is enforced???")
         self.showAuthPotentiallyEnforcedModified.setBounds(10, 60, 200, 30)
         self.showAuthPotentiallyEnforcedModified.setSelected(True)
         self.showAuthPotentiallyEnforcedModified.addItemListener(tabTableFilter(self))
 
-        self.showAuthEnforcedModified = JCheckBox("Authorization enforced!")
+        self.showAuthEnforcedModified = JCheckBox("Enforced!")
         self.showAuthEnforcedModified.setBounds(10, 85, 200, 30)
         self.showAuthEnforcedModified.setSelected(True)
         self.showAuthEnforcedModified.addItemListener(tabTableFilter(self))
 
-        self.showAuthBypassUnauthenticated = JCheckBox("Authorization bypass!")
+        self.showAuthBypassUnauthenticated = JCheckBox("Bypassed!")
         self.showAuthBypassUnauthenticated.setBounds(250, 35, 200, 30)
         self.showAuthBypassUnauthenticated.setSelected(True)
         self.showAuthBypassUnauthenticated.addItemListener(tabTableFilter(self))
 
-        self.showAuthPotentiallyEnforcedUnauthenticated = JCheckBox("Authorization enforced???")
+        self.showAuthPotentiallyEnforcedUnauthenticated = JCheckBox("Is enforced???")
         self.showAuthPotentiallyEnforcedUnauthenticated.setBounds(250, 60, 200, 30)
         self.showAuthPotentiallyEnforcedUnauthenticated.setSelected(True)
         self.showAuthPotentiallyEnforcedUnauthenticated.addItemListener(tabTableFilter(self))
 
-        self.showAuthEnforcedUnauthenticated = JCheckBox("Authorization enforced!")
+        self.showAuthEnforcedUnauthenticated = JCheckBox("Enforced!")
         self.showAuthEnforcedUnauthenticated.setBounds(250, 85, 200, 30)
         self.showAuthEnforcedUnauthenticated.setSelected(True)
         self.showAuthEnforcedUnauthenticated.addItemListener(tabTableFilter(self))
@@ -631,12 +631,12 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             if enforcementStatusFilter == "All Statuses":
                 csvContent += "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id, self._log.get(i)._method, self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse is not None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse is not None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse is not None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
             elif enforcementStatusFilter == "As table filter":                
-                if ((self.showAuthBypassModified.isSelected() and "Authorization bypass!" == self._log.get(i)._enfocementStatus) or
-                    (self.showAuthPotentiallyEnforcedModified.isSelected() and "Authorization enforced???" == self._log.get(i)._enfocementStatus) or
-                    (self.showAuthEnforcedModified.isSelected() and "Authorization enforced!" == self._log.get(i)._enfocementStatus) or
-                    (self.showAuthBypassUnauthenticated.isSelected() and "Authorization bypass!" == self._log.get(i)._enfocementStatusUnauthorized) or
-                    (self.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and "Authorization enforced???" == self._log.get(i)._enfocementStatusUnauthorized) or
-                    (self.showAuthEnforcedUnauthenticated.isSelected() and "Authorization enforced!" == self._log.get(i)._enfocementStatusUnauthorized) or
+                if ((self.showAuthBypassModified.isSelected() and "Bypassed!" == self._log.get(i)._enfocementStatus) or
+                    (self.showAuthPotentiallyEnforcedModified.isSelected() and "Is enforced???" == self._log.get(i)._enfocementStatus) or
+                    (self.showAuthEnforcedModified.isSelected() and "Enforced!" == self._log.get(i)._enfocementStatus) or
+                    (self.showAuthBypassUnauthenticated.isSelected() and "Bypassed!" == self._log.get(i)._enfocementStatusUnauthorized) or
+                    (self.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and "Is enforced???" == self._log.get(i)._enfocementStatusUnauthorized) or
+                    (self.showAuthEnforcedUnauthenticated.isSelected() and "Enforced!" == self._log.get(i)._enfocementStatusUnauthorized) or
                     (self.showDisabledUnauthenticated.isSelected() and "Disabled" == self._log.get(i)._enfocementStatusUnauthorized)):
                     csvContent += "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id, self._log.get(i)._method, self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse is not None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse is not None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse is not None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
             else:
@@ -708,12 +708,12 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             if enforcementStatusFilter == "All Statuses":
                 htmlContent += "<tr><td>%d</td><td>%s</td><td><a href=\"%s\">%s</a></td><td>%d</td><td>%d</td><td>%d</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td></tr>" % (self._log.get(i)._id, self._log.get(i)._method, self._log.get(i)._url, self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse is not None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse is not None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse is not None else 0, color_modified, self._log.get(i)._enfocementStatus, color_unauthorized, self._log.get(i)._enfocementStatusUnauthorized)
             elif enforcementStatusFilter == "As table filter":
-                if ((self.showAuthBypassModified.isSelected() and "Authorization bypass!" == self._log.get(i)._enfocementStatus) or
-                    (self.showAuthPotentiallyEnforcedModified.isSelected() and "Authorization enforced???" == self._log.get(i)._enfocementStatus) or
-                    (self.showAuthEnforcedModified.isSelected() and "Authorization enforced!" == self._log.get(i)._enfocementStatus) or
-                    (self.showAuthBypassUnauthenticated.isSelected() and "Authorization bypass!" == self._log.get(i)._enfocementStatusUnauthorized) or
-                    (self.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and "Authorization enforced???" == self._log.get(i)._enfocementStatusUnauthorized) or
-                    (self.showAuthEnforcedUnauthenticated.isSelected() and "Authorization enforced!" == self._log.get(i)._enfocementStatusUnauthorized) or
+                if ((self.showAuthBypassModified.isSelected() and "Bypassed!" == self._log.get(i)._enfocementStatus) or
+                    (self.showAuthPotentiallyEnforcedModified.isSelected() and "Is enforced???" == self._log.get(i)._enfocementStatus) or
+                    (self.showAuthEnforcedModified.isSelected() and "Enforced!" == self._log.get(i)._enfocementStatus) or
+                    (self.showAuthBypassUnauthenticated.isSelected() and "Bypassed!" == self._log.get(i)._enfocementStatusUnauthorized) or
+                    (self.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and "Is enforced???" == self._log.get(i)._enfocementStatusUnauthorized) or
+                    (self.showAuthEnforcedUnauthenticated.isSelected() and "Enforced!" == self._log.get(i)._enfocementStatusUnauthorized) or
                     (self.showDisabledUnauthenticated.isSelected() and "Disabled" == self._log.get(i)._enfocementStatusUnauthorized)):
                     htmlContent += "<tr><td>%d</td><td>%s</td><td><a href=\"%s\">%s</a></td><td>%d</td><td>%d</td><td>%d</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td></tr>" % (self._log.get(i)._id, self._log.get(i)._method, self._log.get(i)._url, self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse is not None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse is not None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse is not None else 0, color_modified, self._log.get(i)._enfocementStatus, color_unauthorized, self._log.get(i)._enfocementStatusUnauthorized)
             else:
@@ -1209,11 +1209,11 @@ class Table(JTable):
         value = self._extender.getValueAt(self._extender.logTable.convertRowIndexToModel(row), col)
 
         if col == 6 or col == 7:
-            if value == "Authorization bypass!":
+            if value == "Bypassed!":
                 comp.setBackground(Color(255,135,31))
-            elif value == "Authorization enforced??? (please configure enforcement detector)" :
+            elif value == "Is enforced??? (please configure enforcement detector)" :
                 comp.setBackground(Color(255,255,133))
-            elif value == "Authorization enforced!":
+            elif value == "Enforced!":
                 comp.setBackground(Color(192,250,20))
         else:
             comp.setBackground(Color.white)
@@ -1317,17 +1317,17 @@ class tableFilter(RowFilter):
 
     def include(self, entry):
 
-        if self._extender.showAuthBypassModified.isSelected() and "Authorization bypass!" == entry.getValue(6):
+        if self._extender.showAuthBypassModified.isSelected() and "Bypassed!" == entry.getValue(6):
             return True
-        elif self._extender.showAuthPotentiallyEnforcedModified.isSelected() and "Authorization enforced??? (please configure enforcement detector)" == entry.getValue(6):
+        elif self._extender.showAuthPotentiallyEnforcedModified.isSelected() and "Is enforced??? (please configure enforcement detector)" == entry.getValue(6):
             return True
-        elif self._extender.showAuthEnforcedModified.isSelected() and "Authorization enforced!" == entry.getValue(6):
+        elif self._extender.showAuthEnforcedModified.isSelected() and "Enforced!" == entry.getValue(6):
             return True
-        elif self._extender.showAuthBypassUnauthenticated.isSelected() and "Authorization bypass!" == entry.getValue(7):
+        elif self._extender.showAuthBypassUnauthenticated.isSelected() and "Bypassed!" == entry.getValue(7):
             return True
-        elif self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and "Authorization enforced??? (please configure enforcement detector)" == entry.getValue(7):
+        elif self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and "Is enforced??? (please configure enforcement detector)" == entry.getValue(7):
             return True
-        elif self._extender.showAuthEnforcedUnauthenticated.isSelected() and "Authorization enforced!" == entry.getValue(7):
+        elif self._extender.showAuthEnforcedUnauthenticated.isSelected() and "Enforced!" == entry.getValue(7):
             return True 
         elif self._extender.showDisabledUnauthenticated.isSelected() and "Disabled" == entry.getValue(7):
             return True                        
