@@ -50,7 +50,6 @@ import re, csv, sys, base64
 
 #TODO
 # - Disable buttons when saving state/restoring state/export
-# - Change messages from "Authorization enforced" to "Enforced"
 # - Add full headers in addition to cookies
 
 # This code is necessary to maximize the csv field limit for the save and restore functionality
