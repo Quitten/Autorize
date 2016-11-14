@@ -409,7 +409,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.clearButton = JButton("Clear List",actionPerformed=self.clearList)
         self.clearButton.setBounds(10, 40, 100, 30)
 
-        self.replaceString = JTextArea("Cookie: Insert=injected; header=here;", 5, 30)
+        self.replaceString = JTextArea("Cookie: Insert=injected\nHeader: here", 5, 30)
         self.replaceString.setWrapStyleWord(True)
         self.replaceString.setLineWrap(True)
         scrollReplaceString = JScrollPane(self.replaceString)
@@ -1025,8 +1025,9 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         headers = requestInfo.getHeaders()
         if removeOrNot:
             headers = list(headers)
-            removeHeaders = ArrayList()
-            removeHeaders.add(self.replaceString.getText()[0:self.replaceString.getText().index(":")])
+            removeHeaders = self.replaceString.getText()
+            # Headers must be entered line by line i.e. each header in a new line
+            removeHeaders = [header for header in removeHeaders.split() if header.endswith(':')]
 
             for header in headers[:]:
                 for removeHeader in removeHeaders:
