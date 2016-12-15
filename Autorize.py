@@ -1070,7 +1070,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
             for header in headers[:]:
                 for removeHeader in removeHeaders:
-                    if removeHeader in header:
+                    if header.startswith(removeHeader):
                         headers.remove(header)
 
             if authorizeOrNot:
