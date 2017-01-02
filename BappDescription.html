@@ -1,0 +1,25 @@
+<p>Autorize is an extension aimed at helping the penetration tester to detect
+authorization vulnerabilities, one of the more time-consuming tasks in a web
+application penetration test.</p>
+
+<p>It is sufficient to give to the extension the cookies of a low privileged
+user and navigate the website with a high privileged user. The extension
+automatically repeats every request with the session of the low privileged
+user and detects authorization vulnerabilities.</p>
+
+<p>It is also possible to repeat every request without any
+cookies in order to detect authentication vulnerabilities in
+addiction to authorization ones.</p>
+
+<p>The plugin works without any configuration, but is also highly
+customizable, allowing configuration of the granularity of the authorization
+enforcement conditions and also which requests the plugin must test and
+which not. It is possible to save the state of the plugin and to export a
+report of the authorization tests in HTML or in CSV.</p>
+
+<p>The reported enforcement statuses are the following:</p>
+<ol>
+    <li>Bypassed! - Red color</li>
+    <li>Enforced! - Green color</li>
+    <li>Is enforced??? (please configure enforcement detector) - Yellow color</li>
+</ol>
