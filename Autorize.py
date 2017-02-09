@@ -509,8 +509,11 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         copyURLitem = JMenuItem("Copy URL")
         copyURLitem.addActionListener(copySelectedURL(self))
+        retestSelecteditem = JMenuItem("Retest selected request")
+        retestSelecteditem.addActionListener(retestSelectedRequest(self))
         self.menu = JPopupMenu("Popup")
         self.menu.add(copyURLitem)
+        self.menu.add(retestSelecteditem)
 
         self.tabs = JTabbedPane()
         self._requestViewer = self._callbacks.createMessageEditor(self, False)
@@ -1274,7 +1277,7 @@ class Table(JTable):
             self._extender._unauthorizedrequestViewer.setMessage("Request disabled", True)
             self._extender._unauthorizedresponseViewer.setMessage("Response disabled", False)
 
-        self._extender._currentlyDisplayedItem = logEntry._requestResponse
+        self._extender._currentlyDisplayedItem = logEntry
 
         if col == 3:
             self._extender.tabs.setSelectedIndex(3)
@@ -1324,10 +1327,16 @@ class copySelectedURL(ActionListener):
         self._extender = extender
 
     def actionPerformed(self, e):
-        stringSelection = StringSelection(str(self._extender._helpers.analyzeRequest(self._extender._currentlyDisplayedItem).getUrl()))
+        stringSelection = StringSelection(str(self._extender._helpers.analyzeRequest(self._extender._currentlyDisplayedItem._requestResponse).getUrl()))
         clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard()
         clpbrd.setContents(stringSelection, None)
 
+class retestSelectedRequest(ActionListener):
+    def __init__(self, extender):
+        self._extender = extender
+
+    def actionPerformed(self, e):
+        start_new_thread(self._extender.checkAuthorization, (self._extender._currentlyDisplayedItem._originalrequestResponse, self._extender._helpers.analyzeResponse(self._extender._currentlyDisplayedItem._originalrequestResponse.getResponse()).getHeaders(), self._extender.doUnauthorizedRequest.isSelected()))
 
 class handleMenuItems(ActionListener):
     def __init__(self, extender, messageInfo, menuName):
