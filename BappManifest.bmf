@@ -1,6 +1,7 @@
 Uuid: f9bbac8c4acf4aefa4d7dc92a991af2f
 ExtensionType: 2
 Name: Autorize
+RepoName: autorize
 ScreenVersion: 0.14
 SerialVersion: 6
 MinPlatformVersion: 0
