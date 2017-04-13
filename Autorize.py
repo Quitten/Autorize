@@ -443,7 +443,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.clearButton = JButton("Clear List", actionPerformed=self.clearList)
         self.clearButton.setBounds(10, 40, 100, 30)
 
-        self.replaceString = JTextArea("Cookie: Insert=injected; cookie=or\nHeader: here", 5, 30)
+        self.replaceString = JTextArea("Cookie: Insert=injected; cookie=or;\nHeader: here", 5, 30)
         self.replaceString.setWrapStyleWord(True)
         self.replaceString.setLineWrap(True)
         scrollReplaceString = JScrollPane(self.replaceString)
@@ -462,7 +462,9 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.filtersTabs.addTab("Table Filter", self.filterPnl)
         self.filtersTabs.addTab("Save/Restore", self.exportPnl)
 
+        self.filtersTabs.setSelectedIndex(2)
         self.filtersTabs.setBounds(0, 280, 2000, 700)
+        
 
         self.pnl = JPanel()
         self.pnl.setBounds(0, 0, 1000, 1000)
