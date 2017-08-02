@@ -46,7 +46,7 @@ For example, if there is a request enforcement status that is detected as "Autho
 # Interception Fitlers
 The interception filter allows you configure what domains you want to be intercepted by Autorize plugin, you can determine by blacklist/whitelist/regex or items in Burp's scope in order to avoid unnesseary domains to be intercepted by Autorize and work more organized.
 
-Example of interception filters:
+Example of interception filters (Note that there is default filter to avoid scripts and images):
 ![alt tag](https://raw.githubusercontent.com/Quitten/Autorize/master/interceptionFilters.png)
 
 
