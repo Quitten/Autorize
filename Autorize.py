@@ -1079,7 +1079,11 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
                         headers.remove(header)
 
             if authorizeOrNot:
-                headers.append(self.replaceString.getText())
+                # fix missing carriage return on *NIX systems
+                replaceStringLines = self.replaceString.getText().split("\n")
+                print(replaceStringLines)
+                for h in replaceStringLines:
+                    headers.append(h)
 
         msgBody = messageInfo.getRequest()[requestInfo.getBodyOffset():]
         return self._helpers.buildHttpMessage(headers, msgBody)
