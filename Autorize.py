@@ -1081,7 +1081,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             if authorizeOrNot:
                 # fix missing carriage return on *NIX systems
                 replaceStringLines = self.replaceString.getText().split("\n")
-                print(replaceStringLines)
+                
                 for h in replaceStringLines:
                     headers.append(h)
 
