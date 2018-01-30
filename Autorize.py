@@ -105,7 +105,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         self.currentRequestNumber = 1
         
-        print("Thank you for installing Autorize v0.14 extension")
+        print("Thank you for installing Autorize v0.15 extension")
         print("Created by Barak Tawily and Federico Dotta" )
         print("Contributors: Barak Tawily, Federico Dotta, mgeeky, Marcin Woloszyn")
         print("\nGithub:\nhttps://github.com/Quitten/Autorize")
