@@ -980,6 +980,9 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     # implement IHttpListener
     #
     def processHttpMessage(self, toolFlag, messageIsRequest, messageInfo):
+        # avoiding spider traffic
+        if (toolFlag == self._callbacks.TOOL_SPIDER):
+            return
         cookies = self.getCookieFromMessage(messageInfo)
         if cookies:
             self.lastCookies = cookies
