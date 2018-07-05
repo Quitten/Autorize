@@ -361,11 +361,15 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         """  init interception filters tab
         """
         self.savedHeaders = [{"title": "Temporarly headers", "headers": "Cookie: Insert=injected; cookie=or;\nHeader: here"}]
-        IFStrings = ["Scope items only: (Content is not required)",
+        # IFStrings has to contains : character
+        IFStrings = ["Scope items only: (Content is not required)", 
                      "URL Contains (simple string): ",
                      "URL Contains (regex): ",
                      "URL Not Contains (simple string): ",
-                     "URL Not Contains (regex): "]
+                     "URL Not Contains (regex): ",
+                     "Ignore spider requests: (Content is not required)",
+                     "Ignore proxy requests: (Content is not required)",
+                     "Ignore target requests: (Content is not required)"]
         self.IFType = JComboBox(IFStrings)
         self.IFType.setBounds(80, 10, 430, 30)
        
@@ -380,6 +384,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         # Adding some default interception filters
         # self.IFModel.addElement("Scope items only: (Content is not required)") # commented for better first impression.
         self.IFModel.addElement("URL Not Contains (regex): \\.js|css|png|jpg|jpeg|gif|woff|map|bmp|ico$")
+        self.IFModel.addElement("Ignore spider requests: ")
         
         self.IFText = JTextArea("", 5, 30)
 
@@ -1009,10 +1014,18 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     #
     # implement IHttpListener
     #
-    def processHttpMessage(self, toolFlag, messageIsRequest, messageInfo):
-        # avoiding spider traffic
-        if (toolFlag == self._callbacks.TOOL_SPIDER):
-            return
+    def processHttpMessage(self, toolFlag, messageIsRequest, messageInfo):      
+        for i in range(0, self.IFList.getModel().getSize()):
+            if self.IFList.getModel().getElementAt(i).split(":")[0] == "Ignore spider requests":
+                if (toolFlag == self._callbacks.TOOL_SPIDER):
+                    return
+            if self.IFList.getModel().getElementAt(i).split(":")[0] == "Ignore proxy requests":
+                if (toolFlag == self._callbacks.TOOL_PROXY):
+                    return
+            if self.IFList.getModel().getElementAt(i).split(":")[0] == "Ignore target requests":
+                if (toolFlag == self._callbacks.TOOL_TARGET):
+                    return
+
         cookies = self.getCookieFromMessage(messageInfo)
         if cookies:
             self.lastCookies = cookies
