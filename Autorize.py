@@ -17,6 +17,7 @@ from javax.swing import JTextArea
 from javax.swing import RowFilter
 from javax.swing import JPopupMenu
 from javax.swing import JSplitPane
+from javax.swing import JOptionPane
 from javax.swing import JScrollPane
 from javax.swing import JTabbedPane
 from javax.swing import JScrollPane
@@ -24,6 +25,7 @@ from javax.swing import JFileChooser
 from javax.swing import SwingUtilities
 from javax.swing import DefaultListModel
 from javax.swing import JCheckBoxMenuItem
+from javax.swing import DefaultComboBoxModel
 from javax.swing.border import LineBorder
 from javax.swing.table import TableRowSorter
 from javax.swing.table import AbstractTableModel
@@ -105,7 +107,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         self.currentRequestNumber = 1
         
-        print("Thank you for installing Autorize v0.15 extension")
+        print("Thank you for installing Autorize v0.16 extension")
         print("Created by Barak Tawily and Federico Dotta" )
         print("Contributors: Barak Tawily, Federico Dotta, mgeeky, Marcin Woloszyn")
         print("\nGithub:\nhttps://github.com/Quitten/Autorize")
@@ -172,7 +174,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.filterPnl.add(self.showDisabledUnauthenticated)
 
     def initExport(self):
-        """ init enforcement detector tab
+        """ init Save/Restore
         """
 
         exportLabel = JLabel("Export:")
@@ -358,12 +360,16 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     def initInterceptionFilters(self):
         """  init interception filters tab
         """
-
-        IFStrings = ["Scope items only: (Content is not required)",
+        self.savedHeaders = [{"title": "Temporarly headers", "headers": "Cookie: Insert=injected; cookie=or;\nHeader: here"}]
+        # IFStrings has to contains : character
+        IFStrings = ["Scope items only: (Content is not required)", 
                      "URL Contains (simple string): ",
                      "URL Contains (regex): ",
                      "URL Not Contains (simple string): ",
-                     "URL Not Contains (regex): "]
+                     "URL Not Contains (regex): ",
+                     "Ignore spider requests: (Content is not required)",
+                     "Ignore proxy requests: (Content is not required)",
+                     "Ignore target requests: (Content is not required)"]
         self.IFType = JComboBox(IFStrings)
         self.IFType.setBounds(80, 10, 430, 30)
        
@@ -378,6 +384,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         # Adding some default interception filters
         # self.IFModel.addElement("Scope items only: (Content is not required)") # commented for better first impression.
         self.IFModel.addElement("URL Not Contains (regex): \\.js|css|png|jpg|jpeg|gif|woff|map|bmp|ico$")
+        self.IFModel.addElement("Ignore spider requests: ")
         
         self.IFText = JTextArea("", 5, 30)
 
@@ -443,17 +450,26 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.clearButton = JButton("Clear List", actionPerformed=self.clearList)
         self.clearButton.setBounds(10, 40, 100, 30)
 
+        self.saveHeadersButton = JButton("Save headers",
+                                           actionPerformed=self.saveHeaders)
+        self.saveHeadersButton.setBounds(360, 75, 120, 30)
+
+        savedHeadersTitles = self.getSavedHeadersTitles()
+        self.savedHeadersTitlesCombo = JComboBox(savedHeadersTitles)
+        self.savedHeadersTitlesCombo.addActionListener(savedHeaderChange(self))
+        self.savedHeadersTitlesCombo.setBounds(10, 75, 300, 30)
+
         self.replaceString = JTextArea("Cookie: Insert=injected; cookie=or;\nHeader: here", 5, 30)
         self.replaceString.setWrapStyleWord(True)
         self.replaceString.setLineWrap(True)
         scrollReplaceString = JScrollPane(self.replaceString)
         scrollReplaceString.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
-        scrollReplaceString.setBounds(10, 80, 470, 150)
+        scrollReplaceString.setBounds(10, 110, 470, 150)
 
         self.fetchButton = JButton("Fetch cookies from last request",
                                    actionPerformed=self.fetchCookies)
         self.fetchButton.setEnabled(False)
-        self.fetchButton.setBounds(10, 235, 250, 30)
+        self.fetchButton.setBounds(10, 265, 250, 30)
 
         self.filtersTabs = JTabbedPane()
         self.filtersTabs.addTab("Enforcement Detector", self.EDPnl)
@@ -463,7 +479,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.filtersTabs.addTab("Save/Restore", self.exportPnl)
 
         self.filtersTabs.setSelectedIndex(2)
-        self.filtersTabs.setBounds(0, 280, 2000, 700)
+        self.filtersTabs.setBounds(0, 300, 2000, 700)
         
 
         self.pnl = JPanel()
@@ -472,6 +488,8 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.pnl.add(self.startButton)
         self.pnl.add(self.clearButton)
         self.pnl.add(scrollReplaceString)
+        self.pnl.add(self.saveHeadersButton)
+        self.pnl.add(self.savedHeadersTitlesCombo)
         self.pnl.add(self.fetchButton)
         self.pnl.add(startLabel)
         self.pnl.add(self.autoScroll)
@@ -513,9 +531,14 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         copyURLitem.addActionListener(copySelectedURL(self))
         retestSelecteditem = JMenuItem("Retest selected request")
         retestSelecteditem.addActionListener(retestSelectedRequest(self))
+        deleteSelectedItem = JMenuItem("Delete")
+        deleteSelectedItem.addActionListener(deleteSelectedRequest(self))
+
+
         self.menu = JPopupMenu("Popup")
         self.menu.add(copyURLitem)
         self.menu.add(retestSelecteditem)
+        # self.menu.add(deleteSelectedItem) disabling this feature until bug will be fixed.
 
         self.tabs = JTabbedPane()
         self._requestViewer = self._callbacks.createMessageEditor(self, False)
@@ -628,6 +651,18 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
             if ("Scope items" not in valt) and ("Content-Len" not in valt):
                 self.IFText.setText(val)
             self.IFModel.remove(index)
+
+    def getSavedHeadersTitles(self):
+        titles = []
+        for savedHeaderObj in self.savedHeaders:
+            titles.append(savedHeaderObj['title'])
+        return titles
+
+    def saveHeaders(self, event):
+        savedHeadersTitle = JOptionPane.showInputDialog("Please provide saved headers title:")
+        self.savedHeaders.append({'title': savedHeadersTitle, 'headers': self.replaceString.getText()})
+        self.savedHeadersTitlesCombo.setModel(DefaultComboBoxModel(self.getSavedHeadersTitles()))
+        self.savedHeadersTitlesCombo.getModel().setSelectedItem(savedHeadersTitle)
 
     def clearList(self, event):
         self._lock.acquire()
@@ -979,7 +1014,18 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     #
     # implement IHttpListener
     #
-    def processHttpMessage(self, toolFlag, messageIsRequest, messageInfo):
+    def processHttpMessage(self, toolFlag, messageIsRequest, messageInfo):      
+        for i in range(0, self.IFList.getModel().getSize()):
+            if self.IFList.getModel().getElementAt(i).split(":")[0] == "Ignore spider requests":
+                if (toolFlag == self._callbacks.TOOL_SPIDER):
+                    return
+            if self.IFList.getModel().getElementAt(i).split(":")[0] == "Ignore proxy requests":
+                if (toolFlag == self._callbacks.TOOL_PROXY):
+                    return
+            if self.IFList.getModel().getElementAt(i).split(":")[0] == "Ignore target requests":
+                if (toolFlag == self._callbacks.TOOL_TARGET):
+                    return
+
         cookies = self.getCookieFromMessage(messageInfo)
         if cookies:
             self.lastCookies = cookies
@@ -1343,6 +1389,32 @@ class retestSelectedRequest(ActionListener):
 
     def actionPerformed(self, e):
         start_new_thread(self._extender.checkAuthorization, (self._extender._currentlyDisplayedItem._originalrequestResponse, self._extender._helpers.analyzeResponse(self._extender._currentlyDisplayedItem._originalrequestResponse.getResponse()).getHeaders(), self._extender.doUnauthorizedRequest.isSelected()))
+
+class deleteSelectedRequest(ActionListener):
+    def __init__(self, extender):
+        self._extender = extender
+
+    def actionPerformed(self, e): # bug after first delete!
+        pass
+        # logBackup = self._extender._log[:]
+        # self._extender.clearList(self)
+        # self._extender._lock.acquire()
+        # print self._extender._currentlyDisplayedItem
+        # logBackup.remove(self._extender._currentlyDisplayedItem)
+        # self._extender._log = logBackup
+        # row = self._extender._log.size()
+        # start_new_thread(self._extender.UpdateTableEDT, (self._extender,"insert",row,row))
+        # SwingUtilities.invokeLater(UpdateTableEDT(self,"delete",0, oldSize - 1))
+        # self._extender._lock.release()
+
+class savedHeaderChange(ActionListener):
+    def __init__(self, extender):
+        self._extender = extender
+
+    def actionPerformed(self, e):
+        selectedTitle = self._extender.savedHeadersTitlesCombo.getSelectedItem()
+        headers = [x for x in self._extender.savedHeaders if x['title'] == selectedTitle]
+        self._extender.replaceString.setText(headers[0]['headers'])
 
 class handleMenuItems(ActionListener):
     def __init__(self, extender, messageInfo, menuName):
