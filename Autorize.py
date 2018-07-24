@@ -609,7 +609,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         index = self.EDList.getSelectedIndex()
         if not index == -1:
             valt = self.EDList.getSelectedValue()
-            val = valt.split(":")[1].strip()
+            val = valt.split(":", 1)[1].strip()
             if ("Scope items" not in valt) and ("Content-Len" not in valt):
                 self.EDText.setText(val)
             self.EDModel.remove(index)
@@ -628,7 +628,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         index = self.EDListUnauth.getSelectedIndex()
         if not index == -1:
             valt = self.EDListUnauth.getSelectedValue()
-            val = valt.split(":")[1].strip()
+            val = valt.split(":", 1)[1].strip()
             if ("Scope items" not in valt) and ("Content-Len" not in valt):
                 self.EDTextUnauth.setText(val)
             self.EDModelUnauth.remove(index)
@@ -647,7 +647,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         index = self.IFList.getSelectedIndex()
         if not index == -1:
             valt = self.IFList.getSelectedValue()
-            val = valt.split(":")[1].strip()
+            val = valt.split(":", 1)[1].strip()
             if ("Scope items" not in valt) and ("Content-Len" not in valt):
                 self.IFText.setText(val)
             self.IFModel.remove(index)
