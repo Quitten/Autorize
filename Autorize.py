@@ -360,7 +360,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
     def initInterceptionFilters(self):
         """  init interception filters tab
         """
-        self.savedHeaders = [{"title": "Temporarly headers", "headers": "Cookie: Insert=injected; cookie=or;\nHeader: here"}]
+        self.savedHeaders = [{"title": "Temporarily headers", "headers": "Cookie: Insert=injected; cookie=or;\nHeader: here"}]
         # IFStrings has to contains : character
         IFStrings = ["Scope items only: (Content is not required)", 
                      "URL Contains (simple string): ",
