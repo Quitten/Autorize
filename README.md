@@ -43,7 +43,7 @@ The enforcement detector filters will allow Autorize to detect authentication an
 
 For example, if there is a request enforcement status that is detected as "Authorization enforced??? (please configure enforcement detector)" it is possible to investigate the modified/original/unauthenticated response and see that the modified response body includes the string "You are not authorized to perform action", so you can add a filter with the fingerprint value "You are not authorized to perform action", so Autorize will look for this fingerprint and will automatically detect that authorization is enforced. It is possible to do the same by defining content-length filter or fingerprint in headers.
 
-# Interception Fitlers
+# Interception Filters
 The interception filter allows you configure what domains you want to be intercepted by Autorize plugin, you can determine by blacklist/whitelist/regex or items in Burp's scope in order to avoid unnesseary domains to be intercepted by Autorize and work more organized.
 
 Example of interception filters (Note that there is default filter to avoid scripts and images):
