@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
+
 from burp import ITab
 from burp import IBurpExtender
 from burp import IHttpListener
