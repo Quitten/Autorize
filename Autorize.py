@@ -532,6 +532,12 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         copyURLitem = JMenuItem("Copy URL")
         copyURLitem.addActionListener(copySelectedURL(self))
+
+        ## PR
+        sendRequestMenu = JMenuItem("Send to Repeater")
+        sendRequestMenu.addActionListener(sendRequestRepeater(self, self._callbacks))
+
+
         retestSelecteditem = JMenuItem("Retest selected request")
         retestSelecteditem.addActionListener(retestSelectedRequest(self))
         deleteSelectedItem = JMenuItem("Delete")
@@ -539,6 +545,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
 
         self.menu = JPopupMenu("Popup")
+        self.menu.add(sendRequestMenu)
         self.menu.add(copyURLitem)
         self.menu.add(retestSelecteditem)
         # self.menu.add(deleteSelectedItem) disabling this feature until bug will be fixed.
@@ -1375,6 +1382,19 @@ class autoScrollListener(AdjustmentListener):
     def adjustmentValueChanged(self, e):
         if self._extender.autoScroll.isSelected() is True:
             e.getAdjustable().setValue(e.getAdjustable().getMaximum())
+
+class sendRequestRepeater(ActionListener):
+    def __init__(self, extender, callbacks):
+        self._extender = extender
+        self._callbacks = callbacks
+
+    def actionPerformed(self, e):
+        request = self._extender._currentlyDisplayedItem._requestResponse
+        host = request.getHttpService().getHost()
+        port = request.getHttpService().getPort()
+        
+        self._callbacks.sendToRepeater(host, port, 1, request.getRequest(), "Autorize");
+
 
 class copySelectedURL(ActionListener):
     def __init__(self, extender):
