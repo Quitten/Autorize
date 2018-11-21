@@ -110,7 +110,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         self.currentRequestNumber = 1
         
-        print("Thank you for installing Autorize v0.16 extension")
+        print("Thank you for installing Autorize v0.17 extension")
         print("Created by Barak Tawily and Federico Dotta" )
         print("Contributors: Barak Tawily, Federico Dotta, mgeeky, Marcin Woloszyn")
         print("\nGithub:\nhttps://github.com/Quitten/Autorize")
@@ -1313,13 +1313,22 @@ class Table(JTable):
 
         if col == 6 or col == 7:
             if value == "Bypassed!":
-                comp.setBackground(Color(255,135,31))
+                comp.setBackground(Color(179, 0, 0))
+                comp.setForeground(Color.BLACK)
             elif value == "Is enforced??? (please configure enforcement detector)" :
-                comp.setBackground(Color(255,255,133))
+                comp.setBackground(Color(255, 153, 51))
+                comp.setForeground(Color.BLACK)
             elif value == "Enforced!":
-                comp.setBackground(Color(192,250,20))
+                comp.setBackground(Color(0, 153, 51))
+                comp.setForeground(Color.BLACK)
         else:
-            comp.setBackground(Color.white)
+            comp.setForeground(Color.BLACK)
+            comp.setBackground(Color.LIGHT_GRAY)
+
+        selectedRow = self._extender.logTable.getSelectedRow()
+        if selectedRow == row:
+          comp.setBackground(Color.WHITE)
+          comp.setForeground(Color.BLACK)
 
         return comp
     
