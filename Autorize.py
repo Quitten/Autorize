@@ -113,7 +113,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.currentRequestNumber = 1
         
         print("""
-Thank you for installing Autorize v0.16 extension
+Thank you for installing Autorize v0.18 extension
 Created by Barak Tawily
 Contributors: Barak Tawily, Federico Dotta, mgeeky, Marcin Woloszyn
 
