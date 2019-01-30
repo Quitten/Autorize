@@ -1156,7 +1156,7 @@ Github:\nhttps://github.com/Quitten/Autorize
 
         if oldStatusCode == newStatusCode:
             if oldContentLen == newContentLen:
-                impression = self._enfocementStatuses[0]
+                impression = self.BYPASSSED_STR
             
             if len(filters) > 0:
 
@@ -1236,12 +1236,12 @@ Github:\nhttps://github.com/Quitten/Autorize
                 auth_enforced = 0
 
             if auth_enforced:
-                impression = self._enfocementStatuses[2]
+                impression = self.ENFORCED_STR
             else:
-                impression = self._enfocementStatuses[1]
+                impression = self.IS_ENFORCED_STR
                          
         else:
-            impression = self._enfocementStatuses[2]
+            impression = self.ENFORCED_STR
 
         return impression
 
