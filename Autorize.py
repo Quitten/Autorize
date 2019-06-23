@@ -933,8 +933,10 @@ Github:\nhttps://github.com/Quitten/Autorize
             ret = LinkedList()
             requestMenuItem = JMenuItem("Send request to Autorize")
             cookieMenuItem = JMenuItem("Send cookie to Autorize")
-            requestMenuItem.addActionListener(handleMenuItems(self,responses[0], "request"))
-            cookieMenuItem.addActionListener(handleMenuItems(self, responses[0], "cookie"))   
+
+            for response in responses:
+                requestMenuItem.addActionListener(handleMenuItems(self,response, "request"))
+                cookieMenuItem.addActionListener(handleMenuItems(self, response, "cookie"))   
             ret.add(requestMenuItem)
             ret.add(cookieMenuItem)
             return ret
