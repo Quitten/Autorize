@@ -538,8 +538,11 @@ Github:\nhttps://github.com/Quitten/Autorize
         copyURLitem = JMenuItem("Copy URL")
         copyURLitem.addActionListener(copySelectedURL(self))
 
-        sendRequestMenu = JMenuItem("Send to Repeater")
-        sendRequestMenu.addActionListener(sendRequestRepeater(self, self._callbacks))
+        sendRequestMenu = JMenuItem("Send Original Request to Repeater")
+        sendRequestMenu.addActionListener(sendRequestRepeater(self, self._callbacks, True))
+
+        sendRequestMenu2 = JMenuItem("Send Modified Request to Repeater")
+        sendRequestMenu2.addActionListener(sendRequestRepeater(self, self._callbacks, False))
 
         retestSelecteditem = JMenuItem("Retest selected request")
         retestSelecteditem.addActionListener(retestSelectedRequest(self))
@@ -549,6 +552,7 @@ Github:\nhttps://github.com/Quitten/Autorize
 
         self.menu = JPopupMenu("Popup")
         self.menu.add(sendRequestMenu)
+        self.menu.add(sendRequestMenu2)
         self.menu.add(copyURLitem)
         self.menu.add(retestSelecteditem)
         # self.menu.add(deleteSelectedItem) disabling this feature until bug will be fixed.
@@ -933,8 +937,10 @@ Github:\nhttps://github.com/Quitten/Autorize
             ret = LinkedList()
             requestMenuItem = JMenuItem("Send request to Autorize")
             cookieMenuItem = JMenuItem("Send cookie to Autorize")
-            requestMenuItem.addActionListener(handleMenuItems(self,responses[0], "request"))
-            cookieMenuItem.addActionListener(handleMenuItems(self, responses[0], "cookie"))   
+
+            for response in responses:
+                requestMenuItem.addActionListener(handleMenuItems(self,response, "request"))
+                cookieMenuItem.addActionListener(handleMenuItems(self, response, "cookie"))   
             ret.add(requestMenuItem)
             ret.add(cookieMenuItem)
             return ret
@@ -1398,12 +1404,16 @@ class autoScrollListener(AdjustmentListener):
             e.getAdjustable().setValue(e.getAdjustable().getMaximum())
 
 class sendRequestRepeater(ActionListener):
-    def __init__(self, extender, callbacks):
+    def __init__(self, extender, callbacks, original):
         self._extender = extender
         self._callbacks = callbacks
+        self.original = original
 
     def actionPerformed(self, e):
-        request = self._extender._currentlyDisplayedItem._requestResponse
+        if self.original:
+                request = self._extender._currentlyDisplayedItem._originalrequestResponse
+        else:
+                request = self._extender._currentlyDisplayedItem._requestResponse
         host = request.getHttpService().getHost()
         port = request.getHttpService().getPort()
         
