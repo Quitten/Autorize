@@ -113,7 +113,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.currentRequestNumber = 1
         
         print("""
-Thank you for installing Autorize v0.18 extension
+Thank you for installing Autorize v0.19 extension
 Created by Barak Tawily
 Contributors: Barak Tawily, Federico Dotta, mgeeky, Marcin Woloszyn
 
@@ -544,6 +544,9 @@ Github:\nhttps://github.com/Quitten/Autorize
         sendRequestMenu2 = JMenuItem("Send Modified Request to Repeater")
         sendRequestMenu2.addActionListener(sendRequestRepeater(self, self._callbacks, False))
 
+        sendResponseMenu = JMenuItem("Send Responses to Comparer")
+        sendResponseMenu.addActionListener(sendResponseComparer(self, self._callbacks))
+
         retestSelecteditem = JMenuItem("Retest selected request")
         retestSelecteditem.addActionListener(retestSelectedRequest(self))
         
@@ -553,6 +556,7 @@ Github:\nhttps://github.com/Quitten/Autorize
         self.menu = JPopupMenu("Popup")
         self.menu.add(sendRequestMenu)
         self.menu.add(sendRequestMenu2)
+        self.menu.add(sendResponseMenu)
         self.menu.add(copyURLitem)
         self.menu.add(retestSelecteditem)
         # self.menu.add(deleteSelectedItem) disabling this feature until bug will be fixed.
@@ -1418,6 +1422,22 @@ class sendRequestRepeater(ActionListener):
         port = request.getHttpService().getPort()
         
         self._callbacks.sendToRepeater(host, port, 1, request.getRequest(), "Autorize");
+
+
+class sendResponseComparer(ActionListener):
+    def __init__(self, extender, callbacks):
+        self._extender = extender
+        self._callbacks = callbacks
+
+    def actionPerformed(self, e):
+        originalResponse = self._extender._currentlyDisplayedItem._originalrequestResponse
+        modifiedResponse = self._extender._currentlyDisplayedItem._requestResponse
+        unauthorizedResponse = self._extender._currentlyDisplayedItem._unauthorizedRequestResponse
+        
+        self._callbacks.sendToComparer(originalResponse.getResponse());
+        self._callbacks.sendToComparer(modifiedResponse.getResponse());
+        self._callbacks.sendToComparer(unauthorizedResponse.getResponse());
+
 
 class copySelectedURL(ActionListener):
     def __init__(self, extender):
