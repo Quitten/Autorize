@@ -257,7 +257,8 @@ Github:\nhttps://github.com/Quitten/Autorize
                      "Body (regex): (enforced message body contains)",
                      "Full response (simple string): (enforced message contains)",
                      "Full response (regex): (enforced message contains)",
-                     "Full response length: (of enforced response)"]
+                     "Full response length: (of enforced response)",
+                     "Status code equals: (numbers only)"]
         self.EDType = JComboBox(EDStrings)
         self.EDType.setBounds(80, 10, 430, 30)
        
@@ -319,7 +320,8 @@ Github:\nhttps://github.com/Quitten/Autorize
                      "Body (regex): (enforced message body contains)",
                      "Full response (simple string): (enforced message contains)",
                      "Full response (regex): (enforced message contains)",
-                     "Full response length: (of enforced response)"]
+                     "Full response length: (of enforced response)",
+                     "Status code equals: (numbers only)"]
         self.EDTypeUnauth = JComboBox(EDStrings)
         self.EDTypeUnauth.setBounds(80, 10, 430, 30)
        
@@ -814,6 +816,18 @@ Github:\nhttps://github.com/Quitten/Autorize
         f.writelines(htmlContent)
         f.close()
 
+    def isStatusCodesReturned(self, messageInfo, statusCodes):
+        firstHeader = self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders()[0]
+        if type(statusCodes) == list:
+            for statusCode in statusCodes:
+                if statusCode in firstHeader:
+                    return True
+        elif type(statusCodes) == str:
+            # single status code
+            if statusCodes in firstHeader:
+                    return True
+        return False
+
     # Save state
     def saveState(self):
 
@@ -1070,9 +1084,8 @@ Github:\nhttps://github.com/Quitten/Autorize
                 # not intercepted
                 if not self.replaceString.getText() in self._helpers.analyzeRequest(messageInfo).getHeaders():
                     if self.ignore304.isSelected():
-                        firstHeader = self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders()[0]
-                        if "304" in firstHeader or "204" in firstHeader:
-                           return
+                        if self.isStatusCodesReturned(messageInfo, ["304", "204"]):
+                            return
 
                     if self.IFList.getModel().getSize() == 0:
                         self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),
@@ -1178,6 +1191,14 @@ Github:\nhttps://github.com/Quitten/Autorize
                     auth_enforced = 0
 
                 for filter in filters:
+                    if str(filter).startswith("Status code equals: "):
+                        statusCode = filter[20:]
+                        if andEnforcementCheck:
+                            if auth_enforced == 0 and self.isStatusCodesReturned(requestResponse, statusCode):
+                                auth_enforced = 1
+                        else:
+                            if auth_enforced == 0 and self.isStatusCodesReturned(requestResponse, statusCode):
+                                auth_enforced = 1
 
                     if str(filter).startswith("Headers (simple string): "):
                         if andEnforcementCheck:
