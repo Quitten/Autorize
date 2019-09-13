@@ -112,8 +112,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         self.currentRequestNumber = 1
         
-        print("""
-Thank you for installing Autorize v0.19 extension
+        print("""Thank you for installing Autorize v0.20 extension
 Created by Barak Tawily
 Contributors: Barak Tawily, Federico Dotta, mgeeky, Marcin Woloszyn
 
@@ -377,6 +376,7 @@ Github:\nhttps://github.com/Quitten/Autorize
                      "URL Contains (regex): ",
                      "URL Not Contains (simple string): ",
                      "URL Not Contains (regex): ",
+                     "Only HTTP methods (newline separated): ",
                      "Ignore spider requests: (Content is not required)",
                      "Ignore proxy requests: (Content is not required)",
                      "Ignore target requests: (Content is not required)"]
@@ -1118,6 +1118,18 @@ Github:\nhttps://github.com/Quitten/Autorize
                                 if not re.search(regex_string, urlString, re.IGNORECASE) is None:
                                     do_the_check = 0
 
+                            if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Not Contains (regex)":
+                                regex_string = self.IFList.getModel().getElementAt(i)[26:]
+                                if not re.search(regex_string, urlString, re.IGNORECASE) is None:
+                                    do_the_check = 0
+
+                            if self.IFList.getModel().getElementAt(i).split(":")[0] == "Only HTTP methods (newline separated)":
+                                filterMethods = self.IFList.getModel().getElementAt(i)[39:].split("\n")
+                                filterMethods = [x.lower() for x in filterMethods]
+                                reqMethod = str(self._helpers.analyzeRequest(messageInfo).getMethod())
+                                if reqMethod.lower() not in filterMethods:
+                                    do_the_check = 0
+                            
                         if do_the_check:
                             self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
 
