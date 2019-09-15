@@ -30,8 +30,10 @@ from javax.swing import DefaultListModel
 from javax.swing import JCheckBoxMenuItem
 from javax.swing import DefaultComboBoxModel
 from javax.swing.border import LineBorder
+from javax.swing.table import TableColumn
 from javax.swing.table import TableRowSorter
 from javax.swing.table import AbstractTableModel
+from javax.swing.table import DefaultTableColumnModel
 from threading import Lock
 from java.io import File
 from java.net import URL
@@ -91,6 +93,10 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
         self.IS_ENFORCED_STR = "Is enforced??? (please configure enforcement detector)"
         self.ENFORCED_STR = "Enforced!"
         
+        self.columnNames = ["ID","Method", "URL", "Orig. Length", "Modif. Length", "Unauth. Length",
+                "Authorization Enforcement Status", "Authorization Unauth. Status", "Orig. Status Code"]
+        self.visibleColumnsObjects = []
+
         self.intercept = 0
         self.lastCookies = ""
 
@@ -124,52 +130,69 @@ Github:\nhttps://github.com/Quitten/Autorize
         """
         init show tab
         """
-
-        filterLModified = JLabel("Modified:")
-        filterLModified.setBounds(10, 10, 100, 30)
-
-        filterLUnauthenticated = JLabel("Unauthenticated:")
-        filterLUnauthenticated.setBounds(250, 10, 100, 30)
-
-        self.showAuthBypassModified = JCheckBox(self.BYPASSSED_STR)
-        self.showAuthBypassModified.setBounds(10, 35, 200, 30)
-        self.showAuthBypassModified.setSelected(True)
-        self.showAuthBypassModified.addItemListener(tabTableFilter(self))
-
-        self.showAuthPotentiallyEnforcedModified = JCheckBox("Is enforced???")
-        self.showAuthPotentiallyEnforcedModified.setBounds(10, 60, 200, 30)
-        self.showAuthPotentiallyEnforcedModified.setSelected(True)
-        self.showAuthPotentiallyEnforcedModified.addItemListener(tabTableFilter(self))
-
-        self.showAuthEnforcedModified = JCheckBox(self.ENFORCED_STR)
-        self.showAuthEnforcedModified.setBounds(10, 85, 200, 30)
-        self.showAuthEnforcedModified.setSelected(True)
-        self.showAuthEnforcedModified.addItemListener(tabTableFilter(self))
-
-        self.showAuthBypassUnauthenticated = JCheckBox(self.BYPASSSED_STR)
-        self.showAuthBypassUnauthenticated.setBounds(250, 35, 200, 30)
-        self.showAuthBypassUnauthenticated.setSelected(True)
-        self.showAuthBypassUnauthenticated.addItemListener(tabTableFilter(self))
-
-        self.showAuthPotentiallyEnforcedUnauthenticated = JCheckBox("Is enforced???")
-        self.showAuthPotentiallyEnforcedUnauthenticated.setBounds(250, 60, 200, 30)
-        self.showAuthPotentiallyEnforcedUnauthenticated.setSelected(True)
-        self.showAuthPotentiallyEnforcedUnauthenticated.addItemListener(tabTableFilter(self))
-
-        self.showAuthEnforcedUnauthenticated = JCheckBox(self.ENFORCED_STR)
-        self.showAuthEnforcedUnauthenticated.setBounds(250, 85, 200, 30)
-        self.showAuthEnforcedUnauthenticated.setSelected(True)
-        self.showAuthEnforcedUnauthenticated.addItemListener(tabTableFilter(self))
-
-        self.showDisabledUnauthenticated = JCheckBox("Disabled")
-        self.showDisabledUnauthenticated.setBounds(250, 110, 200, 30)
-        self.showDisabledUnauthenticated.setSelected(True)
-        self.showDisabledUnauthenticated.addItemListener(tabTableFilter(self))        
-
         self.filterPnl = JPanel()
         self.filterPnl.setLayout(None)
         self.filterPnl.setBounds(0, 0, 1000, 1000)
 
+        visibleColumnsText = JLabel("Visible columns:")
+        visibleColumnsText.setBounds(10, 10, 200, 30)
+
+        height = 10
+        test = self.columnNames
+        for colmnName in self.columnNames:
+            height = height + 25
+            a = JCheckBox(colmnName)
+            a.setBounds(10, height, 200, 30)
+            a.setSelected(True)
+            a.addItemListener(visibleColumnsHandler(self))
+            self.visibleColumnsObjects.append(a)
+            self.filterPnl.add(a)
+
+
+        filterLModified = JLabel("Modified:")
+        filterLModified.setBounds(250, 10, 100, 30)
+
+        filterLUnauthenticated = JLabel("Unauthenticated:")
+        filterLUnauthenticated.setBounds(250, 110, 200, 30)
+
+        self.showAuthBypassModified = JCheckBox(self.BYPASSSED_STR)
+        self.showAuthBypassModified.setBounds(250, 35, 200, 30)
+        self.showAuthBypassModified.setSelected(True)
+        self.showAuthBypassModified.addItemListener(tabTableFilter(self))
+
+        self.showAuthPotentiallyEnforcedModified = JCheckBox("Is enforced???")
+        self.showAuthPotentiallyEnforcedModified.setBounds(250, 60, 200, 30)
+        self.showAuthPotentiallyEnforcedModified.setSelected(True)
+        self.showAuthPotentiallyEnforcedModified.addItemListener(tabTableFilter(self))
+
+        self.showAuthEnforcedModified = JCheckBox(self.ENFORCED_STR)
+        self.showAuthEnforcedModified.setBounds(250, 85, 200, 30)
+        self.showAuthEnforcedModified.setSelected(True)
+        self.showAuthEnforcedModified.addItemListener(tabTableFilter(self))
+
+        self.showAuthBypassUnauthenticated = JCheckBox(self.BYPASSSED_STR)
+        self.showAuthBypassUnauthenticated.setBounds(250, 135, 200, 30)
+        self.showAuthBypassUnauthenticated.setSelected(True)
+        self.showAuthBypassUnauthenticated.addItemListener(tabTableFilter(self))
+
+        self.showAuthPotentiallyEnforcedUnauthenticated = JCheckBox("Is enforced???")
+        self.showAuthPotentiallyEnforcedUnauthenticated.setBounds(250, 160, 200, 30)
+        self.showAuthPotentiallyEnforcedUnauthenticated.setSelected(True)
+        self.showAuthPotentiallyEnforcedUnauthenticated.addItemListener(tabTableFilter(self))
+
+        self.showAuthEnforcedUnauthenticated = JCheckBox(self.ENFORCED_STR)
+        self.showAuthEnforcedUnauthenticated.setBounds(250, 185, 200, 30)
+        self.showAuthEnforcedUnauthenticated.setSelected(True)
+        self.showAuthEnforcedUnauthenticated.addItemListener(tabTableFilter(self))
+
+        self.showDisabledUnauthenticated = JCheckBox("Disabled")
+        self.showDisabledUnauthenticated.setBounds(250, 210, 200, 30)
+        self.showDisabledUnauthenticated.setSelected(True)
+        self.showDisabledUnauthenticated.addItemListener(tabTableFilter(self))        
+
+        
+
+        self.filterPnl.add(visibleColumnsText)
         self.filterPnl.add(filterLModified)
         self.filterPnl.add(filterLUnauthenticated)
         self.filterPnl.add(self.showAuthBypassModified)
@@ -486,7 +509,7 @@ Github:\nhttps://github.com/Quitten/Autorize
         self.filtersTabs.addTab("Enforcement Detector", self.EDPnl)
         self.filtersTabs.addTab("Detector Unauthenticated", self.EDPnlUnauth)
         self.filtersTabs.addTab("Interception Filters", self.filtersPnl)
-        self.filtersTabs.addTab("Table Filter", self.filterPnl)
+        self.filtersTabs.addTab("Table Settings", self.filterPnl)
         self.filtersTabs.addTab("Save/Restore", self.exportPnl)
 
         self.filtersTabs.setSelectedIndex(2)
@@ -513,9 +536,7 @@ Github:\nhttps://github.com/Quitten/Autorize
         """  init autorize tabs
         """
         
-        self.logTable = Table(self)
-
-        #self.logTable.setAutoCreateRowSorter(True)        
+        self.logTable = Table(self)   
 
         tableWidth = self.logTable.getPreferredSize().width        
         self.logTable.getColumn("ID").setPreferredWidth(Math.round(tableWidth / 50 * 2))
@@ -988,8 +1009,7 @@ Github:\nhttps://github.com/Quitten/Autorize
         return 8
 
     def getColumnName(self, columnIndex):
-        data = ['ID','Method', 'URL', 'Orig. Length', 'Modif. Length', "Unauth. Length",
-                "Authorization Enforcement Status", "Authorization Unauth. Status"]
+    	data = self.columnNames
         try:
             return data[columnIndex]
         except IndexError:
@@ -1541,7 +1561,25 @@ class tabTableFilter(ItemListener):
         self._extender = extender
 
     def itemStateChanged(self, e):
+        # bug in here
         self._extender.tableSorter.sort()
+
+class visibleColumnsHandler(ItemListener):
+    def __init__(self, extender):
+        self._extender = extender
+
+    def itemStateChanged(self, e):
+    	table = self._extender.logTable
+    	updatedModel = DefaultTableColumnModel()
+    	for i, obj in enumerate(self._extender.visibleColumnsObjects):
+    		if obj.isSelected():
+    			tc = TableColumn()
+    			tc.setMinWidth(100)
+    			tc.setMaxWidth(1000)
+    			tc.setWidth(200)
+    			tc.setHeaderValue(obj.text)
+    			updatedModel.addColumn(tc)
+    	table.setColumnModel(updatedModel)
 
 class tableFilter(RowFilter):
 
