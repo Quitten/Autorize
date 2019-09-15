@@ -823,7 +823,7 @@ Github:\nhttps://github.com/Quitten/Autorize
             for statusCode in statusCodes:
                 if statusCode in firstHeader:
                     return True
-        elif type(statusCodes) == str:
+        elif type(statusCodes) == str or type(statusCodes) == unicode:
             # single status code
             if statusCodes in firstHeader:
                     return True
@@ -1215,8 +1215,8 @@ Github:\nhttps://github.com/Quitten/Autorize
                     if str(filter).startswith("Status code equals: "):
                         statusCode = filter[20:]
                         if andEnforcementCheck:
-                            if auth_enforced == 0 and self.isStatusCodesReturned(requestResponse, statusCode):
-                                auth_enforced = 1
+                            if auth_enforced == 1 and not self.isStatusCodesReturned(requestResponse, statusCode):
+                                auth_enforced = 0
                         else:
                             if auth_enforced == 0 and self.isStatusCodesReturned(requestResponse, statusCode):
                                 auth_enforced = 1
