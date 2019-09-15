@@ -377,6 +377,7 @@ Github:\nhttps://github.com/Quitten/Autorize
                      "URL Not Contains (simple string): ",
                      "URL Not Contains (regex): ",
                      "Only HTTP methods (newline separated): ",
+                     "Ignore HTTP methods (newline separated): ",
                      "Ignore spider requests: (Content is not required)",
                      "Ignore proxy requests: (Content is not required)",
                      "Ignore target requests: (Content is not required)"]
@@ -1129,6 +1130,14 @@ Github:\nhttps://github.com/Quitten/Autorize
                                 reqMethod = str(self._helpers.analyzeRequest(messageInfo).getMethod())
                                 if reqMethod.lower() not in filterMethods:
                                     do_the_check = 0
+
+                            if self.IFList.getModel().getElementAt(i).split(":")[0] == "Ignore HTTP methods (newline separated)":
+                                filterMethods = self.IFList.getModel().getElementAt(i)[41:].split("\n")
+                                filterMethods = [x.lower() for x in filterMethods]
+                                reqMethod = str(self._helpers.analyzeRequest(messageInfo).getMethod())
+                                if reqMethod.lower() in filterMethods:
+                                    do_the_check = 0
+                            
                             
                         if do_the_check:
                             self.checkAuthorization(messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
