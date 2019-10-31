@@ -13,6 +13,7 @@ from javax.swing import JFrame
 from javax.swing import JLabel
 from javax.swing import JPanel
 from javax.swing import JButton
+from javax.swing import JToggleButton
 from javax.swing import JComboBox
 from javax.swing import JCheckBox
 from javax.swing import JMenuItem
@@ -437,32 +438,29 @@ Github:\nhttps://github.com/Quitten/Autorize
         """  init configuration tab
         """
 
-        self.prevent304 = JCheckBox("Prevent 304 Not Modified status code")
-        self.prevent304.setBounds(280, 25, 300, 30)
+        self.startButton = JToggleButton("Autorize is off",
+                                    actionPerformed=self.startOrStop)
+        self.startButton.setBounds(10, 20, 230, 30)
+
+        self.clearButton = JButton("Clear List", actionPerformed=self.clearList)
+        self.clearButton.setBounds(10, 80, 100, 30)
+
+        self.autoScroll = JCheckBox("Auto Scroll")
+        self.autoScroll.setBounds(145, 80, 130, 30)
 
         self.ignore304 = JCheckBox("Ignore 304/204 status code responses")
         self.ignore304.setBounds(280, 5, 300, 30)
         self.ignore304.setSelected(True)
 
-        self.autoScroll = JCheckBox("Auto Scroll")
-        self.autoScroll.setBounds(145, 30, 130, 30)
+        self.prevent304 = JCheckBox("Prevent 304 Not Modified status code")
+        self.prevent304.setBounds(280, 25, 300, 30)    
 
         self.interceptRequestsfromRepeater = JCheckBox("Intercept requests from Repeater")
-        self.interceptRequestsfromRepeater.setBounds(280, 65, 300, 30)
+        self.interceptRequestsfromRepeater.setBounds(280, 45, 300, 30)
 
         self.doUnauthorizedRequest = JCheckBox("Check unauthenticated")
-        self.doUnauthorizedRequest.setBounds(280, 45, 300, 30)
+        self.doUnauthorizedRequest.setBounds(280, 65, 300, 30)
         self.doUnauthorizedRequest.setSelected(True)
-
-        startLabel = JLabel("Authorization checks:")
-        startLabel.setBounds(145, 05, 140, 30)
-        self.startButton = JButton("Autorize is off",
-                                   actionPerformed=self.startOrStop)
-        self.startButton.setBounds(10, 20, 120, 50)
-        self.startButton.setBackground(Color(255, 100, 91, 255))
-
-        self.clearButton = JButton("Clear List", actionPerformed=self.clearList)
-        self.clearButton.setBounds(10, 80, 100, 30)
 
         self.saveHeadersButton = JButton("Save headers",
                                            actionPerformed=self.saveHeaders)
@@ -505,7 +503,6 @@ Github:\nhttps://github.com/Quitten/Autorize
         self.pnl.add(self.saveHeadersButton)
         self.pnl.add(self.savedHeadersTitlesCombo)
         self.pnl.add(self.fetchButton)
-        self.pnl.add(startLabel)
         self.pnl.add(self.autoScroll)
         self.pnl.add(self.interceptRequestsfromRepeater)
         self.pnl.add(self.ignore304)
@@ -617,11 +614,11 @@ Github:\nhttps://github.com/Quitten/Autorize
     def startOrStop(self, event):
         if self.startButton.getText() == "Autorize is off":
             self.startButton.setText("Autorize is on")
-            self.startButton.setBackground(Color.GREEN)
+            self.startButton.setSelected(True)
             self.intercept = 1
         else:
             self.startButton.setText("Autorize is off")
-            self.startButton.setBackground(Color(255, 100, 91, 255))
+            self.startButton.setSelected(False)
             self.intercept = 0
 
     #
