@@ -112,7 +112,7 @@ class BurpExtender(IBurpExtender, ITab, IHttpListener, IMessageEditorController,
 
         self.currentRequestNumber = 1
         
-        print("""Thank you for installing Autorize v0.20 extension
+        print("""Thank you for installing Autorize v0.21 extension
 Created by Barak Tawily
 Contributors: Barak Tawily, Federico Dotta, mgeeky, Marcin Woloszyn
 
@@ -438,49 +438,52 @@ Github:\nhttps://github.com/Quitten/Autorize
         """
 
         self.prevent304 = JCheckBox("Prevent 304 Not Modified status code")
-        self.prevent304.setBounds(290, 25, 300, 30)
+        self.prevent304.setBounds(280, 25, 300, 30)
 
         self.ignore304 = JCheckBox("Ignore 304/204 status code responses")
-        self.ignore304.setBounds(290, 5, 300, 30)
+        self.ignore304.setBounds(280, 5, 300, 30)
         self.ignore304.setSelected(True)
 
         self.autoScroll = JCheckBox("Auto Scroll")
-        self.autoScroll.setBounds(160, 40, 140, 30)
+        self.autoScroll.setBounds(145, 30, 130, 30)
+
+        self.interceptRequestsfromRepeater = JCheckBox("Intercept requests from Repeater")
+        self.interceptRequestsfromRepeater.setBounds(280, 65, 300, 30)
 
         self.doUnauthorizedRequest = JCheckBox("Check unauthenticated")
-        self.doUnauthorizedRequest.setBounds(290, 45, 300, 30)
+        self.doUnauthorizedRequest.setBounds(280, 45, 300, 30)
         self.doUnauthorizedRequest.setSelected(True)
 
         startLabel = JLabel("Authorization checks:")
-        startLabel.setBounds(10, 10, 140, 30)
+        startLabel.setBounds(145, 05, 140, 30)
         self.startButton = JButton("Autorize is off",
                                    actionPerformed=self.startOrStop)
-        self.startButton.setBounds(160, 10, 120, 30)
+        self.startButton.setBounds(10, 20, 120, 50)
         self.startButton.setBackground(Color(255, 100, 91, 255))
 
         self.clearButton = JButton("Clear List", actionPerformed=self.clearList)
-        self.clearButton.setBounds(10, 40, 100, 30)
+        self.clearButton.setBounds(10, 80, 100, 30)
 
         self.saveHeadersButton = JButton("Save headers",
                                            actionPerformed=self.saveHeaders)
-        self.saveHeadersButton.setBounds(360, 75, 120, 30)
+        self.saveHeadersButton.setBounds(360, 115, 120, 30)
 
         savedHeadersTitles = self.getSavedHeadersTitles()
         self.savedHeadersTitlesCombo = JComboBox(savedHeadersTitles)
         self.savedHeadersTitlesCombo.addActionListener(savedHeaderChange(self))
-        self.savedHeadersTitlesCombo.setBounds(10, 75, 300, 30)
+        self.savedHeadersTitlesCombo.setBounds(10, 115, 300, 30)
 
         self.replaceString = JTextArea("Cookie: Insert=injected; cookie=or;\nHeader: here", 5, 30)
         self.replaceString.setWrapStyleWord(True)
         self.replaceString.setLineWrap(True)
         scrollReplaceString = JScrollPane(self.replaceString)
         scrollReplaceString.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
-        scrollReplaceString.setBounds(10, 110, 470, 150)
+        scrollReplaceString.setBounds(10, 150, 470, 150)
 
         self.fetchButton = JButton("Fetch cookies from last request",
                                    actionPerformed=self.fetchCookies)
         self.fetchButton.setEnabled(False)
-        self.fetchButton.setBounds(10, 265, 250, 30)
+        self.fetchButton.setBounds(10, 305, 250, 30)
 
         self.filtersTabs = JTabbedPane()
         self.filtersTabs.addTab("Enforcement Detector", self.EDPnl)
@@ -490,7 +493,7 @@ Github:\nhttps://github.com/Quitten/Autorize
         self.filtersTabs.addTab("Save/Restore", self.exportPnl)
 
         self.filtersTabs.setSelectedIndex(2)
-        self.filtersTabs.setBounds(0, 300, 2000, 700)
+        self.filtersTabs.setBounds(0, 350, 2000, 700)
         
 
         self.pnl = JPanel()
@@ -504,10 +507,12 @@ Github:\nhttps://github.com/Quitten/Autorize
         self.pnl.add(self.fetchButton)
         self.pnl.add(startLabel)
         self.pnl.add(self.autoScroll)
+        self.pnl.add(self.interceptRequestsfromRepeater)
         self.pnl.add(self.ignore304)
         self.pnl.add(self.prevent304)
         self.pnl.add(self.doUnauthorizedRequest)
         self.pnl.add(self.filtersTabs)
+
 
     def initTabs(self):
         """  init autorize tabs
@@ -1063,7 +1068,7 @@ Github:\nhttps://github.com/Quitten/Autorize
             self.lastCookies = cookies
             self.fetchButton.setEnabled(True)
 
-        if (self.intercept == 1) and (toolFlag == self._callbacks.TOOL_PROXY):
+        if self.intercept == 1 and (toolFlag == self._callbacks.TOOL_PROXY or (toolFlag == self._callbacks.TOOL_REPEATER and self.interceptRequestsfromRepeater.isSelected())):
             if self.prevent304.isSelected():
                 if messageIsRequest:
                     requestHeaders = list(self._helpers.analyzeRequest(messageInfo).getHeaders())
