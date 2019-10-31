@@ -18,13 +18,12 @@ Autorize is an automatic authorization enforcement detection extension for Burp 
 2.	Open the configuration tab (Autorize -> Configuration).
 3.	Get your low-privileged user authorization token header (Cookie / Authorization) and copy it into the textbox containing the text "Insert injected header here".
 **Note**: Headers inserted here will be replaced if present or added if not.
-4.  Uncheck "Check unauthenticated" if the authentication test is not required (request without any cookies, to check for authentication enforcement in addiction to authorization enforcement with the cookies of low-privileged user)
-5.  Check "Intercept requests from Repeater" to also intercept the requests that are sent through the Repeater. 
-6.	Click on "Intercept is off" to start intercepting the traffic in order to allow Autorize to check for authorization enforcement.
-7.	Open a browser and configure the proxy settings so the traffic will be passed to Burp.
-8.	Browse to the application you want to test with a high privileged user.
-9.	The Autorize table will show you the request's URL and enforcement status.
-10.	It is possible to click on a specific URL and see the original/modified/unauthenticated request/response in order to investigate the differences.
+4.  Uncheck "Check unauthenticated" if the authentication test is not required (request without any cookies, to check for authentication enforcement)
+5.	Click on "Intercept is off" to start intercepting the traffic in order to allow Autorize to check for authorization enforcement.
+6.	Open a browser and configure the proxy settings so the traffic will be passed to Burp.
+7.	Browse to the application you want to test with a high privileged user.
+8.	The Autorize table will show you the request's URL and enforcement status.
+9.	It is possible to click on a specific URL and see the original/modified/unauthenticated request/response in order to investigate the differences.
 
 
 # Authorization Enforcement Status
