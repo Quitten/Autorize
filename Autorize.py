@@ -578,9 +578,10 @@ Github:\nhttps://github.com/Quitten/Autorize
         self.filtersTabs.addTab("Enforcement Detector", self.EDPnl)
         self.filtersTabs.addTab("Detector Unauthenticated", self.EDPnlUnauth)
         self.filtersTabs.addTab("Interception Filters", self.filtersPnl)
+        self.filtersTabs.addTab("Match/Replace", self.MRPnl)
         self.filtersTabs.addTab("Table Filter", self.filterPnl)
         self.filtersTabs.addTab("Save/Restore", self.exportPnl)
-        self.filtersTabs.addTab("Match/Replace", self.MRPnl)
+        
 
         self.filtersTabs.setSelectedIndex(2)
         self.filtersTabs.setBounds(0, 350, 2000, 700)
