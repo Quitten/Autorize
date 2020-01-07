@@ -486,7 +486,7 @@ Github:\nhttps://github.com/Quitten/Autorize
 
         # Adding some default interception filters
         # self.IFModel.addElement("Scope items only: (Content is not required)") # commented for better first impression.
-        self.IFModel.addElement("URL Not Contains (regex): \\.js|css|png|jpg|jpeg|gif|woff|map|bmp|ico$")
+        self.IFModel.addElement("URL Not Contains (regex): \\.js|\\.css|\\.png|\\.jpg|\\.svg|\\.jpeg|\\.gif|\\.woff|\\.map|\\.bmp|\\.ico$")
         self.IFModel.addElement("Ignore spider requests: ")
         
         self.IFText = JTextArea("", 5, 30)
