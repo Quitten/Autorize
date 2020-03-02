@@ -1,13 +1,15 @@
+import sys
+sys.path.append("..")
+
+from javax.swing.table import TableRowSorter
 from javax.swing import JSplitPane
 from javax.swing import JMenuItem
 from javax.swing import JScrollPane
 from javax.swing import JPopupMenu
 from javax.swing import JTabbedPane
-from javax.swing.table import TableRowSorter
-from javax.swing.table import AbstractTableModel
 from java.lang import Math
 
-from table import Table, LogEntry, tableFilter, autoScrollListener, copySelectedURL, \
+from table.table import Table, LogEntry, tableFilter, autoScrollListener, copySelectedURL, \
     sendRequestRepeater, sendResponseComparer, retestSelectedRequest, deleteSelectedRequest
 
 def init_tabs(self):

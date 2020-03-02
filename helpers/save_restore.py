@@ -1,17 +1,15 @@
+import sys
+sys.path.append("..")
 
-from javax.swing import JLabel
-from javax.swing import JComboBox
-from javax.swing import JLabel
-from javax.swing import JButton
-from javax.swing import JPanel
-from javax.swing import JFrame
-from java.awt import Font
-from javax.swing import JFileChooser
-from java.io import File
-import csv, base64, sys
-from table import LogEntry, UpdateTableEDT
-from javax.swing import SwingUtilities
 from burp import IHttpRequestResponse
+
+from javax.swing import SwingUtilities
+from javax.swing import JFileChooser
+from javax.swing import JFrame
+from java.io import File
+
+from table.table import LogEntry, UpdateTableEDT
+import csv, base64, sys
 
 # This code is necessary to maximize the csv field limit for the save and
 # restore functionality

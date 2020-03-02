@@ -1,11 +1,11 @@
-from javax.swing import JLabel
+from javax.swing import JFileChooser
 from javax.swing import JComboBox
-from javax.swing import JLabel
 from javax.swing import JButton
+from javax.swing import JLabel
+from javax.swing import JLabel
 from javax.swing import JPanel
 from javax.swing import JFrame
 from java.awt import Font
-from javax.swing import JFileChooser
 from java.io import File
 
 class Export():

@@ -1,6 +1,9 @@
-from http import getCookieFromMessage, isStatusCodesReturned, makeMessage, makeRequest, getResponseContentLength
-from save_restore import IHttpRequestResponseImplementation
-from table import LogEntry, UpdateTableEDT
+import sys
+sys.path.append("..")
+
+from helpers.http import getCookieFromMessage, isStatusCodesReturned, makeMessage, makeRequest, getResponseContentLength
+from helpers.save_restore import IHttpRequestResponseImplementation
+from table.table import LogEntry, UpdateTableEDT
 from java.awt.event import ActionListener
 from javax.swing import SwingUtilities
 from thread import start_new_thread

@@ -1,15 +1,14 @@
-from javax.swing import JTable
-from java.awt.event import MouseAdapter
-from java.awt import Color
-from java.awt.event import ActionListener
 from java.awt.event import AdjustmentListener
+from java.awt.event import ActionListener
+from java.awt.event import MouseAdapter
+from java.awt.event import ItemListener
 from javax.swing import RowFilter
-from java.lang import Runnable
-
 from javax.swing import JCheckBox
+from javax.swing import JTable
 from javax.swing import JLabel
 from javax.swing import JPanel
-from java.awt.event import ItemListener
+from java.lang import Runnable
+from java.awt import Color
 
 def init_filter(self):
         """

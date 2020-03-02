@@ -16,14 +16,14 @@ from java.lang import String
 from threading import Lock
 from java.net import URL
 
-from tabs import init_tabs
-from export import Export
-from match_replace import init_match_replace
-from configuration_tab import ConfigurationTab
-from authorization import handle_message, handleMenuItems
-from interception_filters import init_interception_filters
-from table import init_filter
-from enforcement_detector import init_enforcement_detector, init_enforcement_detector_unauthorized
+from gui.enforcement_detector import init_enforcement_detector, init_enforcement_detector_unauthorized
+from authorization.authorization import handle_message, handleMenuItems
+from gui.interception_filters import init_interception_filters
+from gui.configuration_tab import ConfigurationTab
+from gui.match_replace import init_match_replace
+from table.table import init_filter
+from gui.tabs import init_tabs
+from gui.export import Export
 
 #TODO
 # - Disable buttons when saving state/restoring state/export
