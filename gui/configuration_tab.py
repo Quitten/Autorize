@@ -3,6 +3,7 @@ sys.path.append("..")
 
 from javax.swing import DefaultComboBoxModel
 from java.awt.event import ActionListener
+from javax.swing import SwingUtilities
 from javax.swing import JToggleButton
 from javax.swing import JScrollPane
 from javax.swing import JTabbedPane
@@ -13,7 +14,7 @@ from javax.swing import JCheckBox
 from javax.swing import JButton
 from javax.swing import JPanel
 
-from table.table import clearList
+from table.table import UpdateTableEDT
 
 class ConfigurationTab():
     def __init__(self, extender):
@@ -27,7 +28,7 @@ class ConfigurationTab():
                                     actionPerformed=self.startOrStop)
         self._extender.startButton.setBounds(10, 20, 230, 30)
 
-        self._extender.clearButton = JButton("Clear List", actionPerformed=clearList)
+        self._extender.clearButton = JButton("Clear List", actionPerformed=self.clearList)
         self._extender.clearButton.setBounds(10, 80, 100, 30)
         self._extender.autoScroll = JCheckBox("Auto Scroll")
         self._extender.autoScroll.setBounds(145, 80, 130, 30)
@@ -51,7 +52,7 @@ class ConfigurationTab():
 
         savedHeadersTitles = self.getSavedHeadersTitles()
         self._extender.savedHeadersTitlesCombo = JComboBox(savedHeadersTitles)
-        self._extender.savedHeadersTitlesCombo.addActionListener(savedHeaderChange(self))
+        self._extender.savedHeadersTitlesCombo.addActionListener(SavedHeaderChange(self._extender))
         self._extender.savedHeadersTitlesCombo.setBounds(10, 115, 300, 30)
 
         self._extender.replaceString = JTextArea("Cookie: Insert=injected; cookie=or;\nHeader: here", 5, 30)
@@ -74,11 +75,9 @@ class ConfigurationTab():
         self._extender.filtersTabs.addTab("Match/Replace", self._extender.MRPnl)
         self._extender.filtersTabs.addTab("Table Filter", self._extender.filterPnl)
         self._extender.filtersTabs.addTab("Save/Restore", self._extender.exportPnl)
-        
 
         self._extender.filtersTabs.setSelectedIndex(2)
         self._extender.filtersTabs.setBounds(0, 350, 2000, 700)
-        
 
         self._extender.pnl = JPanel()
         self.pnl = self._extender.pnl
@@ -106,6 +105,13 @@ class ConfigurationTab():
             self._extender.startButton.setText("Autorize is off")
             self._extender.startButton.setSelected(False)
             self._extender.intercept = 0
+    
+    def clearList(self, event):
+        self._extender._lock.acquire()
+        oldSize = self._extender._log.size()
+        self._extender._log.clear()
+        SwingUtilities.invokeLater(UpdateTableEDT(self._extender,"delete",0, oldSize - 1))
+        self._extender._lock.release()
 
     def saveHeaders(self, event):
         savedHeadersTitle = JOptionPane.showInputDialog("Please provide saved headers title:")
@@ -123,7 +129,7 @@ class ConfigurationTab():
         if self._extender.lastCookies:
             self._extender.replaceString.setText(self._extender.lastCookies)
 
-class savedHeaderChange(ActionListener):
+class SavedHeaderChange(ActionListener):
     def __init__(self, extender):
         self._extender = extender
 

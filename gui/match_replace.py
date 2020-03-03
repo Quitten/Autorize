@@ -13,7 +13,11 @@ from javax.swing.border import LineBorder
 
 import re
 
-def init_match_replace(self):
+class MatchReplace():
+    def __init__(self, extender):
+        self._extender = extender
+    
+    def draw(self):
         """ init the match/replace tab
         """
         #todo add an option to ignore large requests 
@@ -50,63 +54,63 @@ def init_match_replace(self):
         MRLabelList = JLabel("Filter List:")
         MRLabelList.setBounds(column1X, row5Y, labelWidth, labelHeight)
 
-        self.MRType = JComboBox(MRStrings)
-        self.MRType.setBounds(column2X, row1Y, editWidth, labelHeight)
+        self._extender.MRType = JComboBox(MRStrings)
+        self._extender.MRType.setBounds(column2X, row1Y, editWidth, labelHeight)
        
-        self.MText = JTextArea("", 5, 30)
-        scrollMText = JScrollPane(self.MText)
+        self._extender.MText = JTextArea("", 5, 30)
+        scrollMText = JScrollPane(self._extender.MText)
         scrollMText.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         scrollMText.setBounds(column2X, row2Y, editWidth, editHeight)
 
-        self.RText = JTextArea("", 5, 30)
-        scrollRText = JScrollPane(self.RText)
+        self._extender.RText = JTextArea("", 5, 30)
+        scrollRText = JScrollPane(self._extender.RText)
         scrollRText.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         scrollRText.setBounds(column2X, row3Y, editWidth, editHeight)
 
         # i couldn't figure out how to have a model that contained anythin other than a string
         # so i'll use 2 models, one with the data and one for the JList
-        self.badProgrammerMRModel = {}
-        self.MRModel = DefaultListModel()
-        self.MRList = JList(self.MRModel)
+        self._extender.badProgrammerMRModel = {}
+        self._extender.MRModel = DefaultListModel()
+        self._extender.MRList = JList(self._extender.MRModel)
 
-        scrollMRList = JScrollPane(self.MRList)
+        scrollMRList = JScrollPane(self._extender.MRList)
         scrollMRList.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         scrollMRList.setBounds(column2X, row5Y, editWidth, editHeight)
         scrollMRList.setBorder(LineBorder(Color.BLACK)) 
 
-        self.MRAdd = JButton("Add filter", actionPerformed=addMRFilter) 
-        self.MRAdd.setBounds(column2X, row4Y, buttonWidth, buttonHeight)
-        self.MRDel = JButton("Remove filter", actionPerformed=delMRFilter) 
-        self.MRDel.setBounds(column3X, row5Y, buttonWidth, buttonHeight)
-        self.MRMod = JButton("Modify filter", actionPerformed=modMRFilter)
-        self.MRMod.setBounds(column3X, row5Y + buttonHeight + padding, buttonWidth, buttonHeight)
+        self._extender.MRAdd = JButton("Add filter", actionPerformed=self.addMRFilter) 
+        self._extender.MRAdd.setBounds(column2X, row4Y, buttonWidth, buttonHeight)
+        self._extender.MRDel = JButton("Remove filter", actionPerformed=self.delMRFilter) 
+        self._extender.MRDel.setBounds(column3X, row5Y, buttonWidth, buttonHeight)
+        self._extender.MRMod = JButton("Modify filter", actionPerformed=self.modMRFilter)
+        self._extender.MRMod.setBounds(column3X, row5Y + buttonHeight + padding, buttonWidth, buttonHeight)
 
-        self.MRFeedback = JLabel("")
-        self.MRFeedback.setBounds(column1X, row6Y, column3X + buttonWidth, labelHeight)
+        self._extender.MRFeedback = JLabel("")
+        self._extender.MRFeedback.setBounds(column1X, row6Y, column3X + buttonWidth, labelHeight)
 
-        self.MRPnl = JPanel()
-        self.MRPnl.setLayout(None)
-        self.MRPnl.setBounds(0, 0, 1000, 1000)
-        self.MRPnl.add(MRTypeLabel)
-        self.MRPnl.add(self.MRType)
-        self.MRPnl.add(MContent)
-        self.MRPnl.add(scrollMText)
-        self.MRPnl.add(RContent)
-        self.MRPnl.add(scrollRText)
-        self.MRPnl.add(self.MRAdd)
-        self.MRPnl.add(MRLabelList)
-        self.MRPnl.add(scrollMRList)
-        self.MRPnl.add(self.MRDel)
-        self.MRPnl.add(self.MRMod)
-        self.MRPnl.add(self.MRFeedback)
+        self._extender.MRPnl = JPanel()
+        self._extender.MRPnl.setLayout(None)
+        self._extender.MRPnl.setBounds(0, 0, 1000, 1000)
+        self._extender.MRPnl.add(MRTypeLabel)
+        self._extender.MRPnl.add(self._extender.MRType)
+        self._extender.MRPnl.add(MContent)
+        self._extender.MRPnl.add(scrollMText)
+        self._extender.MRPnl.add(RContent)
+        self._extender.MRPnl.add(scrollRText)
+        self._extender.MRPnl.add(self._extender.MRAdd)
+        self._extender.MRPnl.add(MRLabelList)
+        self._extender.MRPnl.add(scrollMRList)
+        self._extender.MRPnl.add(self._extender.MRDel)
+        self._extender.MRPnl.add(self._extender.MRMod)
+        self._extender.MRPnl.add(self._extender.MRFeedback)
 
-def addMRFilter(self, event):
-        typeName = self.MRType.getSelectedItem()
-        match = self.MText.getText()
-        replace = self.RText.getText()
+    def addMRFilter(self, event):
+        typeName = self._extender.MRType.getSelectedItem()
+        match = self._extender.MText.getText()
+        replace = self._extender.RText.getText()
         key = typeName + " " + match + "->" + replace
-        if key in self.badProgrammerMRModel:
-            self.MRFeedback.setText("Match/Replace already exists")
+        if key in self._extender.badProgrammerMRModel:
+            self._extender.MRFeedback.setText("Match/Replace already exists")
             return
 
         regexMatch = None
@@ -114,26 +118,26 @@ def addMRFilter(self, event):
             if "(regex)" in typeName :
                 regexMatch = re.compile(match)
         except re.error:
-            self.MRFeedback.setText("ERROR: Invalid regex")
+            self._extender.MRFeedback.setText("ERROR: Invalid regex")
             return
-        self.badProgrammerMRModel[key] = {"match": match, "regexMatch": regexMatch, "replace" : replace, "type": typeName}
-        self.MRModel.addElement(key)
-        self.MText.setText("")
-        self.RText.setText("")
-        self.MRFeedback.setText("")
+        self._extender.badProgrammerMRModel[key] = {"match": match, "regexMatch": regexMatch, "replace" : replace, "type": typeName}
+        self._extender.MRModel.addElement(key)
+        self._extender.MText.setText("")
+        self._extender.RText.setText("")
+        self._extender.MRFeedback.setText("")
 
-def delMRFilter(self, event):
-        index = self.MRList.getSelectedIndex()
+    def delMRFilter(self, event):
+        index = self._extender.MRList.getSelectedIndex()
         if not index == -1:
-            key = self.MRList.getSelectedValue()
-            del self.badProgrammerMRModel[key]
-            self.MRList.getModel().remove(index)
+            key = self._extender.MRList.getSelectedValue()
+            del self._extender.badProgrammerMRModel[key]
+            self._extender.MRList.getModel().remove(index)
     
-def modMRFilter(self, event):
-        index = self.MRList.getSelectedIndex()
+    def modMRFilter(self, event):
+        index = self._extender.MRList.getSelectedIndex()
         if not index == -1:
-            key = self.MRList.getSelectedValue()
-            self.MRType.getModel().setSelectedItem(self.badProgrammerMRModel[key]["type"])
-            self.MText.setText(self.badProgrammerMRModel[key]["match"])
-            self.RText.setText(self.badProgrammerMRModel[key]["replace"])
+            key = self._extender.MRList.getSelectedValue()
+            self._extender.MRType.getModel().setSelectedItem(self._extender.badProgrammerMRModel[key]["type"])
+            self._extender.MText.setText(self._extender.badProgrammerMRModel[key]["match"])
+            self._extender.RText.setText(self._extender.badProgrammerMRModel[key]["replace"])
             self.delMRFilter(event)

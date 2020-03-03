@@ -4,9 +4,7 @@ sys.path.append("..")
 from helpers.http import getCookieFromMessage, isStatusCodesReturned, makeMessage, makeRequest, getResponseContentLength
 from helpers.save_restore import IHttpRequestResponseImplementation
 from table.table import LogEntry, UpdateTableEDT
-from java.awt.event import ActionListener
 from javax.swing import SwingUtilities
-from thread import start_new_thread
 from java.net import URL
 import re
 
@@ -263,15 +261,3 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
     self.currentRequestNumber = self.currentRequestNumber + 1
     self._lock.release()
     
-class handleMenuItems(ActionListener):
-    def __init__(self, extender, messageInfo, menuName):
-        self._extender = extender
-        self._menuName = menuName
-        self._messageInfo = messageInfo
-
-    def actionPerformed(self, e):
-        if self._menuName == "request":
-            start_new_thread(self._extender.sendRequestToAutorizeWork,(self._messageInfo,))
-
-        if self._menuName == "cookie":
-            self._extender.replaceString.setText(self._extender.getCookieFromMessage(self._messageInfo))
