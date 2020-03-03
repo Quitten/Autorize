@@ -52,16 +52,14 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
 
     # apply the match/replace settings to the body of the request
     if authorizeOrNot and msgBody is not None:
-        msgBody = ''.join(map(chr,msgBody))
+        msgBody = 	self._helpers.bytesToString(msgBody)
         # simple string replace
         for k, v in self.badProgrammerMRModel.items():
             if(v["type"] == "Body (simple string):") :
                 msgBody = msgBody.replace(v["match"], v["replace"])
             if(v["type"] == "Body (regex):") :
                 msgBody = re.sub(v["regexMatch"], v["replace"],msgBody)
-        b = bytearray()
-        b.extend(map(ord, msgBody))
-        msgBody = b
+        msgBody = self._helpers.stringToBytes(msgBody)
     return self._helpers.buildHttpMessage(headers, msgBody)
 
 def getResponseHeaders(self, requestResponse):
