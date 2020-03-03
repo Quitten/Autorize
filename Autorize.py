@@ -7,15 +7,15 @@ from burp import IHttpListener
 from java.util import ArrayList
 from threading import Lock
 
-from gui.enforcement_detector import EnforcementDetectors
 from authorization.authorization import handle_message
+from gui.enforcement_detector import EnforcementDetectors
 from gui.interception_filters import InterceptionFilters
 from gui.configuration_tab import ConfigurationTab
 from gui.match_replace import MatchReplace
-from table.table import TableFilter
-from gui.export import Export
 from gui.tabs import Tabs, ITabImpl
 from helpers.menu import MenuImpl
+from table.table import TableFilter
+from gui.export import Export
 
 class BurpExtender(IBurpExtender, IHttpListener):
 
