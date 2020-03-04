@@ -224,11 +224,10 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
 
 def checkBypass(self, oldStatusCode, newStatusCode, oldContentLen,
                  newContentLen, filters, requestResponse, andOrEnforcement):
-    impression = ""
-
+                 
     if oldStatusCode == newStatusCode:
         if oldContentLen == newContentLen:
-            impression = self.BYPASSSED_STR
+            return self.BYPASSSED_STR
         # If no enforcement detectors are set and the HTTP response is the same, the impression is yellow
         auth_enforced = 0
         
@@ -236,14 +235,12 @@ def checkBypass(self, oldStatusCode, newStatusCode, oldContentLen,
             auth_enforced = auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andOrEnforcement)
 
         if auth_enforced:
-            impression = self.ENFORCED_STR
+            return self.ENFORCED_STR
         else:
-            impression = self.IS_ENFORCED_STR
+            return self.IS_ENFORCED_STR
 
     else:
-        impression = self.ENFORCED_STR
-
-    return impression
+        return self.ENFORCED_STR
 
 def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
     oldResponse = messageInfo.getResponse()
