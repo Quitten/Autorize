@@ -7,17 +7,22 @@ from javax.swing import SwingUtilities
 from java.net import URL
 import re
 
-def handle_message(self, toolFlag, messageIsRequest, messageInfo):
+def tool_needs_to_be_ignored(self, toolFlag):
     for i in range(0, self.IFList.getModel().getSize()):
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Ignore spider requests":
             if (toolFlag == self._callbacks.TOOL_SPIDER):
-                return
+                return True
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Ignore proxy requests":
             if (toolFlag == self._callbacks.TOOL_PROXY):
-                return
+                return True
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Ignore target requests":
             if (toolFlag == self._callbacks.TOOL_TARGET):
-                return
+                return True
+    return False
+
+def handle_message(self, toolFlag, messageIsRequest, messageInfo):
+    if tool_needs_to_be_ignored(self, toolFlag):
+        return
     
     cookies = getCookieFromMessage(self, messageInfo)
     if cookies:
