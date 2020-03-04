@@ -37,8 +37,6 @@ class Tabs():
 
         self._extender.logTable = Table(self._extender)
 
-        #self.logTable.setAutoCreateRowSorter(True)
-
         tableWidth = self._extender.logTable.getPreferredSize().width        
         self._extender.logTable.getColumn("ID").setPreferredWidth(Math.round(tableWidth / 50 * 2))
         self._extender.logTable.getColumn("Method").setPreferredWidth(Math.round(tableWidth / 50 * 3))

@@ -137,6 +137,40 @@ class TableModel(AbstractTableModel):
             return logEntry._enfocementStatusUnauthorized        
         return ""
 
+# TODO:
+# header black background white text
+# columns borders per row black
+# all header text centered
+# all rows centered as well?
+# change fonts of items
+# bold text?
+
+# implement custom header:
+# JTable table = new JTable(…);
+# JTableHeader header = table.getTableHeader();
+# header.setDefaultRenderer(new HeaderRenderer(table));
+# Custom header renderer:
+
+# private static class HeaderRenderer implements TableCellRenderer {
+
+#     DefaultTableCellRenderer renderer;
+
+#     public HeaderRenderer(JTable table) {
+#         renderer = (DefaultTableCellRenderer)
+#             table.getTableHeader().getDefaultRenderer();
+#         renderer.setHorizontalAlignment(JLabel.CENTER);
+#     }
+
+#     @Override
+#     public Component getTableCellRendererComponent(
+#         JTable table, Object value, boolean isSelected,
+#         boolean hasFocus, int row, int col) {
+#         return renderer.getTableCellRendererComponent(
+#             table, value, isSelected, hasFocus, row, col);
+#     }
+# }
+
+
 class Table(JTable):
     def __init__(self, extender):
         self._extender = extender
@@ -149,25 +183,26 @@ class Table(JTable):
     def prepareRenderer(self, renderer, row, col):
         comp = JTable.prepareRenderer(self, renderer, row, col)
         value = self._extender.tableModel.getValueAt(self._extender.logTable.convertRowIndexToModel(row), col)
-
+        
         if col == 6 or col == 7:
             if value == self._extender.BYPASSSED_STR:
-                comp.setBackground(Color(179, 0, 0))
+                comp.setBackground(Color(255, 153, 153))
                 comp.setForeground(Color.BLACK)
             elif value == self._extender.IS_ENFORCED_STR:
-                comp.setBackground(Color(255, 153, 51))
+                comp.setBackground(Color(255, 204, 153))
                 comp.setForeground(Color.BLACK)
             elif value == self._extender.ENFORCED_STR:
-                comp.setBackground(Color(0, 153, 51))
+                comp.setBackground(Color(204, 255, 153))
                 comp.setForeground(Color.BLACK)
         else:
             comp.setForeground(Color.BLACK)
-            comp.setBackground(Color.LIGHT_GRAY)
+            comp.setBackground(Color.WHITE)
 
         selectedRow = self._extender.logTable.getSelectedRow()
         if selectedRow == row:
-          comp.setBackground(Color.WHITE)
-          comp.setForeground(Color.BLACK)
+            comp.setBackground(Color(201, 215, 255))
+            comp.setForeground(Color.BLACK)
+
 
         return comp
     
