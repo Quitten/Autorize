@@ -53,4 +53,3 @@ Example of interception filters (Note that there is default filter to avoid scri
 
 # Authors
 - Barak Tawily, Application Security Expert
-- Federico Dotta, Security Expert at Mediaservice.net
