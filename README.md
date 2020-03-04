@@ -1,7 +1,7 @@
 # Autorize
 Autorize is an automatic authorization enforcement detection extension for Burp Suite. It was written in Python by Barak Tawily, an application security expert. Autorize was designed to help security testers by performing automatic authorization tests. With the last release now Autorize also perform automatic authentication tests.
 
-![alt tag](https://raw.githubusercontent.com/Quitten/Autorize/master/Autorizev21.png)
+![alt tag](https://raw.githubusercontent.com/Quitten/Autorize/master/Autorizev1.3.png)
 
 # Installation 
 1.	Download Burp Suite (obviously): http://portswigger.net/burp/download.html
@@ -36,7 +36,7 @@ There are 3 enforcement statuses:
 
 3.	Is enforced??? (please configure enforcement detector) - Yellow color
 
-The first 2 statuses are clear, so I won’t elaborate on them.
+The first 2 statuses are clear, so I wonât elaborate on them.
 
 The 3rd status means that Autorize cannot determine if authorization is enforced or not, and so Autorize will ask you to configure a filter in the enforcement detector tabs. There are two different enforcement detector tabs, one for the detection of the enforcement of low-privileged requests and one for the detection of the enforcement of unauthenticated requests.
 
