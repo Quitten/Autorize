@@ -22,9 +22,9 @@ class BurpExtender(IBurpExtender, IHttpListener):
         
         initiator.draw_all()
 
-        initiator.implement_all()        
+        initiator.implement_all()
 
-        initiator.init_ui()        
+        initiator.init_ui() 
         
         initiator.print_welcome_message()
         
