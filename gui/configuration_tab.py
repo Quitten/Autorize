@@ -1,6 +1,3 @@
-import sys
-sys.path.append("..")
-
 from javax.swing import DefaultComboBoxModel
 from java.awt.event import ActionListener
 from javax.swing import SwingUtilities
@@ -14,7 +11,7 @@ from javax.swing import JCheckBox
 from javax.swing import JButton
 from javax.swing import JPanel
 
-from table.table import UpdateTableEDT
+from table import UpdateTableEDT
 
 class ConfigurationTab():
     def __init__(self, extender):

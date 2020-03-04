@@ -1,14 +1,11 @@
-import sys
-sys.path.append("..")
-
-from burp import IHttpRequestResponse
-
 from javax.swing import SwingUtilities
 from javax.swing import JFileChooser
 from javax.swing import JFrame
 from java.io import File
 
-from table.table import LogEntry, UpdateTableEDT
+from table import LogEntry, UpdateTableEDT
+from helpers.http import IHttpRequestResponseImplementation
+
 import csv, base64, sys
 
 # This code is necessary to maximize the csv field limit for the save and
@@ -155,41 +152,3 @@ class SaveRestore():
                     if cookies:
                         self._extender.lastCookies = cookies
                         self._extender.fetchButton.setEnabled(True)
-
-class IHttpRequestResponseImplementation(IHttpRequestResponse):
-    def __init__(self, service, req, res):
-        self._httpService = service
-        self._request = req
-        self._response = res
-        self._comment = None
-        self._highlight = None
-
-    def getComment(self):
-        return self._comment
-
-    def getHighlight(self):
-        return self._highlight
-
-    def getHttpService(self):
-        return self._httpService
-
-    def getRequest(self):
-        return self._request
-
-    def getResponse(self):
-        return self._response
-
-    def setComment(self,c):
-        self._comment = c
-
-    def setHighlight(self,h):
-        self._highlight = h
-
-    def setHttpService(self,service):
-        self._httpService = service
-
-    def setRequest(self,req):
-        self._request = req
-
-    def setResponse(self,res):
-        self._response = res

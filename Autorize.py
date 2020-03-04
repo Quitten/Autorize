@@ -4,18 +4,9 @@
 from burp import IBurpExtender
 from burp import IHttpListener
 
-from java.util import ArrayList
-from threading import Lock
-
 from authorization.authorization import handle_message
-from gui.enforcement_detector import EnforcementDetectors
-from gui.interception_filters import InterceptionFilters
-from gui.configuration_tab import ConfigurationTab
-from gui.match_replace import MatchReplace
-from gui.tabs import Tabs, ITabImpl
-from helpers.menu import MenuImpl
-from table.table import TableFilter
-from gui.export import Export
+
+from helpers.initiator import Initiator
 
 class BurpExtender(IBurpExtender, IHttpListener):
 
@@ -25,59 +16,18 @@ class BurpExtender(IBurpExtender, IHttpListener):
         
         callbacks.setExtensionName("Autorize")
         
-        self._log = ArrayList()
-        self._lock = Lock()
+        initiator = Initiator(self)
 
-        self.BYPASSSED_STR = "Bypassed!"
-        self.IS_ENFORCED_STR = "Is enforced??? (please configure enforcement detector)"
-        self.ENFORCED_STR = "Enforced!"
+        initiator.init_constants()
         
-        self.intercept = 0
-        self.lastCookies = ""
-        self.currentRequestNumber = 1
+        initiator.draw_all()
 
-        interception_filters = InterceptionFilters(self)
-        interception_filters.draw()
+        initiator.implement_all()        
 
-        enforcement_detectors = EnforcementDetectors(self)
-        enforcement_detectors.draw()
-        enforcement_detectors.draw_unauthenticated()
-    
-        export = Export(self)
-        export.draw()
-
-        match_replace = MatchReplace(self)
-        match_replace.draw()
-
-        table_filter = TableFilter(self)
-        table_filter.draw()
-
-        cfg_tab = ConfigurationTab(self)
-        cfg_tab.draw()
-
-        tabs = Tabs(self)
-        tabs.draw()
+        initiator.init_ui()        
         
-        itab = ITabImpl(self)
-        menu = MenuImpl(self)
-
-        self._callbacks.registerHttpListener(self)
+        initiator.print_welcome_message()
         
-        self._callbacks.customizeUiComponent(self._splitpane)
-        self._callbacks.customizeUiComponent(self.logTable)
-        self._callbacks.customizeUiComponent(self.scrollPane)
-        self._callbacks.customizeUiComponent(self.tabs)
-        self._callbacks.customizeUiComponent(self.filtersTabs)
-        self._callbacks.registerContextMenuFactory(menu)
-        
-        self._callbacks.addSuiteTab(itab)
-        
-        print("""Thank you for installing Autorize v1.23 extension
-Created by Barak Tawily
-Contributors: Barak Tawily, Federico Dotta, mgeeky, Marcin Woloszyn
-
-Github:\nhttps://github.com/Quitten/Autorize
-            """)
         return
 
     #

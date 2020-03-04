@@ -1,6 +1,3 @@
-import sys
-sys.path.append("..")
-
 from java.awt.datatransfer import StringSelection
 from javax.swing.table import TableRowSorter
 from java.awt.event import AdjustmentListener
@@ -18,7 +15,7 @@ from burp import IMessageEditorController
 
 from thread import start_new_thread
 
-from table.table import Table, LogEntry, TableRowFilter
+from table import Table, LogEntry, TableRowFilter
 
 class ITabImpl(ITab):
     def __init__(self, extender):

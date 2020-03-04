@@ -11,7 +11,7 @@ from javax.swing import JFrame
 from java.awt import Font
 from java.io import File
 
-from helpers.save_restore import SaveRestore
+from save_restore import SaveRestore
 
 class Export():
     def __init__(self, extender):

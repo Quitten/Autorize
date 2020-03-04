@@ -1,9 +1,8 @@
 import sys
 sys.path.append("..")
 
-from helpers.http import getCookieFromMessage, isStatusCodesReturned, makeMessage, makeRequest, getResponseContentLength
-from helpers.save_restore import IHttpRequestResponseImplementation
-from table.table import LogEntry, UpdateTableEDT
+from helpers.http import getCookieFromMessage, isStatusCodesReturned, makeMessage, makeRequest, getResponseContentLength, IHttpRequestResponseImplementation
+from gui.table import LogEntry, UpdateTableEDT
 from javax.swing import SwingUtilities
 from java.net import URL
 import re
