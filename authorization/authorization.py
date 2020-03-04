@@ -107,7 +107,7 @@ def handle_message(self, toolFlag, messageIsRequest, messageInfo):
 
     handle_cookies_feature(self, messageInfo)
 
-    if self.intercept == 1 and isToolValid(self, toolFlag):
+    if self.intercept and isToolValid(self, toolFlag):
         handle_304_status_code_prevention(self, messageIsRequest, messageInfo)
     
         if not messageIsRequest:
@@ -124,7 +124,7 @@ def handle_message(self, toolFlag, messageIsRequest, messageInfo):
                     if message_passed_interception_filters(self, messageInfo):
                         checkAuthorization(self, messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
 
-def sendRequestToAutorizeWork(self,messageInfo):
+def sendRequestToAutorizeWork(self, messageInfo):
     if messageInfo.getResponse() is None:
         message = makeMessage(self, messageInfo,False,False)
         requestResponse = makeRequest(self, messageInfo, message)
@@ -137,105 +137,109 @@ def sendRequestToAutorizeWork(self,messageInfo):
         newHttpRequestResponsePersisted = self._callbacks.saveBuffersToTempFiles(newHttpRequestResponse)
         checkAuthorization(self, newHttpRequestResponsePersisted,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
 
-def checkBypass(self,oldStatusCode,newStatusCode,oldContentLen,newContentLen,filters,requestResponse,andOrEnforcement):
+def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andOrEnforcement):
     response = requestResponse.getResponse()
     analyzedResponse = self._helpers.analyzeResponse(response)
+    auth_enforced = False
+    if andOrEnforcement == "And":
+        andEnforcementCheck = True
+        auth_enforced = True
+    else:
+        andEnforcementCheck = False
+        auth_enforced = False
+    
+    response = requestResponse.getResponse()
+    for filter in filters:
+        if str(filter).startswith("Status code equals: "):
+            statusCode = filter[20:]
+            if andEnforcementCheck:
+                if auth_enforced and not isStatusCodesReturned(self, requestResponse, statusCode):
+                    auth_enforced = False
+            else:
+                if not auth_enforced and isStatusCodesReturned(self, requestResponse, statusCode):
+                    auth_enforced = True
+
+        if str(filter).startswith("Headers (simple string): "):
+            if andEnforcementCheck:
+                if auth_enforced and not filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
+                    auth_enforced = False
+            else:
+                if not auth_enforced and filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
+                    auth_enforced = True
+
+        if str(filter).startswith("Headers (regex): "):
+            regex_string = filter[17:]
+            p = re.compile(regex_string, re.IGNORECASE)                        
+            if andEnforcementCheck:
+                if auth_enforced and not p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
+                    auth_enforced = False
+            else:
+                if not auth_enforced and p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
+                    auth_enforced = True
+
+        if str(filter).startswith("Body (simple string): "):
+            if andEnforcementCheck:
+                if auth_enforced and not filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
+                    auth_enforced = False
+            else:
+                if not auth_enforced and filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
+                    auth_enforced = True
+
+        if str(filter).startswith("Body (regex): "):
+            regex_string = filter[14:]
+            p = re.compile(regex_string, re.IGNORECASE)
+            if andEnforcementCheck:
+                if auth_enforced and not p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
+                    auth_enforced = False
+            else:
+                if not auth_enforced and p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
+                    auth_enforced = True
+
+        if str(filter).startswith("Full response (simple string): "):
+            if andEnforcementCheck:
+                if auth_enforced and not filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()):
+                    auth_enforced = False
+            else:
+                if not auth_enforced and filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()):
+                    auth_enforced = True
+
+        if str(filter).startswith("Full response (regex): "):
+            regex_string = filter[23:]
+            p = re.compile(regex_string, re.IGNORECASE)
+            if andEnforcementCheck:
+                if auth_enforced and not p.search(self._helpers.bytesToString(requestResponse.getResponse())):
+                    auth_enforced = False
+            else:
+                if not auth_enforced and p.search(self._helpers.bytesToString(requestResponse.getResponse())):
+                    auth_enforced = True
+
+        if str(filter).startswith("Full response length: "):
+            if andEnforcementCheck:
+                if auth_enforced and not str(len(response)) == filter[22:].strip():
+                    auth_enforced = False
+            else:
+                if not auth_enforced and str(len(response)) == filter[22:].strip():
+                    auth_enforced = True
+        return auth_enforced
+
+def checkBypass(self, oldStatusCode, newStatusCode, oldContentLen,
+                 newContentLen, filters, requestResponse, andOrEnforcement):
     impression = ""
 
     if oldStatusCode == newStatusCode:
         if oldContentLen == newContentLen:
             impression = self.BYPASSSED_STR
+        # If no enforcement detectors are set and the HTTP response is the same, the impression is yellow
+        auth_enforced = 0
         
         if len(filters) > 0:
-
-            if andOrEnforcement == "And":
-                andEnforcementCheck = True
-                auth_enforced = 1
-            else:
-                andEnforcementCheck = False
-                auth_enforced = 0
-
-            for filter in filters:
-                if str(filter).startswith("Status code equals: "):
-                    statusCode = filter[20:]
-                    if andEnforcementCheck:
-                        if auth_enforced == 1 and not isStatusCodesReturned(self, requestResponse, statusCode):
-                            auth_enforced = 0
-                    else:
-                        if auth_enforced == 0 and isStatusCodesReturned(self, requestResponse, statusCode):
-                            auth_enforced = 1
-
-                if str(filter).startswith("Headers (simple string): "):
-                    if andEnforcementCheck:
-                        if auth_enforced == 1 and not filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
-                            auth_enforced = 0
-                    else:
-                        if auth_enforced == 0 and filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
-                            auth_enforced = 1
-
-                if str(filter).startswith("Headers (regex): "):
-                    regex_string = filter[17:]
-                    p = re.compile(regex_string, re.IGNORECASE)                        
-                    if andEnforcementCheck:
-                        if auth_enforced == 1 and not p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
-                            auth_enforced = 0
-                    else:
-                        if auth_enforced == 0 and p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
-                            auth_enforced = 1
-
-                if str(filter).startswith("Body (simple string): "):
-                    if andEnforcementCheck:
-                        if auth_enforced == 1 and not filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
-                            auth_enforced = 0
-                    else:
-                        if auth_enforced == 0 and filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
-                            auth_enforced = 1
-
-                if str(filter).startswith("Body (regex): "):
-                    regex_string = filter[14:]
-                    p = re.compile(regex_string, re.IGNORECASE)
-                    if andEnforcementCheck:
-                        if auth_enforced == 1 and not p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
-                            auth_enforced = 0
-                    else:
-                        if auth_enforced == 0 and p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
-                            auth_enforced = 1
-
-                if str(filter).startswith("Full response (simple string): "):
-                    if andEnforcementCheck:
-                        if auth_enforced == 1 and not filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()):
-                            auth_enforced = 0
-                    else:
-                        if auth_enforced == 0 and filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()):
-                            auth_enforced = 1
-
-                if str(filter).startswith("Full response (regex): "):
-                    regex_string = filter[23:]
-                    p = re.compile(regex_string, re.IGNORECASE)
-                    if andEnforcementCheck:
-                        if auth_enforced == 1 and not p.search(self._helpers.bytesToString(requestResponse.getResponse())):
-                            auth_enforced = 0
-                    else:
-                        if auth_enforced == 0 and p.search(self._helpers.bytesToString(requestResponse.getResponse())):
-                            auth_enforced = 1
-
-                if str(filter).startswith("Full response length: "):
-                    if andEnforcementCheck:
-                        if auth_enforced == 1 and not str(len(response)) == filter[22:].strip():
-                            auth_enforced = 0
-                    else:
-                        if auth_enforced == 0 and str(len(response)) == filter[22:].strip():
-                            auth_enforced = 1
-
-        else:
-            # If no enforcement detectors are set and the HTTP response is the same, the impression is yellow
-            auth_enforced = 0
+            auth_enforced = auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andOrEnforcement)
 
         if auth_enforced:
             impression = self.ENFORCED_STR
         else:
             impression = self.IS_ENFORCED_STR
-                        
+
     else:
         impression = self.ENFORCED_STR
 
