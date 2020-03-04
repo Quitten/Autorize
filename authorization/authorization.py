@@ -20,34 +20,49 @@ def tool_needs_to_be_ignored(self, toolFlag):
                 return True
     return False
 
-def handle_message(self, toolFlag, messageIsRequest, messageInfo):
-    if tool_needs_to_be_ignored(self, toolFlag):
-        return
-    
+def handle_cookies_feature(self, messageInfo):
     cookies = getCookieFromMessage(self, messageInfo)
     if cookies:
         self.lastCookies = cookies
         self.fetchButton.setEnabled(True)
 
-    if self.intercept == 1 and (toolFlag == self._callbacks.TOOL_PROXY or (toolFlag == self._callbacks.TOOL_REPEATER and self.interceptRequestsfromRepeater.isSelected())):
-        if self.prevent304.isSelected():
-            if messageIsRequest:
-                requestHeaders = list(self._helpers.analyzeRequest(messageInfo).getHeaders())
-                newHeaders = list()
-                found = 0
-                for header in requestHeaders:
-                    if not "If-None-Match:" in header and not "If-Modified-Since:" in header:
-                        newHeaders.append(header)
-                        found = 1
-                if found == 1:
-                    requestInfo = self._helpers.analyzeRequest(messageInfo)
-                    bodyBytes = messageInfo.getRequest()[requestInfo.getBodyOffset():]
-                    bodyStr = self._helpers.bytesToString(bodyBytes)
-                    messageInfo.setRequest(self._helpers.buildHttpMessage(newHeaders, bodyStr))
+def isToolValid(self, toolFlag):
+    return (toolFlag == self._callbacks.TOOL_PROXY or 
+    (toolFlag == self._callbacks.TOOL_REPEATER and
+     self.interceptRequestsfromRepeater.isSelected()))
+
+def handle_304_status_code_prevention(self, messageIsRequest, messageInfo):
+    should_prevent = False
+    if self.prevent304.isSelected():
+        if messageIsRequest:
+            requestHeaders = list(self._helpers.analyzeRequest(messageInfo).getHeaders())
+            newHeaders = list()   
+            for header in requestHeaders:
+                if not "If-None-Match:" in header and not "If-Modified-Since:" in header:
+                    newHeaders.append(header)
+                    should_prevent = True
+        if should_prevent:
+            requestInfo = self._helpers.analyzeRequest(messageInfo)
+            bodyBytes = messageInfo.getRequest()[requestInfo.getBodyOffset():]
+            bodyStr = self._helpers.bytesToString(bodyBytes)
+            messageInfo.setRequest(self._helpers.buildHttpMessage(newHeaders, bodyStr))
+    
+def message_not_from_autorize(self, messageInfo):
+    return not self.replaceString.getText() in self._helpers.analyzeRequest(messageInfo).getHeaders()
+
+def handle_message(self, toolFlag, messageIsRequest, messageInfo):
+    if tool_needs_to_be_ignored(self, toolFlag):
+        return
+
+    handle_cookies_feature(self, messageInfo)
+
+    if self.intercept == 1 and isToolValid(self, toolFlag):
+        handle_304_status_code_prevention(self, messageIsRequest, messageInfo)
+    
         if not messageIsRequest:
             # Requests with the same headers of the Autorize headers are
             # not intercepted
-            if not self.replaceString.getText() in self._helpers.analyzeRequest(messageInfo).getHeaders():
+            if message_not_from_autorize(self, messageInfo):
                 if self.ignore304.isSelected():
                     if isStatusCodesReturned(self, messageInfo, ["304", "204"]):
                         return
