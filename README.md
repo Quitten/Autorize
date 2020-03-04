@@ -36,7 +36,7 @@ There are 3 enforcement statuses:
 
 3.	Is enforced??? (please configure enforcement detector) - Yellow color
 
-The first 2 statuses are clear, so I wonât elaborate on them.
+The first 2 statuses are clear, so I won't elaborate on them.
 
 The 3rd status means that Autorize cannot determine if authorization is enforced or not, and so Autorize will ask you to configure a filter in the enforcement detector tabs. There are two different enforcement detector tabs, one for the detection of the enforcement of low-privileged requests and one for the detection of the enforcement of unauthenticated requests.
 
