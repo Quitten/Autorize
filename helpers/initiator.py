@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
+
 from gui.enforcement_detector import EnforcementDetectors
 from gui.interception_filters import InterceptionFilters
 from gui.configuration_tab import ConfigurationTab

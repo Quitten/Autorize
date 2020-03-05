@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
+
 from burp import IContextMenuFactory
 
 from java.util import LinkedList

@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
+
 from javax.swing.table import AbstractTableModel
 from java.awt.event import ActionListener
 from java.awt.event import MouseAdapter

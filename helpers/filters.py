@@ -1,6 +1,6 @@
-#
-## FilterHelpers
-#
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
+
 def addFilterHelper(typeObj, model, textObj):
         typeName = typeObj.getSelectedItem().split(":")[0]
         model.addElement(typeName + ": " + textObj.getText().strip())

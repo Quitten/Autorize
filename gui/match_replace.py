@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
 
 from javax.swing import JLabel
 from javax.swing import JComboBox

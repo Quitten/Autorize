@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
+
 from javax.swing import DefaultComboBoxModel
 from java.awt.event import ActionListener
 from javax.swing import SwingUtilities

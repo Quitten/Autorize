@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
+
 from java.awt.datatransfer import StringSelection
 from javax.swing.table import TableRowSorter
 from java.awt.event import AdjustmentListener
