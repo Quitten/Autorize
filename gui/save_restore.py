@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
+
 from javax.swing import SwingUtilities
 from javax.swing import JFileChooser
 from javax.swing import JFrame
