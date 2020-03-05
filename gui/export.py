@@ -1,25 +1,31 @@
-from javax.swing import JLabel
+import sys
+sys.path.append("..")
+
+from javax.swing import JFileChooser
 from javax.swing import JComboBox
-from javax.swing import JLabel
 from javax.swing import JButton
+from javax.swing import JLabel
+from javax.swing import JLabel
 from javax.swing import JPanel
 from javax.swing import JFrame
 from java.awt import Font
-from javax.swing import JFileChooser
 from java.io import File
+
+from save_restore import SaveRestore
 
 class Export():
     def __init__(self, extender):
         self._extender = extender
-        self.BYPASSSED_STR = self._extender.BYPASSSED_STR
-        self.ENFORCED_STR = self._extender.ENFORCED_STR
-        self.IS_ENFORCED_STR = self._extender.IS_ENFORCED_STR
+        self.BYPASSSED_STR = extender.BYPASSSED_STR
+        self.ENFORCED_STR = extender.ENFORCED_STR
+        self.IS_ENFORCED_STR = extender.IS_ENFORCED_STR
         self._log = extender._log
+        self.save_restore = SaveRestore(extender)
 
     def draw(self):
             """ init Save/Restore
             """
-
+            
             exportLabel = JLabel("Export:")
             exportLabel.setBounds(10, 10, 100, 30)
             labelFont = exportLabel.getFont()
@@ -80,10 +86,10 @@ class Export():
                 self.exportToCSV()
 
     def saveStateAction(self, event):
-        self._extender.saveState()
+        self.save_restore.saveState()
         
     def restoreStateAction(self, event):
-        self._extender.restoreState()
+        self.save_restore.restoreState()
 
     def exportToHTML(self):
         parentFrame = JFrame()

@@ -1,4 +1,5 @@
 import re
+from burp import IHttpRequestResponse
 
 def isStatusCodesReturned(self, messageInfo, statusCodes):
     firstHeader = self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders()[0]
@@ -11,7 +12,6 @@ def isStatusCodesReturned(self, messageInfo, statusCodes):
         if statusCodes in firstHeader:
                 return True
     return False
-
 
 def makeRequest(self, messageInfo, message):
     requestURL = self._helpers.analyzeRequest(messageInfo).getUrl()
@@ -52,16 +52,14 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
 
     # apply the match/replace settings to the body of the request
     if authorizeOrNot and msgBody is not None:
-        msgBody = ''.join(map(chr,msgBody))
+        msgBody = self._helpers.bytesToString(msgBody)
         # simple string replace
         for k, v in self.badProgrammerMRModel.items():
             if(v["type"] == "Body (simple string):") :
                 msgBody = msgBody.replace(v["match"], v["replace"])
             if(v["type"] == "Body (regex):") :
                 msgBody = re.sub(v["regexMatch"], v["replace"],msgBody)
-        b = bytearray()
-        b.extend(map(ord, msgBody))
-        msgBody = b
+        msgBody = self._helpers.stringToBytes(msgBody)
     return self._helpers.buildHttpMessage(headers, msgBody)
 
 def getResponseHeaders(self, requestResponse):
@@ -81,3 +79,41 @@ def getCookieFromMessage(self, messageInfo):
         if header.strip().lower().startswith("cookie:"):
             return header
     return None
+
+class IHttpRequestResponseImplementation(IHttpRequestResponse):
+    def __init__(self, service, req, res):
+        self._httpService = service
+        self._request = req
+        self._response = res
+        self._comment = None
+        self._highlight = None
+
+    def getComment(self):
+        return self._comment
+
+    def getHighlight(self):
+        return self._highlight
+
+    def getHttpService(self):
+        return self._httpService
+
+    def getRequest(self):
+        return self._request
+
+    def getResponse(self):
+        return self._response
+
+    def setComment(self,c):
+        self._comment = c
+
+    def setHighlight(self,h):
+        self._highlight = h
+
+    def setHttpService(self,service):
+        self._httpService = service
+
+    def setRequest(self,req):
+        self._request = req
+
+    def setResponse(self,res):
+        self._response = res
