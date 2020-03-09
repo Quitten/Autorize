@@ -3,9 +3,10 @@ ExtensionType: 2
 Name: Autorize
 RepoName: autorize
 ScreenVersion: 1.30
-SerialVersion: 8
+SerialVersion: 17
 MinPlatformVersion: 0
 ProOnly: False
 Author:  Barak Tawily
 ShortDescription: Automatically detects authorization enforcement.
 EntryPoint: Autorize.py
+BuildCommand: 
