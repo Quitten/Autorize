@@ -102,8 +102,8 @@ class TableModel(AbstractTableModel):
         return 8
 
     def getColumnName(self, columnIndex):
-        data = ['ID','Method', 'URL', 'Orig. Length', 'Modif. Length', "Unauth. Length",
-                "Authorization Enforcement Status", "Authorization Unauth. Status"]
+        data = ['ID','Method', 'URL', 'Orig. Len', 'Modif. Len', "Unauth. Len",
+                "Authz. Status", "Unauth. Status"]
         try:
             return data[columnIndex]
         except IndexError:
