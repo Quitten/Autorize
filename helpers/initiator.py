@@ -19,7 +19,7 @@ class Initiator():
     
     def init_constants(self):
         self.contributors = ["Federico Dotta", "mgeeky", "Marcin Woloszyn", "jpginc"]
-        self._extender.version = 1.30
+        self._extender.version = 1.4
         self._extender._log = ArrayList()
         self._extender._lock = Lock()
 
@@ -30,6 +30,7 @@ class Initiator():
         self._extender.intercept = 0
         self._extender.lastCookies = ""
         self._extender.currentRequestNumber = 1
+        self._extender.expanded_requests = 0
     
     def draw_all(self):
         interception_filters = InterceptionFilters(self._extender)

@@ -15,6 +15,8 @@ from java.lang import Integer
 from java.lang import String
 from java.awt import Color
 
+from helpers.filters import expand, collapse
+
 class TableFilter():
     def __init__(self, extender):
         self._extender = extender
@@ -227,13 +229,21 @@ class Table(JTable):
         self._extender._currentlyDisplayedItem = logEntry
 
         if col == 3:
-            self._extender.tabs.setSelectedIndex(3)
+            collapse(self._extender, self._extender.modified_requests_tabs)
+            collapse(self._extender, self._extender.unauthenticated_requests_tabs)
+            expand(self._extender, self._extender.original_requests_tabs)
         elif col == 4 or col == 6:
-            self._extender.tabs.setSelectedIndex(1)
+            collapse(self._extender, self._extender.original_requests_tabs)
+            collapse(self._extender, self._extender.unauthenticated_requests_tabs)
+            expand(self._extender, self._extender.modified_requests_tabs)
         elif col == 5 or col == 7:
-            self._extender.tabs.setSelectedIndex(5)
+            collapse(self._extender, self._extender.original_requests_tabs)
+            collapse(self._extender, self._extender.modified_requests_tabs)
+            expand(self._extender, self._extender.unauthenticated_requests_tabs)
         else:
-            self._extender.tabs.setSelectedIndex(2)
+            collapse(self._extender, self._extender.original_requests_tabs)
+            collapse(self._extender, self._extender.modified_requests_tabs)
+            collapse(self._extender, self._extender.unauthenticated_requests_tabs)
 
         JTable.changeSelection(self, row, col, toggle, extend)
         return
