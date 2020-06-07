@@ -4,7 +4,7 @@
 import sys
 sys.path.append("..")
 
-from helpers.http import getCookieFromMessage, isStatusCodesReturned, makeMessage, makeRequest, getResponseContentLength, IHttpRequestResponseImplementation
+from helpers.http import get_cookie_from_message, isStatusCodesReturned, makeMessage, makeRequest, getResponseContentLength, IHttpRequestResponseImplementation
 from gui.table import LogEntry, UpdateTableEDT
 from javax.swing import SwingUtilities
 from java.net import URL
@@ -24,12 +24,12 @@ def tool_needs_to_be_ignored(self, toolFlag):
     return False
 
 def handle_cookies_feature(self, messageInfo):
-    cookies = getCookieFromMessage(self, messageInfo)
+    cookies = get_cookie_from_message(self, messageInfo)
     if cookies:
         self.lastCookies = cookies
         self.fetchButton.setEnabled(True)
 
-def isToolValid(self, toolFlag):
+def valid_tool(self, toolFlag):
     return (toolFlag == self._callbacks.TOOL_PROXY or 
     (toolFlag == self._callbacks.TOOL_REPEATER and
      self.interceptRequestsfromRepeater.isSelected()))
@@ -110,7 +110,7 @@ def handle_message(self, toolFlag, messageIsRequest, messageInfo):
 
     handle_cookies_feature(self, messageInfo)
 
-    if self.intercept and isToolValid(self, toolFlag):
+    if self.intercept and valid_tool(self, toolFlag):
         handle_304_status_code_prevention(self, messageIsRequest, messageInfo)
     
         if not messageIsRequest:
@@ -127,7 +127,7 @@ def handle_message(self, toolFlag, messageIsRequest, messageInfo):
                     if message_passed_interception_filters(self, messageInfo):
                         checkAuthorization(self, messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
 
-def sendRequestToAutorizeWork(self, messageInfo):
+def send_request_to_autorize(self, messageInfo):
     if messageInfo.getResponse() is None:
         message = makeMessage(self, messageInfo,False,False)
         requestResponse = makeRequest(self, messageInfo, message)
