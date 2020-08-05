@@ -46,9 +46,13 @@ class ConfigurationTab():
         self._extender.doUnauthorizedRequest.setBounds(280, 65, 300, 30)
         self._extender.doUnauthorizedRequest.setSelected(True)
 
-        self._extender.saveHeadersButton = JButton("Save headers",
+        self._extender.saveHeadersButton = JButton("Add",
                                         actionPerformed=self.saveHeaders)
-        self._extender.saveHeadersButton.setBounds(360, 115, 120, 30)
+        self._extender.saveHeadersButton.setBounds(315, 115, 80, 30)
+        
+        self._extender.removeHeadersButton = JButton("Remove",
+                                        actionPerformed=self.removeHeaders)
+        self._extender.removeHeadersButton.setBounds(400, 115, 80, 30)
 
         savedHeadersTitles = self.getSavedHeadersTitles()
         self._extender.savedHeadersTitlesCombo = JComboBox(savedHeadersTitles)
@@ -87,6 +91,7 @@ class ConfigurationTab():
         self.pnl.add(self._extender.clearButton)
         self.pnl.add(scrollReplaceString)
         self.pnl.add(self._extender.saveHeadersButton)
+        self.pnl.add(self._extender.removeHeadersButton)
         self.pnl.add(self._extender.savedHeadersTitlesCombo)
         self.pnl.add(self._extender.fetchButton)
         self.pnl.add(self._extender.autoScroll)
@@ -118,6 +123,19 @@ class ConfigurationTab():
         self._extender.savedHeaders.append({'title': savedHeadersTitle, 'headers': self._extender.replaceString.getText()})
         self._extender.savedHeadersTitlesCombo.setModel(DefaultComboBoxModel(self.getSavedHeadersTitles()))
         self._extender.savedHeadersTitlesCombo.getModel().setSelectedItem(savedHeadersTitle)
+    
+    def removeHeaders(self, event):
+        model = self._extender.savedHeadersTitlesCombo.getModel()
+        selectedItem = model.getSelectedItem()
+        if selectedItem == "Temporary headers":
+            return
+
+        delObject = None
+        for savedHeaderObj in self._extender.savedHeaders:
+            if selectedItem == savedHeaderObj['title']:
+                delObject = savedHeaderObj
+        self._extender.savedHeaders.remove(delObject)
+        model.removeElement(selectedItem)
 
     def getSavedHeadersTitles(self):
         titles = []
