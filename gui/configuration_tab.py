@@ -8,6 +8,7 @@ from javax.swing import JToggleButton
 from javax.swing import JScrollPane
 from javax.swing import JTabbedPane
 from javax.swing import JOptionPane
+from javax.swing import JSplitPane
 from javax.swing import JComboBox
 from javax.swing import JTextArea
 from javax.swing import JCheckBox
@@ -83,23 +84,27 @@ class ConfigurationTab():
         self._extender.filtersTabs.setSelectedIndex(2)
         self._extender.filtersTabs.setBounds(0, 350, 2000, 700)
 
-        self._extender.pnl = JPanel()
-        self.pnl = self._extender.pnl
-        self.pnl.setBounds(0, 0, 1000, 1000)
-        self.pnl.setLayout(None)
-        self.pnl.add(self._extender.startButton)
-        self.pnl.add(self._extender.clearButton)
-        self.pnl.add(scrollReplaceString)
-        self.pnl.add(self._extender.saveHeadersButton)
-        self.pnl.add(self._extender.removeHeadersButton)
-        self.pnl.add(self._extender.savedHeadersTitlesCombo)
-        self.pnl.add(self._extender.fetchButton)
-        self.pnl.add(self._extender.autoScroll)
-        self.pnl.add(self._extender.interceptRequestsfromRepeater)
-        self.pnl.add(self._extender.ignore304)
-        self.pnl.add(self._extender.prevent304)
-        self.pnl.add(self._extender.doUnauthorizedRequest)
-        self.pnl.add(self._extender.filtersTabs)
+        self.config_pnl = JPanel()
+        self.config_pnl.setBounds(0, 0, 1000, 1000)
+        self.config_pnl.setLayout(None)
+        self.config_pnl.add(self._extender.startButton)
+        self.config_pnl.add(self._extender.clearButton)
+        self.config_pnl.add(scrollReplaceString)
+        self.config_pnl.add(self._extender.saveHeadersButton)
+        self.config_pnl.add(self._extender.removeHeadersButton)
+        self.config_pnl.add(self._extender.savedHeadersTitlesCombo)
+        self.config_pnl.add(self._extender.fetchButton)
+        self.config_pnl.add(self._extender.autoScroll)
+        self.config_pnl.add(self._extender.interceptRequestsfromRepeater)
+        self.config_pnl.add(self._extender.ignore304)
+        self.config_pnl.add(self._extender.prevent304)
+        self.config_pnl.add(self._extender.doUnauthorizedRequest)
+
+        self._extender._cfg_splitpane = JSplitPane(JSplitPane.VERTICAL_SPLIT)
+        self._extender._cfg_splitpane.setResizeWeight(0.5)
+        self._extender._cfg_splitpane.setBounds(0, 0, 1000, 1000)
+        self._extender._cfg_splitpane.setRightComponent(self._extender.filtersTabs)
+        self._extender._cfg_splitpane.setLeftComponent(self.config_pnl)
     
     def startOrStop(self, event):
         if self._extender.startButton.getText() == "Autorize is off":
