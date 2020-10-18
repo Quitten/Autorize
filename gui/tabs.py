@@ -130,7 +130,7 @@ class Tabs():
 
         self._extender.tabs.addTab("Request/Response Viewers", self._extender.requests_panel)
         
-        self._extender.tabs.addTab("Configuration", self._extender.pnl)
+        self._extender.tabs.addTab("Configuration", self._extender._cfg_splitpane)
         self._extender.tabs.setSelectedIndex(1)
         self._extender._splitpane.setRightComponent(self._extender.tabs)
 
