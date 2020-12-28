@@ -24,7 +24,7 @@ class ConfigurationTab():
     def draw(self):
         """  init configuration tab
         """
-
+        self.DEFUALT_REPLACE_TEXT = "Cookie: Insert=injected; cookie=or;\nHeader: here"
         self._extender.startButton = JToggleButton("Autorize is off",
                                     actionPerformed=self.startOrStop)
         self._extender.startButton.setBounds(10, 20, 230, 30)
@@ -47,6 +47,10 @@ class ConfigurationTab():
         self._extender.doUnauthorizedRequest.setBounds(280, 65, 300, 30)
         self._extender.doUnauthorizedRequest.setSelected(True)
 
+        self._extender.replaceQueryParam = JCheckBox("Replace query params", actionPerformed=self.replaceQueryHanlder)
+        self._extender.replaceQueryParam.setBounds(280, 85, 300, 30)
+        self._extender.replaceQueryParam.setSelected(False)
+
         self._extender.saveHeadersButton = JButton("Add",
                                         actionPerformed=self.saveHeaders)
         self._extender.saveHeadersButton.setBounds(315, 115, 80, 30)
@@ -60,7 +64,7 @@ class ConfigurationTab():
         self._extender.savedHeadersTitlesCombo.addActionListener(SavedHeaderChange(self._extender))
         self._extender.savedHeadersTitlesCombo.setBounds(10, 115, 300, 30)
 
-        self._extender.replaceString = JTextArea("Cookie: Insert=injected; cookie=or;\nHeader: here", 5, 30)
+        self._extender.replaceString = JTextArea(self.DEFUALT_REPLACE_TEXT, 5, 30)
         self._extender.replaceString.setWrapStyleWord(True)
         self._extender.replaceString.setLineWrap(True)
         scrollReplaceString = JScrollPane(self._extender.replaceString)
@@ -99,13 +103,14 @@ class ConfigurationTab():
         self.config_pnl.add(self._extender.ignore304)
         self.config_pnl.add(self._extender.prevent304)
         self.config_pnl.add(self._extender.doUnauthorizedRequest)
-
+        self.config_pnl.add(self._extender.replaceQueryParam)
+        
         self._extender._cfg_splitpane = JSplitPane(JSplitPane.VERTICAL_SPLIT)
         self._extender._cfg_splitpane.setResizeWeight(0.5)
         self._extender._cfg_splitpane.setBounds(0, 0, 1000, 1000)
         self._extender._cfg_splitpane.setRightComponent(self._extender.filtersTabs)
         self._extender._cfg_splitpane.setLeftComponent(self.config_pnl)
-    
+
     def startOrStop(self, event):
         if self._extender.startButton.getText() == "Autorize is off":
             self._extender.startButton.setText("Autorize is on")
@@ -122,6 +127,12 @@ class ConfigurationTab():
         self._extender._log.clear()
         SwingUtilities.invokeLater(UpdateTableEDT(self._extender,"delete",0, oldSize - 1))
         self._extender._lock.release()
+    
+    def replaceQueryHanlder(self, event):
+        if self._extender.replaceQueryParam.isSelected():
+            self._extender.replaceString.setText("paramName=paramValue")
+        else:
+            self._extender.replaceString.setText(self.DEFUALT_REPLACE_TEXT)
 
     def saveHeaders(self, event):
         savedHeadersTitle = JOptionPane.showInputDialog("Please provide saved headers title:")
