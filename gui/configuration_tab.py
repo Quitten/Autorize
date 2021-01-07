@@ -14,6 +14,7 @@ from javax.swing import JTextArea
 from javax.swing import JCheckBox
 from javax.swing import JButton
 from javax.swing import JPanel
+from javax.swing import JLabel
 
 from table import UpdateTableEDT
 
@@ -71,10 +72,18 @@ class ConfigurationTab():
         scrollReplaceString.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         scrollReplaceString.setBounds(10, 150, 470, 150)
 
-        self._extender.fetchButton = JButton("Fetch cookies from last request",
-                                actionPerformed=self.fetchCookies)
-        self._extender.fetchButton.setEnabled(False)
-        self._extender.fetchButton.setBounds(10, 305, 250, 30)
+        fromLastRequestLabel = JLabel("From last request:")
+        fromLastRequestLabel.setBounds(10, 305, 250, 30)
+
+        self._extender.fetchCookiesHeaderButton = JButton("Fetch Cookies header",
+                                actionPerformed=self.fetchCookiesHeader)
+        self._extender.fetchCookiesHeaderButton.setEnabled(False)
+        self._extender.fetchCookiesHeaderButton.setBounds(10, 330, 220, 30)
+
+        self._extender.fetchAuthorizationHeaderButton = JButton("Fetch Authorization header",
+                                actionPerformed=self.fetchAuthorizationHeader)
+        self._extender.fetchAuthorizationHeaderButton.setEnabled(False)
+        self._extender.fetchAuthorizationHeaderButton.setBounds(260, 330, 220, 30)
 
         self._extender.filtersTabs = JTabbedPane()
         self._extender.filtersTabs = self._extender.filtersTabs
@@ -94,10 +103,12 @@ class ConfigurationTab():
         self.config_pnl.add(self._extender.startButton)
         self.config_pnl.add(self._extender.clearButton)
         self.config_pnl.add(scrollReplaceString)
+        self.config_pnl.add(fromLastRequestLabel)
         self.config_pnl.add(self._extender.saveHeadersButton)
         self.config_pnl.add(self._extender.removeHeadersButton)
         self.config_pnl.add(self._extender.savedHeadersTitlesCombo)
-        self.config_pnl.add(self._extender.fetchButton)
+        self.config_pnl.add(self._extender.fetchCookiesHeaderButton)
+        self.config_pnl.add(self._extender.fetchAuthorizationHeaderButton)
         self.config_pnl.add(self._extender.autoScroll)
         self.config_pnl.add(self._extender.interceptRequestsfromRepeater)
         self.config_pnl.add(self._extender.ignore304)
@@ -159,9 +170,13 @@ class ConfigurationTab():
             titles.append(savedHeaderObj['title'])
         return titles
 
-    def fetchCookies(self, event):
-        if self._extender.lastCookies:
-            self._extender.replaceString.setText(self._extender.lastCookies)
+    def fetchCookiesHeader(self, event):
+        if self._extender.lastCookiesHeader:
+            self._extender.replaceString.setText(self._extender.lastCookiesHeader)
+    
+    def fetchAuthorizationHeader(self, event):
+        if self._extender.lastAuthorizationHeader:
+            self._extender.replaceString.setText(self._extender.lastAuthorizationHeader)
 
 class SavedHeaderChange(ActionListener):
     def __init__(self, extender):

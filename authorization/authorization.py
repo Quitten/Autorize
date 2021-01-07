@@ -4,7 +4,7 @@
 import sys
 sys.path.append("..")
 
-from helpers.http import get_cookie_from_message, isStatusCodesReturned, makeMessage, makeRequest, getResponseContentLength, IHttpRequestResponseImplementation
+from helpers.http import get_authorization_header_from_message, get_cookie_header_from_message, isStatusCodesReturned, makeMessage, makeRequest, getResponseContentLength, IHttpRequestResponseImplementation
 from gui.table import LogEntry, UpdateTableEDT
 from javax.swing import SwingUtilities
 from java.net import URL
@@ -23,11 +23,18 @@ def tool_needs_to_be_ignored(self, toolFlag):
                 return True
     return False
 
-def handle_cookies_feature(self, messageInfo):
-    cookies = get_cookie_from_message(self, messageInfo)
+def capture_last_cookie_header(self, messageInfo):
+    cookies = get_cookie_header_from_message(self, messageInfo)
     if cookies:
-        self.lastCookies = cookies
-        self.fetchButton.setEnabled(True)
+        self.lastCookiesHeader = cookies
+        self.fetchCookiesHeaderButton.setEnabled(True)
+
+def capture_last_authorization_header(self, messageInfo):
+    authorization = get_authorization_header_from_message(self, messageInfo)
+    if authorization:
+        self.lastAuthorizationHeader = authorization
+        self.fetchAuthorizationHeaderButton.setEnabled(True)
+
 
 def valid_tool(self, toolFlag):
     return (toolFlag == self._callbacks.TOOL_PROXY or 
@@ -108,7 +115,8 @@ def handle_message(self, toolFlag, messageIsRequest, messageInfo):
     if tool_needs_to_be_ignored(self, toolFlag):
         return
 
-    handle_cookies_feature(self, messageInfo)
+    capture_last_cookie_header(self, messageInfo)
+    capture_last_authorization_header(self, messageInfo)
 
     if self.intercept and valid_tool(self, toolFlag):
         handle_304_status_code_prevention(self, messageIsRequest, messageInfo)

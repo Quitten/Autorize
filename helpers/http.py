@@ -87,10 +87,17 @@ def getResponseBody(self, requestResponse):
 def getResponseContentLength(self, response):
     return len(response) - self._helpers.analyzeResponse(response).getBodyOffset()
 
-def get_cookie_from_message(self, messageInfo):
+def get_cookie_header_from_message(self, messageInfo):
     headers = list(self._helpers.analyzeRequest(messageInfo.getRequest()).getHeaders())
     for header in headers:
         if header.strip().lower().startswith("cookie:"):
+            return header
+    return None
+
+def get_authorization_header_from_message(self, messageInfo):
+    headers = list(self._helpers.analyzeRequest(messageInfo.getRequest()).getHeaders())
+    for header in headers:
+        if header.strip().lower().startswith("authorization:"):
             return header
     return None
 

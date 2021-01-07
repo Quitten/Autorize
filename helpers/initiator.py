@@ -28,7 +28,9 @@ class Initiator():
         self._extender.ENFORCED_STR = "Enforced!"
         
         self._extender.intercept = 0
-        self._extender.lastCookies = ""
+        self._extender.lastCookiesHeader = ""
+        self._extender.lastAuthorizationHeader = ""
+
         self._extender.currentRequestNumber = 1
         self._extender.expanded_requests = 0
     
