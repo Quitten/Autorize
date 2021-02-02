@@ -209,7 +209,7 @@ class AutoScrollListener(AdjustmentListener):
 
 class MessageEditor(IMessageEditorController):
     def __init__(self, extender):
-        pass
+        self._extender = extender
 
     def getHttpService(self):
         return self._extender._currentlyDisplayedItem.getHttpService()
