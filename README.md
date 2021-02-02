@@ -52,4 +52,4 @@ Example of interception filters (Note that there is default filter to avoid scri
 
 
 # Authors
-- Barak Tawily, Application Security Expert
+- Barak Tawily, CTO @ [enso.security](https://enso.security/) by day, [Application Security Researcher](https://quitten.github.io/) by night
