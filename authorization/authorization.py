@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
 
-import sys
+import sys  
+reload(sys)  
+
+sys.setdefaultencoding('utf8')
 sys.path.append("..")
 
 from helpers.http import get_authorization_header_from_message, get_cookie_header_from_message, isStatusCodesReturned, makeMessage, makeRequest, getResponseContentLength, IHttpRequestResponseImplementation
@@ -161,7 +164,8 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
     
     response = requestResponse.getResponse()
     for filter in filters:
-        if str(filter).startswith("Status code equals: "):
+        filter = self._helpers.bytesToString(bytes(filter))
+        if filter.startswith("Status code equals: "):
             statusCode = filter[20:]
             if andEnforcementCheck:
                 if auth_enforced and not isStatusCodesReturned(self, requestResponse, statusCode):
@@ -170,7 +174,7 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
                 if not auth_enforced and isStatusCodesReturned(self, requestResponse, statusCode):
                     auth_enforced = True
 
-        if str(filter).startswith("Headers (simple string): "):
+        if filter.startswith("Headers (simple string): "):
             if andEnforcementCheck:
                 if auth_enforced and not filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
                     auth_enforced = False
@@ -178,7 +182,7 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
                 if not auth_enforced and filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
                     auth_enforced = True
 
-        if str(filter).startswith("Headers (regex): "):
+        if filter.startswith("Headers (regex): "):
             regex_string = filter[17:]
             p = re.compile(regex_string, re.IGNORECASE)                        
             if andEnforcementCheck:
@@ -188,7 +192,7 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
                 if not auth_enforced and p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
                     auth_enforced = True
 
-        if str(filter).startswith("Body (simple string): "):
+        if filter.startswith("Body (simple string): "):
             if andEnforcementCheck:
                 if auth_enforced and not filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
                     auth_enforced = False
@@ -196,7 +200,7 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
                 if not auth_enforced and filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
                     auth_enforced = True
 
-        if str(filter).startswith("Body (regex): "):
+        if filter.startswith("Body (regex): "):
             regex_string = filter[14:]
             p = re.compile(regex_string, re.IGNORECASE)
             if andEnforcementCheck:
@@ -206,7 +210,7 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
                 if not auth_enforced and p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
                     auth_enforced = True
 
-        if str(filter).startswith("Full response (simple string): "):
+        if filter.startswith("Full response (simple string): "):
             if andEnforcementCheck:
                 if auth_enforced and not filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()):
                     auth_enforced = False
@@ -214,7 +218,7 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
                 if not auth_enforced and filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()):
                     auth_enforced = True
 
-        if str(filter).startswith("Full response (regex): "):
+        if filter.startswith("Full response (regex): "):
             regex_string = filter[23:]
             p = re.compile(regex_string, re.IGNORECASE)
             if andEnforcementCheck:
@@ -224,7 +228,7 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
                 if not auth_enforced and p.search(self._helpers.bytesToString(requestResponse.getResponse())):
                     auth_enforced = True
 
-        if str(filter).startswith("Full response length: "):
+        if filter.startswith("Full response length: "):
             if andEnforcementCheck:
                 if auth_enforced and not str(len(response)) == filter[22:].strip():
                     auth_enforced = False
