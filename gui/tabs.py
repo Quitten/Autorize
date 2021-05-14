@@ -148,8 +148,10 @@ class SendRequestRepeater(ActionListener):
                 request = self._extender._currentlyDisplayedItem._requestResponse
         host = request.getHttpService().getHost()
         port = request.getHttpService().getPort()
-        
-        self._callbacks.sendToRepeater(host, port, 1, request.getRequest(), "Autorize");
+        proto = request.getHttpService().getProtocol()
+        secure = True if proto == "https" else False
+
+        self._callbacks.sendToRepeater(host, port, secure, request.getRequest(), "Autorize");
 
 class SendResponseComparer(ActionListener):
     def __init__(self, extender, callbacks):
