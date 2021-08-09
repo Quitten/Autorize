@@ -68,6 +68,14 @@ def no_filters_defined(self):
 
 def message_passed_interception_filters(self, messageInfo):
     urlString = str(self._helpers.analyzeRequest(messageInfo).getUrl())
+    reqInfo = self._helpers.analyzeRequest(messageInfo)
+    reqBodyBytes = messageInfo.getRequest()[reqInfo.getBodyOffset():]
+    bodyStr = self._helpers.bytesToString(reqBodyBytes)
+
+    resInfo = self._helpers.analyzeResponse(messageInfo.getResponse())
+    resBodyBytes = messageInfo.getResponse()[resInfo.getBodyOffset():]
+    resStr = self._helpers.bytesToString(resBodyBytes)
+
     message_passed_filters = True
     for i in range(0, self.IFList.getModel().getSize()):
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Scope items only":
@@ -93,9 +101,40 @@ def message_passed_interception_filters(self, messageInfo):
             if not re.search(regex_string, urlString, re.IGNORECASE) is None:
                 message_passed_filters = False
 
-        if self.IFList.getModel().getElementAt(i).split(":")[0] == "URL Not Contains (regex)":
-            regex_string = self.IFList.getModel().getElementAt(i)[26:]
-            if not re.search(regex_string, urlString, re.IGNORECASE) is None:
+        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Request Body contains (simple string)":
+            if self.IFList.getModel().getElementAt(i)[40:] not in bodyStr:
+                message_passed_filters = False
+                
+        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Request Body contains (regex)":
+            regex_string = self.IFList.getModel().getElementAt(i)[32:]
+            if re.search(regex_string, bodyStr, re.IGNORECASE) is None:
+                message_passed_filters = False
+        
+        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Request Body NOT contains (simple string)":
+            if self.IFList.getModel().getElementAt(i)[44:] in bodyStr:
+                message_passed_filters = False
+                
+        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Request Body Not contains (regex)":
+            regex_string = self.IFList.getModel().getElementAt(i)[36:]
+            if not re.search(regex_string, bodyStr, re.IGNORECASE) is None:
+                message_passed_filters = False
+
+        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Body contains (simple string)":
+            if self.IFList.getModel().getElementAt(i)[41:] not in resStr:
+                message_passed_filters = False
+
+        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Body contains (regex)":
+            regex_string = self.IFList.getModel().getElementAt(i)[33:]
+            if re.search(regex_string, resStr, re.IGNORECASE) is None:
+                message_passed_filters = False
+
+        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Body NOT contains (simple string)":
+            if self.IFList.getModel().getElementAt(i)[45:] in resStr:
+                message_passed_filters = False
+                
+        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Body Not contains (regex)":
+            regex_string = self.IFList.getModel().getElementAt(i)[37:]
+            if not re.search(regex_string, resStr, re.IGNORECASE) is None:
                 message_passed_filters = False
 
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Only HTTP methods (newline separated)":
@@ -111,7 +150,7 @@ def message_passed_interception_filters(self, messageInfo):
             reqMethod = str(self._helpers.analyzeRequest(messageInfo).getMethod())
             if reqMethod.lower() in filterMethods:
                 message_passed_filters = False
-    
+
     return message_passed_filters
 
 def handle_message(self, toolFlag, messageIsRequest, messageInfo):
