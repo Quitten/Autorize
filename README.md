@@ -18,7 +18,7 @@ Autorize is an automatic authorization enforcement detection extension for Burp 
 2.	Open the configuration tab (Autorize -> Configuration).
 3.	Get your low-privileged user authorization token header (Cookie / Authorization) and copy it into the textbox containing the text "Insert injected header here".
 **Note**: Headers inserted here will be replaced if present or added if not.
-4.  Uncheck "Check unauthenticated" if the authentication test is not required (request without any cookies, to check for authentication enforcement in addiction to authorization enforcement with the cookies of low-privileged user)
+4.  Uncheck "Check unauthenticated" if the authentication test is not required (request without any cookies, to check for authentication enforcement in addition to authorization enforcement with the cookies of low-privileged user)
 5.  Check "Intercept requests from Repeater" to also intercept the requests that are sent through the Repeater. 
 6.	Click on "Intercept is off" to start intercepting the traffic in order to allow Autorize to check for authorization enforcement.
 7.	Open a browser and configure the proxy settings so the traffic will be passed to Burp.
@@ -45,7 +45,7 @@ The enforcement detector filters will allow Autorize to detect authentication an
 For example, if there is a request enforcement status that is detected as "Authorization enforced??? (please configure enforcement detector)" it is possible to investigate the modified/original/unauthenticated response and see that the modified response body includes the string "You are not authorized to perform action", so you can add a filter with the fingerprint value "You are not authorized to perform action", so Autorize will look for this fingerprint and will automatically detect that authorization is enforced. It is possible to do the same by defining content-length filter or fingerprint in headers.
 
 # Interception Filters
-The interception filter allows you configure what domains you want to be intercepted by Autorize plugin, you can determine by blacklist/whitelist/regex or items in Burp's scope in order to avoid unnesseary domains to be intercepted by Autorize and work more organized.
+The interception filter allows you configure what domains you want to be intercepted by Autorize plugin, you can determine by blacklist/whitelist/regex or items in Burp's scope in order to avoid unnecessary domains to be intercepted by Autorize and work more organized.
 
 Example of interception filters (Note that there is default filter to avoid scripts and images):
 ![alt tag](https://raw.githubusercontent.com/Quitten/Autorize/master/interceptionFilters.png)
