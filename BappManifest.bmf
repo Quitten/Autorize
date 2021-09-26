@@ -2,8 +2,8 @@ Uuid: f9bbac8c4acf4aefa4d7dc92a991af2f
 ExtensionType: 2
 Name: Autorize
 RepoName: autorize
-ScreenVersion: 1.4
-SerialVersion: 17
+ScreenVersion: 1.5
+SerialVersion: 18
 MinPlatformVersion: 0
 ProOnly: False
 Author:  Barak Tawily
