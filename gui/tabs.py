@@ -19,6 +19,8 @@ from java.lang import Math
 from burp import ITab
 from burp import IMessageEditorController
 
+from authorization.authorization import handle_message, retestAllRequests
+
 from thread import start_new_thread
 
 from table import Table, LogEntry, TableRowFilter
@@ -79,6 +81,9 @@ class Tabs():
 
         retestSelecteditem = JMenuItem("Retest selected request")
         retestSelecteditem.addActionListener(RetestSelectedRequest(self._extender))
+
+        retestAllitem = JMenuItem("Retest all requests")
+        retestAllitem.addActionListener(RetestAllRequests(self._extender))
         
         deleteSelectedItem = JMenuItem("Delete")
         deleteSelectedItem.addActionListener(DeleteSelectedRequest(self._extender))
@@ -89,6 +94,7 @@ class Tabs():
         self._extender.menu.add(sendResponseMenu)
         self._extender.menu.add(copyURLitem)
         self._extender.menu.add(retestSelecteditem)
+        self._extender.menu.add(retestAllitem)
         # self.menu.add(deleteSelectedItem) disabling this feature until bug will be fixed.
         message_editor = MessageEditor(self._extender)
 
@@ -173,24 +179,23 @@ class RetestSelectedRequest(ActionListener):
         self._extender = extender
 
     def actionPerformed(self, e):
-        start_new_thread(self._extender.checkAuthorization, (self._extender._currentlyDisplayedItem._originalrequestResponse, self._extender._helpers.analyzeResponse(self._extender._currentlyDisplayedItem._originalrequestResponse.getResponse()).getHeaders(), self._extender.doUnauthorizedRequest.isSelected()))
+        start_new_thread(handle_message, (self._extender, "AUTORIZE", False, self._extender._currentlyDisplayedItem._originalrequestResponse))
+
+class RetestAllRequests(ActionListener):
+    def __init__(self, extender):
+        self._extender = extender
+
+    def actionPerformed(self, e):
+        start_new_thread(retestAllRequests, (self._extender,))
+
 
 class DeleteSelectedRequest(ActionListener):
     def __init__(self, extender):
         self._extender = extender
 
-    def actionPerformed(self, e): # bug after first deletion!
+    def actionPerformed(self, e):
+        # TODO: Implement this function.
         pass
-        # logBackup = self._extender._log[:]
-        # self._extender.clearList(self)
-        # self._extender._lock.acquire()
-        # print self._extender._currentlyDisplayedItem
-        # logBackup.remove(self._extender._currentlyDisplayedItem)
-        # self._extender._log = logBackup
-        # row = self._extender._log.size()
-        # start_new_thread(self._extender.UpdateTableEDT, (self._extender,"insert",row,row))
-        # SwingUtilities.invokeLater(UpdateTableEDT(self._extender,"delete",0, oldSize - 1))
-        # self._extender._lock.release()
 
 class CopySelectedURL(ActionListener):
     def __init__(self, extender):
