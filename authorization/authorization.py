@@ -40,9 +40,9 @@ def capture_last_authorization_header(self, messageInfo):
 
 
 def valid_tool(self, toolFlag):
-    return (toolFlag == self._callbacks.TOOL_PROXY or 
-    (toolFlag == self._callbacks.TOOL_REPEATER and
-     self.interceptRequestsfromRepeater.isSelected()))
+    return (toolFlag == self._callbacks.TOOL_PROXY or
+            (toolFlag == self._callbacks.TOOL_REPEATER and
+            self.interceptRequestsfromRepeater.isSelected()))
 
 def handle_304_status_code_prevention(self, messageIsRequest, messageInfo):
     should_prevent = False
@@ -160,7 +160,7 @@ def handle_message(self, toolFlag, messageIsRequest, messageInfo):
     capture_last_cookie_header(self, messageInfo)
     capture_last_authorization_header(self, messageInfo)
 
-    if self.intercept and valid_tool(self, toolFlag):
+    if (self.intercept and valid_tool(self, toolFlag) or toolFlag == "AUTORIZE"):
         handle_304_status_code_prevention(self, messageIsRequest, messageInfo)
     
         if not messageIsRequest:
@@ -334,3 +334,10 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
     self.currentRequestNumber = self.currentRequestNumber + 1
     self._lock.release()
     
+def checkAuthorizationV2(self, messageInfo):
+    checkAuthorization(self, messageInfo, self._extender._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(), self._extender.doUnauthorizedRequest.isSelected())
+
+def retestAllRequests(self):
+    for i in range(self.tableModel.getRowCount()):
+        logEntry = self._log.get(self.logTable.convertRowIndexToModel(i))
+        handle_message(self, "AUTORIZE", False, logEntry._originalrequestResponse)
