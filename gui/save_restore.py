@@ -151,7 +151,12 @@ class SaveRestore():
 
                 lastRow = self._extender._log.size()
                 if lastRow > 0:
-                    cookies = self._extender.getCookieFromMessage(self._extender._log.get(lastRow - 1)._requestResponse)
-                    if cookies:
-                        self._extender.lastCookies = cookies
-                        self._extender.fetchButton.setEnabled(True)
+                    cookiesHeader = self._extender.get_cookie_header_from_message(self._extender._log.get(lastRow - 1)._requestResponse)
+                    if cookiesHeader:
+                        self._extender.lastCookiesHeader = cookiesHeader
+                        self._extender.fetchCookiesHeaderButton.setEnabled(True)
+                    authorizationHeader = self._extender.get_authorization_header_from_message(self._extender._log.get(lastRow - 1)._requestResponse)
+                    if authorizationHeader:
+                        self._extender.lastAuthorizationHeader = authorizationHeader
+                        self._extender.fetchAuthorizationHeaderButton.setEnabled(True)
+

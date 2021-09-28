@@ -25,16 +25,27 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
     headers = requestInfo.getHeaders()
     if removeOrNot:
         headers = list(headers)
-        removeHeaders = self.replaceString.getText()
+        # flag for query
+        queryFlag = self.replaceQueryParam.isSelected()
+        if queryFlag:
+            param = self.replaceString.getText().split("=")
+            paramKey = param[0]
+            paramValue = param[1]
+            # ([\?&])test=.*?(?=[\s&])
+            pattern = r"([\?&]){}=.*?(?=[\s&])".format(paramKey)
+            patchedHeader = re.sub(pattern, r"\1{}={}".format(paramKey, paramValue), headers[0], count=1, flags=re.DOTALL)
+            headers[0] = patchedHeader
+        else:
+            removeHeaders = self.replaceString.getText()
 
-        # Headers must be entered line by line i.e. each header in a new
-        # line
-        removeHeaders = [header for header in removeHeaders.split() if header.endswith(':')]
-
-        for header in headers[:]:
-            for removeHeader in removeHeaders:
-                if header.startswith(removeHeader):
-                    headers.remove(header)
+            # Headers must be entered line by line i.e. each header in a new
+            # line
+            removeHeaders = [header for header in removeHeaders.split() if header.endswith(':')]
+            
+            for header in headers[:]:
+                for removeHeader in removeHeaders:
+                    if header.startswith(removeHeader):
+                        headers.remove(header)
 
         if authorizeOrNot:
             # simple string replace
@@ -44,13 +55,13 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
                 if(v["type"] == "Headers (regex):") :
                     headers = map(lambda h: re.sub(v["regexMatch"], v["replace"], h), headers)
                     
-            # fix missing carriage return on *NIX systems
-            replaceStringLines = self.replaceString.getText().split("\n")
+            if not queryFlag:
+                # fix missing carriage return on *NIX systems
+                replaceStringLines = self.replaceString.getText().split("\n")
+                
+                for h in replaceStringLines:
+                    headers.append(h)
             
-            for h in replaceStringLines:
-                headers.append(h)
-            
-
     msgBody = messageInfo.getRequest()[requestInfo.getBodyOffset():]
 
     # apply the match/replace settings to the body of the request
@@ -76,10 +87,17 @@ def getResponseBody(self, requestResponse):
 def getResponseContentLength(self, response):
     return len(response) - self._helpers.analyzeResponse(response).getBodyOffset()
 
-def getCookieFromMessage(self, messageInfo):
+def get_cookie_header_from_message(self, messageInfo):
     headers = list(self._helpers.analyzeRequest(messageInfo.getRequest()).getHeaders())
     for header in headers:
         if header.strip().lower().startswith("cookie:"):
+            return header
+    return None
+
+def get_authorization_header_from_message(self, messageInfo):
+    headers = list(self._helpers.analyzeRequest(messageInfo.getRequest()).getHeaders())
+    for header in headers:
+        if header.strip().lower().startswith("authorization:"):
             return header
     return None
 

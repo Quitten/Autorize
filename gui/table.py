@@ -142,40 +142,6 @@ class TableModel(AbstractTableModel):
             return logEntry._enfocementStatusUnauthorized        
         return ""
 
-# TODO:
-# header black background white text
-# columns borders per row black
-# all header text centered
-# all rows centered as well?
-# change fonts of items
-# bold text?
-
-# implement custom header:
-# JTable table = new JTable(…);
-# JTableHeader header = table.getTableHeader();
-# header.setDefaultRenderer(new HeaderRenderer(table));
-# Custom header renderer:
-
-# private static class HeaderRenderer implements TableCellRenderer {
-
-#     DefaultTableCellRenderer renderer;
-
-#     public HeaderRenderer(JTable table) {
-#         renderer = (DefaultTableCellRenderer)
-#             table.getTableHeader().getDefaultRenderer();
-#         renderer.setHorizontalAlignment(JLabel.CENTER);
-#     }
-
-#     @Override
-#     public Component getTableCellRendererComponent(
-#         JTable table, Object value, boolean isSelected,
-#         boolean hasFocus, int row, int col) {
-#         return renderer.getTableCellRendererComponent(
-#             table, value, isSelected, hasFocus, row, col);
-#     }
-# }
-
-
 class Table(JTable):
     def __init__(self, extender):
         self._extender = extender

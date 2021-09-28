@@ -19,7 +19,7 @@ class Initiator():
     
     def init_constants(self):
         self.contributors = ["Federico Dotta", "mgeeky", "Marcin Woloszyn", "jpginc"]
-        self._extender.version = 1.4
+        self._extender.version = 1.5
         self._extender._log = ArrayList()
         self._extender._lock = Lock()
 
@@ -28,7 +28,9 @@ class Initiator():
         self._extender.ENFORCED_STR = "Enforced!"
         
         self._extender.intercept = 0
-        self._extender.lastCookies = ""
+        self._extender.lastCookiesHeader = ""
+        self._extender.lastAuthorizationHeader = ""
+
         self._extender.currentRequestNumber = 1
         self._extender.expanded_requests = 0
     
