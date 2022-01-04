@@ -45,7 +45,9 @@ class InterceptionFilters():
                      "Ignore HTTP methods (newline separated): ",
                      "Ignore spider requests: (Content is not required)",
                      "Ignore proxy requests: (Content is not required)",
-                     "Ignore target requests: (Content is not required)"]
+                     "Ignore target requests: (Content is not required)",
+                     "Ignore OPTIONS requests: (Content is not required)"
+                     ]
         self._extender.IFType = JComboBox(IFStrings)
         self._extender.IFType.setBounds(80, 10, 430, 30)
        

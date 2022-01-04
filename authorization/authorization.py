@@ -151,6 +151,11 @@ def message_passed_interception_filters(self, messageInfo):
             if reqMethod.lower() in filterMethods:
                 message_passed_filters = False
 
+        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Ignore OPTIONS requests":
+            reqMethod = str(self._helpers.analyzeRequest(messageInfo).getMethod())
+            if reqMethod == "OPTIONS":
+                message_passed_filters = False
+
     return message_passed_filters
 
 def handle_message(self, toolFlag, messageIsRequest, messageInfo):
