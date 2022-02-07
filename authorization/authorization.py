@@ -4,7 +4,9 @@
 import sys  
 reload(sys)  
 
-sys.setdefaultencoding('utf8')
+if (sys.version_info[0] == 2):
+    sys.setdefaultencoding('utf8')
+    
 sys.path.append("..")
 
 from helpers.http import get_authorization_header_from_message, get_cookie_header_from_message, isStatusCodesReturned, makeMessage, makeRequest, getResponseContentLength, IHttpRequestResponseImplementation
