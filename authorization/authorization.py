@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
 
+from operator import truediv
 import sys  
 reload(sys)  
 
 if (sys.version_info[0] == 2):
     sys.setdefaultencoding('utf8')
-    
+
 sys.path.append("..")
 
 from helpers.http import get_authorization_header_from_message, get_cookie_header_from_message, isStatusCodesReturned, makeMessage, makeRequest, getResponseContentLength, IHttpRequestResponseImplementation
@@ -138,6 +139,16 @@ def message_passed_interception_filters(self, messageInfo):
             regex_string = self.IFList.getModel().getElementAt(i)[37:]
             if not re.search(regex_string, resStr, re.IGNORECASE) is None:
                 message_passed_filters = False
+
+        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Header contains":
+            for header in list(resInfo.getHeaders()):
+                if self.IFList.getModel().getElementAt(i)[17:] in header:
+                    message_passed_filters = False
+        
+        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Header doesn't contain":
+            for header in list(resInfo.getHeaders()):
+                if not self.IFList.getModel().getElementAt(i)[17:] in header:
+                    message_passed_filters = False
 
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Only HTTP methods (newline separated)":
             filterMethods = self.IFList.getModel().getElementAt(i)[39:].split("\n")
