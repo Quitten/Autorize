@@ -13,10 +13,22 @@ from javax.swing import JPanel
 from javax.swing import JFrame
 from java.awt import Font
 from java.io import File
+from javax.swing import JCheckBox
+from java.awt.event import ItemListener
+
 
 from save_restore import SaveRestore
 
+class RemoveDups(ItemListener):
+    def __init__(self, extender):
+        self._extender = extender
+
+    def itemStateChanged(self, e):
+        return True
+
+
 class Export():
+
     def __init__(self, extender):
         self._extender = extender
         self.BYPASSSED_STR = extender.BYPASSSED_STR
@@ -24,6 +36,7 @@ class Export():
         self.IS_ENFORCED_STR = extender.IS_ENFORCED_STR
         self._log = extender._log
         self.save_restore = SaveRestore(extender)
+
 
     def draw(self):
             """ init Save/Restore
@@ -52,19 +65,24 @@ class Export():
             exportLES = JLabel("Statuses:")
             exportLES.setBounds(10, 90, 100, 30)
 
+            self.removeDuplicates = JCheckBox("Remove Duplicates")
+            self.removeDuplicates.setBounds(8, 120, 300, 30)
+            self.removeDuplicates.setSelected(True)
+            self.removeDuplicates.addItemListener(RemoveDups(self._extender))
+
             self.exportButton = JButton("Export",
                                         actionPerformed=self.export)
             self.exportButton.setBounds(390, 50, 100, 30)
 
-            saveRestoreLabel = JLabel("Save / Restore:")
-            saveRestoreLabel.setBounds(10, 250, 100, 30)    
+            saveRestoreLabel = JLabel("State:")
+            saveRestoreLabel.setBounds(10, 160, 250, 30)
             saveRestoreLabel.setFont(boldFont)
 
-            self.saveStateButton = JButton("Save state",
+            self.saveStateButton = JButton("Save",
                                         actionPerformed=self.saveStateAction)
             self.saveStateButton.setBounds(10, 200, 100, 30)
 
-            self.restoreStateButton = JButton("Restore state",
+            self.restoreStateButton = JButton("Restore",
                                             actionPerformed=self.restoreStateAction)
             self.restoreStateButton.setBounds(390, 200, 100, 30)        
             
@@ -81,6 +99,7 @@ class Export():
             exportPnl.add(saveRestoreLabel)
             exportPnl.add(self.saveStateButton)
             exportPnl.add(self.restoreStateButton)
+            exportPnl.add(self.removeDuplicates)
 
     def export(self, event):
             if self.exportType.getSelectedItem() == "HTML":
@@ -133,8 +152,15 @@ class Export():
         <div class="datagrid"><table>
         <thead><tr><th width=\"3%\">ID</th><th width=\"5%\">Method</th><th width=\"43%\">URL</th><th width=\"9%\">Original length</th><th width=\"9%\">Modified length</th><th width=\"9%\">Unauthorized length</th><th width=\"11%\">Authorization Enforcement Status</th><th width=\"11%\">Authorization Unauthenticated Status</th></tr></thead>
         <tbody>"""
-
+        unique_HTML_lines = set()  # set to keep track of unique values
         for i in range(0,self._log.size()):
+            if self.removeDuplicates.isSelected():
+                # line data only looks for method, url, and authorized status. Does not factor in size of request during comparision
+                lineData = "\t%s\t%s\t%s\t%s\n" % (self._log.get(i)._method, self._log.get(i)._url, self._log.get(i)._enfocementStatus,self._log.get(i)._enfocementStatusUnauthorized)
+                if lineData in unique_HTML_lines:  # Skip if line is already in set
+                    continue
+                else:  # Add line to set and continue with execution
+                    unique_HTML_lines.add(lineData)
             color_modified = ""
             if self._log.get(i)._enfocementStatus == self.BYPASSSED_STR:
                 color_modified = "red"
@@ -183,8 +209,15 @@ class Export():
         enforcementStatusFilter = self.exportES.getSelectedItem()
         csvContent = "id\tMethod\tURL\tOriginal length\tModified length\tUnauthorized length\tAuthorization Enforcement Status\tAuthorization Unauthenticated Status\n"
 
-        for i in range(0,self._log.size()):
-
+        unique_CVS_lines = set()
+        for i in range(0, self._log.size()):
+            if self.removeDuplicates.isSelected():
+                # line data only looks for method, url, and authorized status. Does not factor in size of request during comparision
+                lineData = "\t%s\t%s\t%s\t%s\n" % (self._log.get(i)._method, self._log.get(i)._url, self._log.get(i)._enfocementStatus,self._log.get(i)._enfocementStatusUnauthorized)
+                if lineData in unique_CVS_lines:  # Skip if line is already in set
+                    continue
+                else:  # Add line to set and continue with execution
+                    unique_CVS_lines.add(lineData)
             if enforcementStatusFilter == "All Statuses":
                 csvContent += "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id, self._log.get(i)._method, self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse is not None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse is not None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse is not None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
             elif enforcementStatusFilter == "As table filter":                
@@ -199,7 +232,9 @@ class Export():
             else:
                 if (enforcementStatusFilter == self._log.get(i)._enfocementStatus) or (enforcementStatusFilter == self._log.get(i)._enfocementStatusUnauthorized):
                     csvContent += "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id, self._log.get(i)._method, self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse is not None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse is not None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse is not None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
-        
+
+
         f = open(fileToSave.getAbsolutePath(), 'w')
         f.writelines(csvContent)
         f.close()
+
