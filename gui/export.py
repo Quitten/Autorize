@@ -66,23 +66,23 @@ class Export():
             exportLES.setBounds(10, 90, 100, 30)
 
             self.removeDuplicates = JCheckBox("Remove Duplicates")
-            self.removeDuplicates.setBounds(390, 100, 100, 30)
-            self.removeDuplicates.setSelected(False)
+            self.removeDuplicates.setBounds(8, 120, 300, 30)
+            self.removeDuplicates.setSelected(True)
             self.removeDuplicates.addItemListener(RemoveDups(self._extender))
 
             self.exportButton = JButton("Export",
                                         actionPerformed=self.export)
             self.exportButton.setBounds(390, 50, 100, 30)
 
-            saveRestoreLabel = JLabel("Save / Restore:")
-            saveRestoreLabel.setBounds(10, 250, 100, 30)    
+            saveRestoreLabel = JLabel("State:")
+            saveRestoreLabel.setBounds(10, 160, 250, 30)
             saveRestoreLabel.setFont(boldFont)
 
-            self.saveStateButton = JButton("Save state",
+            self.saveStateButton = JButton("Save",
                                         actionPerformed=self.saveStateAction)
             self.saveStateButton.setBounds(10, 200, 100, 30)
 
-            self.restoreStateButton = JButton("Restore state",
+            self.restoreStateButton = JButton("Restore",
                                             actionPerformed=self.restoreStateAction)
             self.restoreStateButton.setBounds(390, 200, 100, 30)        
             
