@@ -355,6 +355,7 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
 def checkAuthorizationV2(self, messageInfo):
     checkAuthorization(self, messageInfo, self._extender._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(), self._extender.doUnauthorizedRequest.isSelected())
 
+test = test
 def retestAllRequests(self):
     for i in range(self.tableModel.getRowCount()):
         logEntry = self._log.get(self.logTable.convertRowIndexToModel(i))
