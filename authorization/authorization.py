@@ -357,6 +357,6 @@ def checkAuthorizationV2(self, messageInfo):
 
 def retestAllRequests(self):
     for i in range(self.tableModel.getRowCount()):
-        self.logTable.setAutoCreateRowSorter(True)
+        self.logTable.setAutoCreateRowSorter(True )
         logEntry = self._log.get(self.logTable.convertRowIndexToModel(i))
         handle_message(self, "AUTORIZE", False, logEntry._originalrequestResponse)
