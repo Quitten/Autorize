@@ -50,7 +50,7 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
         if authorizeOrNot:
             # simple string replace
             for k, v in self.badProgrammerMRModel.items():
-                if(v["type"] == "Headers (simple string):") :
+                if(v["type"] == "Headers (simple string):"):
                     headers = map(lambda h: h.replace(v["match"], v["replace"]), headers)
                 if(v["type"] == "Headers (regex):") :
                     headers = map(lambda h: re.sub(v["regexMatch"], v["replace"], h), headers)
@@ -72,7 +72,7 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
             if(v["type"] == "Body (simple string):") :
                 msgBody = msgBody.replace(v["match"], v["replace"])
             if(v["type"] == "Body (regex):") :
-                msgBody = re.sub(v["regexMatch"], v["replace"],msgBody)
+                msgBody = re.sub(v["regexMatch"], v["replace"], msgBody) #test
         msgBody = self._helpers.stringToBytes(msgBody)
     return self._helpers.buildHttpMessage(headers, msgBody)
 

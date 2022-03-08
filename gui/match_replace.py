@@ -33,7 +33,7 @@ class MatchReplace():
         column1X = 10
         column2X = column1X + labelWidth + padding
         column3X = column2X + editWidth + padding
-        MRStrings = ["Headers (simple string):" ,
+        MRStrings = ["Headers (simple string):",
                      "Headers (regex):",
                      "Body (simple string):",
                      "Body (regex):"]
@@ -117,7 +117,7 @@ class MatchReplace():
 
         regexMatch = None
         try:
-            if "(regex)" in typeName :
+            if "(regex)" in typeName:
                 regexMatch = re.compile(match)
         except re.error:
             self._extender.MRFeedback.setText("ERROR: Invalid regex")
