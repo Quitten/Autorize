@@ -72,7 +72,7 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
             if(v["type"] == "Body (simple string):") :
                 msgBody = msgBody.replace(v["match"], v["replace"])
             if(v["type"] == "Body (regex):") :
-                msgBody = re.sub(v["regexMatch"], v["replace"], msgBody) #test
+                msgBody = re.sub(v["regexMatch"], v["replace"], msgBody)
         msgBody = self._helpers.stringToBytes(msgBody)
     return self._helpers.buildHttpMessage(headers, msgBody)
 
