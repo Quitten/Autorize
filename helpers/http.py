@@ -58,9 +58,11 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
             if not queryFlag:
                 # fix missing carriage return on *NIX systems
                 replaceStringLines = self.replaceString.getText().split("\n")
-                
                 for h in replaceStringLines:
-                    headers.append(h)
+                    if h == "": # Logic to fix extraneous newline at the end of requests when no temporary headers are added
+                        pass
+                    else:
+                        headers.append(h)
             
     msgBody = messageInfo.getRequest()[requestInfo.getBodyOffset():]
 
