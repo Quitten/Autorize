@@ -7,7 +7,7 @@ from javax.swing import JFrame
 from java.io import File
 
 from table import LogEntry, UpdateTableEDT
-from helpers.http import IHttpRequestResponseImplementation
+from helpers.http import get_cookie_header_from_message, get_authorization_header_from_message, IHttpRequestResponseImplementation
 
 import csv, base64, json, re, sys
 
@@ -252,11 +252,11 @@ class SaveRestore():
 
                 lastRow = self._extender._log.size()
                 if lastRow > 0:
-                    cookiesHeader = self._extender.get_cookie_header_from_message(self._extender._log.get(lastRow - 1)._requestResponse)
+                    cookiesHeader = get_cookie_header_from_message(self._extender, self._extender._log.get(lastRow - 1)._requestResponse)
                     if cookiesHeader:
                         self._extender.lastCookiesHeader = cookiesHeader
                         self._extender.fetchCookiesHeaderButton.setEnabled(True)
-                    authorizationHeader = self._extender.get_authorization_header_from_message(self._extender._log.get(lastRow - 1)._requestResponse)
+                    authorizationHeader = get_authorization_header_from_message(self._extender, self._extender._log.get(lastRow - 1)._requestResponse)
                     if authorizationHeader:
                         self._extender.lastAuthorizationHeader = authorizationHeader
                         self._extender.fetchAuthorizationHeaderButton.setEnabled(True)
