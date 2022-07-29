@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 
 import re
 from burp import IHttpRequestResponse
@@ -41,7 +41,7 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
             # Headers must be entered line by line i.e. each header in a new
             # line
             removeHeaders = [header for header in removeHeaders.split() if header.endswith(':')]
-            
+
             for header in headers[:]:
                 for removeHeader in removeHeaders:
                     if header.startswith(removeHeader):
@@ -54,7 +54,7 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
                     headers = map(lambda h: h.replace(v["match"], v["replace"]), headers)
                 if(v["type"] == "Headers (regex):") :
                     headers = map(lambda h: re.sub(v["regexMatch"], v["replace"], h), headers)
-                    
+
             if not queryFlag:
                 # fix missing carriage return on *NIX systems
                 replaceStringLines = self.replaceString.getText().split("\n")
@@ -63,7 +63,7 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
                         pass
                     else:
                         headers.append(h)
-            
+
     msgBody = messageInfo.getRequest()[requestInfo.getBodyOffset():]
 
     # apply the match/replace settings to the body of the request
@@ -84,7 +84,7 @@ def getResponseHeaders(self, requestResponse):
 
 def getResponseBody(self, requestResponse):
     analyzedResponse = self._helpers.analyzeResponse(requestResponse.getResponse())
-    self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])
+    return self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])
 
 def getResponseContentLength(self, response):
     return len(response) - self._helpers.analyzeResponse(response).getBodyOffset()

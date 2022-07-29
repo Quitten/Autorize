@@ -10,7 +10,7 @@ if (sys.version_info[0] == 2):
 
 sys.path.append("..")
 
-from helpers.http import get_authorization_header_from_message, get_cookie_header_from_message, isStatusCodesReturned, makeMessage, makeRequest, getResponseContentLength, IHttpRequestResponseImplementation
+from helpers.http import get_authorization_header_from_message, get_cookie_header_from_message, isStatusCodesReturned, makeMessage, makeRequest, getResponseBody, IHttpRequestResponseImplementation
 from gui.table import LogEntry, UpdateTableEDT
 from javax.swing import SwingUtilities
 from java.net import URL
@@ -294,15 +294,15 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
                     auth_enforced = True
         return auth_enforced
 
-def checkBypass(self, oldStatusCode, newStatusCode, oldContentLen,
-                 newContentLen, filters, requestResponse, andOrEnforcement):
+def checkBypass(self, oldStatusCode, newStatusCode, oldContent,
+                 newContent, filters, requestResponse, andOrEnforcement):
     if oldStatusCode == newStatusCode:
         auth_enforced = 0
         if len(filters) > 0:
             auth_enforced = auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andOrEnforcement)
         if auth_enforced:
             return self.ENFORCED_STR
-        elif oldContentLen == newContentLen:
+        elif oldContent == newContent:
             return self.BYPASSSED_STR
         else:
             return self.IS_ENFORCED_STR
@@ -310,7 +310,6 @@ def checkBypass(self, oldStatusCode, newStatusCode, oldContentLen,
         return self.ENFORCED_STR
 
 def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
-    oldResponse = messageInfo.getResponse()
     message = makeMessage(self, messageInfo, True, True)
     requestResponse = makeRequest(self, messageInfo, message)
     newResponse = requestResponse.getResponse()
@@ -318,8 +317,8 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
     
     oldStatusCode = originalHeaders[0]
     newStatusCode = analyzedResponse.getHeaders()[0]
-    oldContentLen = getResponseContentLength(self, oldResponse)
-    newContentLen = getResponseContentLength(self, newResponse)
+    oldContent = getResponseBody(self, messageInfo)
+    newContent = getResponseBody(self, requestResponse)
 
     # Check unauthorized request
     if checkUnauthorized:
@@ -328,15 +327,15 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
         unauthorizedResponse = requestResponseUnauthorized.getResponse()
         analyzedResponseUnauthorized = self._helpers.analyzeResponse(unauthorizedResponse)  
         statusCodeUnauthorized = analyzedResponseUnauthorized.getHeaders()[0]
-        contentLenUnauthorized = getResponseContentLength(self, unauthorizedResponse)
+        contentUnauthorized = getResponseBody(self, requestResponseUnauthorized)
 
     EDFilters = self.EDModel.toArray()
 
-    impression = checkBypass(self, oldStatusCode,newStatusCode,oldContentLen,newContentLen,EDFilters,requestResponse,self.AndOrType.getSelectedItem())
+    impression = checkBypass(self, oldStatusCode, newStatusCode, oldContent, newContent, EDFilters, requestResponse, self.AndOrType.getSelectedItem())
 
     if checkUnauthorized:
         EDFiltersUnauth = self.EDModelUnauth.toArray()
-        impressionUnauthorized = checkBypass(self, oldStatusCode,statusCodeUnauthorized,oldContentLen,contentLenUnauthorized,EDFiltersUnauth,requestResponseUnauthorized,self.AndOrTypeUnauth.getSelectedItem())
+        impressionUnauthorized = checkBypass(self, oldStatusCode, statusCodeUnauthorized, oldContent, contentUnauthorized, EDFiltersUnauth, requestResponseUnauthorized, self.AndOrTypeUnauth.getSelectedItem())
 
     self._lock.acquire()
     
