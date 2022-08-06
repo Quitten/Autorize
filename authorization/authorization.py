@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 
 from operator import truediv
-import sys  
-reload(sys)  
+import sys
+reload(sys)
 
 if (sys.version_info[0] == 2):
     sys.setdefaultencoding('utf8')
@@ -52,7 +52,7 @@ def handle_304_status_code_prevention(self, messageIsRequest, messageInfo):
     if self.prevent304.isSelected():
         if messageIsRequest:
             requestHeaders = list(self._helpers.analyzeRequest(messageInfo).getHeaders())
-            newHeaders = list()   
+            newHeaders = list()
             for header in requestHeaders:
                 if not "If-None-Match:" in header and not "If-Modified-Since:" in header:
                     newHeaders.append(header)
@@ -62,7 +62,7 @@ def handle_304_status_code_prevention(self, messageIsRequest, messageInfo):
             bodyBytes = messageInfo.getRequest()[requestInfo.getBodyOffset():]
             bodyStr = self._helpers.bytesToString(bodyBytes)
             messageInfo.setRequest(self._helpers.buildHttpMessage(newHeaders, bodyStr))
-    
+
 def message_not_from_autorize(self, messageInfo):
     return not self.replaceString.getText() in self._helpers.analyzeRequest(messageInfo).getHeaders()
 
@@ -107,16 +107,16 @@ def message_passed_interception_filters(self, messageInfo):
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Request Body contains (simple string)":
             if self.IFList.getModel().getElementAt(i)[40:] not in bodyStr:
                 message_passed_filters = False
-                
+
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Request Body contains (regex)":
             regex_string = self.IFList.getModel().getElementAt(i)[32:]
             if re.search(regex_string, bodyStr, re.IGNORECASE) is None:
                 message_passed_filters = False
-        
+
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Request Body NOT contains (simple string)":
             if self.IFList.getModel().getElementAt(i)[44:] in bodyStr:
                 message_passed_filters = False
-                
+
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Request Body Not contains (regex)":
             regex_string = self.IFList.getModel().getElementAt(i)[36:]
             if not re.search(regex_string, bodyStr, re.IGNORECASE) is None:
@@ -134,7 +134,7 @@ def message_passed_interception_filters(self, messageInfo):
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Body NOT contains (simple string)":
             if self.IFList.getModel().getElementAt(i)[45:] in resStr:
                 message_passed_filters = False
-                
+
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Body Not contains (regex)":
             regex_string = self.IFList.getModel().getElementAt(i)[37:]
             if not re.search(regex_string, resStr, re.IGNORECASE) is None:
@@ -144,7 +144,7 @@ def message_passed_interception_filters(self, messageInfo):
             for header in list(resInfo.getHeaders()):
                 if self.IFList.getModel().getElementAt(i)[17:] in header:
                     message_passed_filters = False
-        
+
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Header doesn't contain":
             for header in list(resInfo.getHeaders()):
                 if not self.IFList.getModel().getElementAt(i)[17:] in header:
@@ -180,7 +180,7 @@ def handle_message(self, toolFlag, messageIsRequest, messageInfo):
 
     if (self.intercept and valid_tool(self, toolFlag) or toolFlag == "AUTORIZE"):
         handle_304_status_code_prevention(self, messageIsRequest, messageInfo)
-    
+
         if not messageIsRequest:
             if message_not_from_autorize(self, messageInfo):
                 if self.ignore304.isSelected():
@@ -218,81 +218,51 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
     else:
         andEnforcementCheck = False
         auth_enforced = False
-    
-    response = requestResponse.getResponse()
+
     for filter in filters:
         filter = self._helpers.bytesToString(bytes(filter))
+        inverse = "NOT" in filter
+        filter = filter.replace(" NOT", "")
+
         if filter.startswith("Status code equals: "):
             statusCode = filter[20:]
-            if andEnforcementCheck:
-                if auth_enforced and not isStatusCodesReturned(self, requestResponse, statusCode):
-                    auth_enforced = False
-            else:
-                if not auth_enforced and isStatusCodesReturned(self, requestResponse, statusCode):
-                    auth_enforced = True
+            filterMatched = inverse ^ isStatusCodesReturned(self, requestResponse, statusCode)
 
-        if filter.startswith("Headers (simple string): "):
-            if andEnforcementCheck:
-                if auth_enforced and not filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
-                    auth_enforced = False
-            else:
-                if not auth_enforced and filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]):
-                    auth_enforced = True
+        elif filter.startswith("Headers (simple string): "):
+            filterMatched = inverse ^ (filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]))
 
-        if filter.startswith("Headers (regex): "):
+        elif filter.startswith("Headers (regex): "):
             regex_string = filter[17:]
-            p = re.compile(regex_string, re.IGNORECASE)                        
-            if andEnforcementCheck:
-                if auth_enforced and not p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
-                    auth_enforced = False
-            else:
-                if not auth_enforced and p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])):
-                    auth_enforced = True
+            p = re.compile(regex_string, re.IGNORECASE)
+            filterMatched = inverse ^ bool(p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])))
 
-        if filter.startswith("Body (simple string): "):
-            if andEnforcementCheck:
-                if auth_enforced and not filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
-                    auth_enforced = False
-            else:
-                if not auth_enforced and filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]):
-                    auth_enforced = True
+        elif filter.startswith("Body (simple string): "):
+            filterMatched = inverse ^ (filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]))
 
-        if filter.startswith("Body (regex): "):
+        elif filter.startswith("Body (regex): "):
             regex_string = filter[14:]
             p = re.compile(regex_string, re.IGNORECASE)
-            if andEnforcementCheck:
-                if auth_enforced and not p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
-                    auth_enforced = False
-            else:
-                if not auth_enforced and p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])):
-                    auth_enforced = True
+            filterMatched = inverse ^ bool(p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])))
 
-        if filter.startswith("Full response (simple string): "):
-            if andEnforcementCheck:
-                if auth_enforced and not filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()):
-                    auth_enforced = False
-            else:
-                if not auth_enforced and filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()):
-                    auth_enforced = True
+        elif filter.startswith("Full response (simple string): "):
+            filterMatched = inverse ^ (filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()))
 
-        if filter.startswith("Full response (regex): "):
+        elif filter.startswith("Full response (regex): "):
             regex_string = filter[23:]
             p = re.compile(regex_string, re.IGNORECASE)
-            if andEnforcementCheck:
-                if auth_enforced and not p.search(self._helpers.bytesToString(requestResponse.getResponse())):
-                    auth_enforced = False
-            else:
-                if not auth_enforced and p.search(self._helpers.bytesToString(requestResponse.getResponse())):
-                    auth_enforced = True
+            filterMatched = inverse ^ bool(p.search(self._helpers.bytesToString(requestResponse.getResponse())))
 
-        if filter.startswith("Full response length: "):
-            if andEnforcementCheck:
-                if auth_enforced and not str(len(response)) == filter[22:].strip():
-                    auth_enforced = False
-            else:
-                if not auth_enforced and str(len(response)) == filter[22:].strip():
-                    auth_enforced = True
-        return auth_enforced
+        elif filter.startswith("Full response length: "):
+            filterMatched = inverse ^ (str(len(response)) == filter[22:].strip())
+
+        if andEnforcementCheck:
+            if auth_enforced and not filterMatched:
+                auth_enforced = False
+        else:
+            if not auth_enforced and filterMatched:
+                auth_enforced = True
+
+    return auth_enforced
 
 def checkBypass(self, oldStatusCode, newStatusCode, oldContent,
                  newContent, filters, requestResponse, andOrEnforcement):
@@ -314,7 +284,7 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
     requestResponse = makeRequest(self, messageInfo, message)
     newResponse = requestResponse.getResponse()
     analyzedResponse = self._helpers.analyzeResponse(newResponse)
-    
+
     oldStatusCode = originalHeaders[0]
     newStatusCode = analyzedResponse.getHeaders()[0]
     oldContent = getResponseBody(self, messageInfo)
@@ -325,7 +295,7 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
         messageUnauthorized = makeMessage(self, messageInfo, True, False)
         requestResponseUnauthorized = makeRequest(self, messageInfo, messageUnauthorized)
         unauthorizedResponse = requestResponseUnauthorized.getResponse()
-        analyzedResponseUnauthorized = self._helpers.analyzeResponse(unauthorizedResponse)  
+        analyzedResponseUnauthorized = self._helpers.analyzeResponse(unauthorizedResponse)
         statusCodeUnauthorized = analyzedResponseUnauthorized.getHeaders()[0]
         contentUnauthorized = getResponseBody(self, requestResponseUnauthorized)
 
@@ -338,19 +308,19 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
         impressionUnauthorized = checkBypass(self, oldStatusCode, statusCodeUnauthorized, oldContent, contentUnauthorized, EDFiltersUnauth, requestResponseUnauthorized, self.AndOrTypeUnauth.getSelectedItem())
 
     self._lock.acquire()
-    
+
     row = self._log.size()
     method = self._helpers.analyzeRequest(messageInfo.getRequest()).getMethod()
-    
+
     if checkUnauthorized:
         self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(requestResponse), method, self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression,self._callbacks.saveBuffersToTempFiles(requestResponseUnauthorized),impressionUnauthorized)) # same requests not include again.
     else:
         self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(requestResponse), method, self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression,None,"Disabled")) # same requests not include again.
-    
+
     SwingUtilities.invokeLater(UpdateTableEDT(self,"insert",row,row))
     self.currentRequestNumber = self.currentRequestNumber + 1
     self._lock.release()
-    
+
 def checkAuthorizationV2(self, messageInfo):
     checkAuthorization(self, messageInfo, self._extender._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(), self._extender.doUnauthorizedRequest.isSelected())
 
