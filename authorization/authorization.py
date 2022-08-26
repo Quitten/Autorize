@@ -140,7 +140,7 @@ def message_passed_interception_filters(self, messageInfo):
             if not re.search(regex_string, resStr, re.IGNORECASE) is None:
                 message_passed_filters = False
 
-        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Header contains":
+        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Headers contains":
             for header in list(resInfo.getHeaders()):
                 if self.IFList.getModel().getElementAt(i)[17:] in header:
                     message_passed_filters = False

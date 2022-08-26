@@ -41,7 +41,7 @@ class InterceptionFilters():
                      "Response Body contains (regex): ",
                      "Response Body NOT contains (simple string): ",
                      "Response Body Not contains (regex): ",
-                     "Response Header contains: ",
+                     "Response Headers contains: ",
                      "Response Header doesn't contain: ",
                      "Only HTTP methods (newline separated): ",
                      "Ignore HTTP methods (newline separated): ",
