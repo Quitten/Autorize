@@ -131,15 +131,6 @@ def message_passed_interception_filters(self, messageInfo):
             if re.search(regex_string, resStr, re.IGNORECASE) is None:
                 message_passed_filters = False
 
-        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Header Contains (simple string)":
-            if self.IFList.getModel().getElementAt(i)[:41] not in resStr:
-                message_passed_filters = False
-
-        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Header Contains (regex)":
-            regex_string = self.IFList.getModel().getElementAt(i)[33:]
-            if re.search(regex_string, resStr, re.IGNORECASE) is None:
-                message_passed_filters = False
-
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Body NOT contains (simple string)":
             if self.IFList.getModel().getElementAt(i)[45:] in resStr:
                 message_passed_filters = False
@@ -149,12 +140,13 @@ def message_passed_interception_filters(self, messageInfo):
             if not re.search(regex_string, resStr, re.IGNORECASE) is None:
                 message_passed_filters = False
 
-        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Header contains":
+        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Header contains":
             for header in list(resInfo.getHeaders()):
+                print(header)
                 if self.IFList.getModel().getElementAt(i)[17:] in header:
                     message_passed_filters = False
         
-        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Header doesn't contain":
+        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Header doesn't contain":
             for header in list(resInfo.getHeaders()):
                 if not self.IFList.getModel().getElementAt(i)[17:] in header:
                     message_passed_filters = False
