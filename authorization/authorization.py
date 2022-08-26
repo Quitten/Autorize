@@ -142,7 +142,6 @@ def message_passed_interception_filters(self, messageInfo):
 
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Header contains":
             for header in list(resInfo.getHeaders()):
-                print(header)
                 if self.IFList.getModel().getElementAt(i)[17:] in header:
                     message_passed_filters = False
         
