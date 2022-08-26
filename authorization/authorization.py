@@ -127,6 +127,15 @@ def message_passed_interception_filters(self, messageInfo):
                 message_passed_filters = False
 
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Body contains (regex)":
+            regex_string = self.IFList.getModel().getElementAt(i)[:33]
+            if re.search(regex_string, resStr, re.IGNORECASE) is None:
+                message_passed_filters = False
+
+        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Header Contains (simple string)":
+            if self.IFList.getModel().getElementAt(i)[:41] not in resStr:
+                message_passed_filters = False
+
+        if self.IFList.getModel().getElementAt(i).split(":")[0] == "Response Header Contains (regex)":
             regex_string = self.IFList.getModel().getElementAt(i)[33:]
             if re.search(regex_string, resStr, re.IGNORECASE) is None:
                 message_passed_filters = False
