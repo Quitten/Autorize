@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 
 import sys
 sys.path.append("..")
@@ -41,7 +41,7 @@ class Export():
     def draw(self):
             """ init Save/Restore
             """
-            
+
             exportLabel = JLabel("Export:")
             exportLabel.setBounds(10, 10, 100, 30)
             labelFont = exportLabel.getFont()
@@ -74,7 +74,7 @@ class Export():
                                         actionPerformed=self.export)
             self.exportButton.setBounds(390, 50, 100, 30)
 
-            saveRestoreLabel = JLabel("State:")
+            saveRestoreLabel = JLabel("State (incl. Configuration):")
             saveRestoreLabel.setBounds(10, 160, 250, 30)
             saveRestoreLabel.setFont(boldFont)
 
@@ -84,10 +84,10 @@ class Export():
 
             self.restoreStateButton = JButton("Restore",
                                             actionPerformed=self.restoreStateAction)
-            self.restoreStateButton.setBounds(390, 200, 100, 30)        
-            
+            self.restoreStateButton.setBounds(390, 200, 100, 30)
+
             self._extender.exportPnl = JPanel()
-            exportPnl = self._extender.exportPnl 
+            exportPnl = self._extender.exportPnl
             exportPnl.setLayout(None)
             exportPnl.setBounds(0, 0, 1000, 1000)
             exportPnl.add(exportLabel)
@@ -109,7 +109,7 @@ class Export():
 
     def saveStateAction(self, event):
         self.save_restore.saveState()
-        
+
     def restoreStateAction(self, event):
         self.save_restore.restoreState()
 
@@ -220,7 +220,7 @@ class Export():
                     unique_CVS_lines.add(lineData)
             if enforcementStatusFilter == "All Statuses":
                 csvContent += "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id, self._log.get(i)._method, self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse is not None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse is not None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse is not None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
-            elif enforcementStatusFilter == "As table filter":                
+            elif enforcementStatusFilter == "As table filter":
                 if ((self._extender.showAuthBypassModified.isSelected() and self.BYPASSSED_STR == self._log.get(i)._enfocementStatus) or
                     (self._extender.showAuthPotentiallyEnforcedModified.isSelected() and "Is enforced???" == self._log.get(i)._enfocementStatus) or
                     (self._extender.showAuthEnforcedModified.isSelected() and self.ENFORCED_STR == self._log.get(i)._enfocementStatus) or
@@ -237,4 +237,3 @@ class Export():
         f = open(fileToSave.getAbsolutePath(), 'w')
         f.writelines(csvContent)
         f.close()
-
