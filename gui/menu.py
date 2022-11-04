@@ -22,7 +22,7 @@ class MenuImpl(IContextMenuFactory):
             ret = LinkedList()
             requestMenuItem = JMenuItem("Send request to Autorize")
             cookieMenuItem = JMenuItem("Send Cookie header to Autorize")
-            authMenuItem = JMenuItem("Send Authorziation header to Autorize")
+            authMenuItem = JMenuItem("Send Authorization header to Autorize")
 
             for response in responses:
                 requestMenuItem.addActionListener(HandleMenuItems(self._extender,response, "request"))
