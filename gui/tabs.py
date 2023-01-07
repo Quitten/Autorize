@@ -28,6 +28,7 @@ from helpers.filters import expand, collapse
 from javax.swing import KeyStroke
 from javax.swing import JTable
 from javax.swing import AbstractAction
+from java.awt.event import KeyEvent
 
 class ITabImpl(ITab):
     def __init__(self, extender):
@@ -80,7 +81,8 @@ class Tabs():
         sendRequestMenu2.addActionListener(SendRequestRepeater(self._extender, self._extender._callbacks, False))
 
         # Define the key combination for the shortcut
-        keyStroke = KeyStroke.getKeyStroke("F2")
+
+        keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx())
 
         # Get the input and action maps for the JTable
         inputMap = self._extender.logTable.getInputMap(JTable.WHEN_FOCUSED)
