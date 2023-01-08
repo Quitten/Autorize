@@ -6,7 +6,7 @@ ScreenVersion: 1.5
 SerialVersion: 18
 MinPlatformVersion: 0
 ProOnly: False
-Author:  Barak Tawily
+Author:  Barak Tawily, AppSec Labs
 ShortDescription: Automatically detects authorization enforcement.
 EntryPoint: Autorize.py
 BuildCommand: 
