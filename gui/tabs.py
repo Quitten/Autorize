@@ -84,19 +84,24 @@ class Tabs():
 
         # Define the key combination for the shortcut
 
-        keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx())
-        keyStroke1 = KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.META_DOWN_MASK)
+        # The keystroke combo is: Mac -> Command + r  /  Windows control + r
+        # This is used to send to the repeater function in burp
+        controlR = KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx())
+
+        # The keystroke combo is: Mac -> Command + c  /  Windows control + c
+        # This is used to copy the URL to the keyboard.
+        controlC = KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.META_DOWN_MASK)
 
         # Get the input and action maps for the JTable
         inputMap = self._extender.logTable.getInputMap(JTable.WHEN_FOCUSED)
         actionMap = self._extender.logTable.getActionMap()
 
         # Bind the key combination to the action
-        inputMap.put(keyStroke, "myShortcutAction")
-        actionMap.put("myShortcutAction", SendModifiedRequestToRepeaterAction(self._extender, self._extender._callbacks))
+        inputMap.put(controlR, "SendRequestToRepeaterAction")
+        actionMap.put("SendRequestToRepeaterAction", SendRequestToRepeaterAction(self._extender, self._extender._callbacks))
 
         # Bind the key combination to the action
-        inputMap.put(keyStroke1, "copyToClipBoard")
+        inputMap.put(controlC, "copyToClipBoard")
         actionMap.put("copyToClipBoard",
                       CopySelectedURLToClipBoard(self._extender, self._extender._callbacks))
 
@@ -262,7 +267,7 @@ class Mouseclick(MouseAdapter):
             else:
                 collapse(self._extender, evt.getComponent())
 
-class SendModifiedRequestToRepeaterAction(AbstractAction):
+class SendRequestToRepeaterAction(AbstractAction):
     def __init__(self, extender, callbacks):
         self._extender = extender
         self._callbacks = callbacks
