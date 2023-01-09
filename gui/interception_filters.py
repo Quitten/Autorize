@@ -41,11 +41,15 @@ class InterceptionFilters():
                      "Response Body contains (regex): ",
                      "Response Body NOT contains (simple string): ",
                      "Response Body Not contains (regex): ",
+                     "Header contains: ",
+                     "Header doesn't contain: ",
                      "Only HTTP methods (newline separated): ",
                      "Ignore HTTP methods (newline separated): ",
                      "Ignore spider requests: (Content is not required)",
                      "Ignore proxy requests: (Content is not required)",
-                     "Ignore target requests: (Content is not required)"]
+                     "Ignore target requests: (Content is not required)",
+                     "Ignore OPTIONS requests: (Content is not required)"
+                     ]
         self._extender.IFType = JComboBox(IFStrings)
         self._extender.IFType.setBounds(80, 10, 430, 30)
        
@@ -59,7 +63,7 @@ class InterceptionFilters():
 
         # Adding some default interception filters
         # self.IFModel.addElement("Scope items only: (Content is not required)") # commented for better first impression.
-        self._extender.IFModel.addElement("URL Not Contains (regex): \\.js|\\.css|\\.png|\\.jpg|\\.svg|\\.jpeg|\\.gif|\\.woff|\\.map|\\.bmp|\\.ico$")
+        self._extender.IFModel.addElement("URL Not Contains (regex): (\\.js|\\.css|\\.png|\\.jpg|\\.svg|\\.jpeg|\\.gif|\\.woff|\\.map|\\.bmp|\\.ico)(?![a-z]+)[?]*[\S]*$")
         self._extender.IFModel.addElement("Ignore spider requests: ")
         
         self._extender.IFText = JTextArea("", 5, 30)
