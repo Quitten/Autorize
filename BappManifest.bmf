@@ -2,11 +2,11 @@ Uuid: f9bbac8c4acf4aefa4d7dc92a991af2f
 ExtensionType: 2
 Name: Autorize
 RepoName: autorize
-ScreenVersion: 1.5
+ScreenVersion: 1.6
 SerialVersion: 21
 MinPlatformVersion: 0
 ProOnly: False
-Author:  Barak Tawily
+Author:  Barak Tawily, AppSec Labs
 ShortDescription: Automatically detects authorization enforcement.
 EntryPoint: Autorize.py
 BuildCommand: 

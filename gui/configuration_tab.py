@@ -40,7 +40,7 @@ class ConfigurationTab():
         self._extender.ignore304.setSelected(True)
 
         self._extender.prevent304 = JCheckBox("Prevent 304 Not Modified status code")
-        self._extender.prevent304.setBounds(280, 25, 300, 30)    
+        self._extender.prevent304.setBounds(280, 25, 300, 30)
         self._extender.interceptRequestsfromRepeater = JCheckBox("Intercept requests from Repeater")
         self._extender.interceptRequestsfromRepeater.setBounds(280, 45, 300, 30)
 
