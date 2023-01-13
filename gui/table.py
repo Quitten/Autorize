@@ -14,6 +14,8 @@ from java.lang import Runnable
 from java.lang import Integer
 from java.lang import String
 from java.awt import Color
+from javax.swing import ListSelectionModel
+from javax.swing.event import ListSelectionListener
 
 from helpers.filters import expand, collapse
 
@@ -148,6 +150,15 @@ class TableModel(AbstractTableModel):
             return logEntry._enfocementStatusUnauthorized        
         return ""
 
+class TableSelectionListener(ListSelectionListener):
+    """Class Responsible for the multi-row deletion"""
+    def __init__(self, extender):
+        self._extender = extender
+
+    def valueChanged(self, e):
+        rows = [i for i in self._table.getSelectedRows()]
+        self._extender.tableModel.removeRows(rows)
+
 class Table(JTable):
     def __init__(self, extender):
         self._extender = extender
@@ -156,11 +167,12 @@ class Table(JTable):
         self.addMouseListener(Mouseclick(self._extender))
         self.getColumnModel().getColumn(0).setPreferredWidth(450)
         self.setRowSelectionAllowed(True)
+        # Enables multi-row selection
+        self.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
 
     def prepareRenderer(self, renderer, row, col):
         comp = JTable.prepareRenderer(self, renderer, row, col)
         value = self._extender.tableModel.getValueAt(self._extender.logTable.convertRowIndexToModel(row), col)
-        
         if col == 6 or col == 7:
             if value == self._extender.BYPASSSED_STR:
                 comp.setBackground(Color(255, 153, 153))
@@ -175,11 +187,10 @@ class Table(JTable):
             comp.setForeground(Color.BLACK)
             comp.setBackground(Color.WHITE)
 
-        selectedRow = self._extender.logTable.getSelectedRow()
-        if selectedRow == row:
+        selectedRows = self._extender.logTable.getSelectedRows()
+        if row in selectedRows:
             comp.setBackground(Color(201, 215, 255))
             comp.setForeground(Color.BLACK)
-
 
         return comp
     
