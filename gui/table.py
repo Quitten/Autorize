@@ -91,7 +91,13 @@ class TabTableFilter(ItemListener):
 class TableModel(AbstractTableModel):
     def __init__(self, extender):
         self._extender = extender
-    
+
+    def removeRows(self, rows):
+        rows.sort(reverse=True)
+        for row in rows:
+            self._extender._log.pop(row)
+        self.fireTableDataChanged()
+
     def getRowCount(self):
         try:
             return self._extender._log.size()
