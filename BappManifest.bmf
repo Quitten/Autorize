@@ -3,7 +3,7 @@ ExtensionType: 2
 Name: Autorize
 RepoName: autorize
 ScreenVersion: 1.6
-SerialVersion: 21
+SerialVersion: 22
 MinPlatformVersion: 0
 ProOnly: False
 Author:  Barak Tawily, AppSec Labs
