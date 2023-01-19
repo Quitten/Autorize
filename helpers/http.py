@@ -44,7 +44,7 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
 
             for header in headers[:]:
                 for removeHeader in removeHeaders:
-                    if header.startswith(removeHeader):
+                    if header.lower().startswith(removeHeader.lower()):
                         headers.remove(header)
 
         if authorizeOrNot:
