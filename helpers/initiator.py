@@ -64,6 +64,8 @@ class Initiator():
         self._extender._callbacks.registerContextMenuFactory(menu)
         self._extender._callbacks.addSuiteTab(itab)
         self._extender._callbacks.registerHttpListener(self._extender)
+        self._extender._callbacks.registerProxyListener(self._extender)
+
 
     def init_ui(self):
         self._extender._callbacks.customizeUiComponent(self._extender._splitpane)
