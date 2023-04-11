@@ -86,10 +86,12 @@ class Tabs():
         sendRequestMenu2.addActionListener(SendRequestRepeater(self._extender, self._extender._callbacks, False))
 
         # Define the key combination for the shortcut
-
-        # The keystroke combo is: Mac -> Command + r  /  Windows control + r
-        # This is used to send to the repeater function in burp
-        controlR = KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx())
+        try:
+            # The keystroke combo is: Mac -> Command + r  /  Windows control + r
+            # This is used to send to the repeater function in burp
+            controlR = KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx())
+        except:
+            controlR = KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK)
 
         # The keystroke combo is: Mac -> Command + c  /  Windows control + c
         # This is used to copy the URL to the keyboard.
