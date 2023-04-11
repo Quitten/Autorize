@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*- 
 
 from java.awt import GridLayout
+from burp import IInterceptedProxyMessage
 
 def addFilterHelper(typeObj, model, textObj):
         typeName = typeObj.getSelectedItem().split(":")[0]
@@ -44,4 +45,14 @@ def collapse(extender, comp):
         extender.requests_panel.add(extender.unauthenticated_requests_tabs)
         extender.requests_panel.revalidate()
         extender.expanded_requests = 0
-        
+
+def handle_proxy_message(self,message):
+        currentPort = message.getListenerInterface().split(":")[1]
+        for i in range(0, self.IFList.getModel().getSize()):
+            interceptionFilter = self.IFList.getModel().getElementAt(i)
+            interceptionFilterTitle = interceptionFilter.split(":")[0]
+            if interceptionFilterTitle == "Drop proxy listener ports":
+                portsList = interceptionFilter[27:].split(",")
+                portsList = [int(i) for i in portsList]
+                if int(currentPort) in portsList:
+                    message.setInterceptAction(IInterceptedProxyMessage.ACTION_DROP)
