@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
 
-from burp import IBurpExtender
-from burp import IHttpListener
-
+from burp import IBurpExtender, IHttpListener, IProxyListener
 from authorization.authorization import handle_message
-
 from helpers.initiator import Initiator
+from helpers.filters import handle_proxy_message
 
-class BurpExtender(IBurpExtender, IHttpListener):
+class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
 
     def registerExtenderCallbacks(self, callbacks):
         self._callbacks = callbacks
@@ -35,3 +33,10 @@ class BurpExtender(IBurpExtender, IHttpListener):
     #
     def processHttpMessage(self, toolFlag, messageIsRequest, messageInfo):      
         handle_message(self, toolFlag, messageIsRequest, messageInfo)
+
+    #
+    # implement IProxyListener
+    #
+    def processProxyMessage(self, messageIsRequest, message):
+        handle_proxy_message(self,message)
+        
