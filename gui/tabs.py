@@ -23,13 +23,16 @@ from authorization.authorization import handle_message, retestAllRequests
 
 from thread import start_new_thread
 
-from table import Table, LogEntry, TableRowFilter
+from table import Table, LogEntry, TableRowFilter, UpdateTableEDT
 from helpers.filters import expand, collapse
 from javax.swing import KeyStroke
 from javax.swing import JTable
 from javax.swing import AbstractAction
 from java.awt.event import KeyEvent
 from java.awt.event import InputEvent
+from javax.swing import SwingUtilities
+from javax.swing import ListSelectionModel
+from javax.swing.ListSelectionModel import MULTIPLE_INTERVAL_SELECTION
 
 
 class ITabImpl(ITab):
@@ -52,7 +55,7 @@ class Tabs():
 
         self._extender.logTable = Table(self._extender)
 
-        tableWidth = self._extender.logTable.getPreferredSize().width        
+        tableWidth = self._extender.logTable.getPreferredSize().width
         self._extender.logTable.getColumn("ID").setPreferredWidth(Math.round(tableWidth / 50 * 2))
         self._extender.logTable.getColumn("Method").setPreferredWidth(Math.round(tableWidth / 50 * 3))
         self._extender.logTable.getColumn("URL").setPreferredWidth(Math.round(tableWidth / 50 * 25))
@@ -83,10 +86,12 @@ class Tabs():
         sendRequestMenu2.addActionListener(SendRequestRepeater(self._extender, self._extender._callbacks, False))
 
         # Define the key combination for the shortcut
-
-        # The keystroke combo is: Mac -> Command + r  /  Windows control + r
-        # This is used to send to the repeater function in burp
-        controlR = KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx())
+        try:
+            # The keystroke combo is: Mac -> Command + r  /  Windows control + r
+            # This is used to send to the repeater function in burp
+            controlR = KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx())
+        except:
+            controlR = KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK)
 
         # The keystroke combo is: Mac -> Command + c  /  Windows control + c
         # This is used to copy the URL to the keyboard.
@@ -124,7 +129,7 @@ class Tabs():
         self._extender.menu.add(copyURLitem)
         self._extender.menu.add(retestSelecteditem)
         self._extender.menu.add(retestAllitem)
-        # self.menu.add(deleteSelectedItem) disabling this feature until bug will be fixed.
+        self._extender.menu.add(deleteSelectedItem) # disabling this feature until bug will be fixed.
         message_editor = MessageEditor(self._extender)
 
         self._extender.tabs = JTabbedPane()
@@ -218,13 +223,16 @@ class RetestAllRequests(ActionListener):
         start_new_thread(retestAllRequests, (self._extender,))
 
 
-class DeleteSelectedRequest(ActionListener):
+class DeleteSelectedRequest(AbstractAction):
     def __init__(self, extender):
         self._extender = extender
 
     def actionPerformed(self, e):
-        # TODO: Implement this function.
-        pass
+        # Its ready to delete multiple rows at a time once we can figure out how to select multiple row.
+        rows = self._extender.logTable.getSelectedRows()
+        if len(rows) != 0:
+            rows = [self._extender.logTable.convertRowIndexToModel(row) for row in rows]
+            SwingUtilities.invokeLater(lambda: self._extender.tableModel.removeRows(rows))
 
 class CopySelectedURL(ActionListener):
     def __init__(self, extender):

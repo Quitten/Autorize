@@ -19,7 +19,7 @@ class Initiator():
     
     def init_constants(self):
         self.contributors = ["Federico Dotta", "mgeeky", "Marcin Woloszyn", "jpginc", "Eric Harris"]
-        self._extender.version = 1.6
+        self._extender.version = 1.7
         self._extender._log = ArrayList()
         self._extender._lock = Lock()
 
@@ -64,6 +64,8 @@ class Initiator():
         self._extender._callbacks.registerContextMenuFactory(menu)
         self._extender._callbacks.addSuiteTab(itab)
         self._extender._callbacks.registerHttpListener(self._extender)
+        self._extender._callbacks.registerProxyListener(self._extender)
+
 
     def init_ui(self):
         self._extender._callbacks.customizeUiComponent(self._extender._splitpane)
