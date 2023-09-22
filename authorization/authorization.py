@@ -268,18 +268,19 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
 
 def checkBypass(self, oldStatusCode, newStatusCode, oldContent,
                  newContent, filters, requestResponse, andOrEnforcement):
-    if oldStatusCode == newStatusCode:
-        auth_enforced = 0
-        if len(filters) > 0:
-            auth_enforced = auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andOrEnforcement)
+    if len(filters) > 0:
+        auth_enforced = auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andOrEnforcement)
         if auth_enforced:
             return self.ENFORCED_STR
-        elif oldContent == newContent:
+        else:
+            return self.BYPASSSED_STR
+    else:
+        if oldStatusCode != newStatusCode:
+            return self.ENFORCED_STR
+        if oldContent == newContent:
             return self.BYPASSSED_STR
         else:
             return self.IS_ENFORCED_STR
-    else:
-        return self.ENFORCED_STR
 
 def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
     message = makeMessage(self, messageInfo, True, True)
