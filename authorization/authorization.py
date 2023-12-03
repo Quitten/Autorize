@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+import json
 from operator import truediv
 import sys
 reload(sys)
@@ -231,7 +231,7 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
             filterMatched = inverse ^ isStatusCodesReturned(self, requestResponse, statusCode)
 
         elif filter.startswith("Headers (simple string): "):
-            filterMatched = inverse ^ (filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]))
+                filterMatched = inverse ^ (filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]))
 
         elif filter.startswith("Headers (regex): "):
             regex_string = filter[17:]
@@ -266,20 +266,101 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
 
     return auth_enforced
 
+def isContentLengthSimilar(oldContent, newContent):
+    threshole = 1.06
+
+    old_length = len(oldContent)
+    new_length = len(newContent)
+
+    if old_length > new_length:
+        return new_length/old_length < threshole
+    else:
+        return old_length/new_length < threshole
+
+    return True
+
+status_codes = ["code","msg","message","success"]
+def structureCompare(json1, json2, level=0):
+    if level > 3:
+        return True
+
+    if type(json1) != type(json2):
+        return False
+    else:
+        if isinstance(json1, dict):
+            json1_keys = json1.keys()
+            json2_keys = json2.keys()
+
+            if len(json1_keys) != len(json2_keys):
+                return False
+
+            for key in json1_keys:
+                if key not in json2_keys:
+                    return False
+
+            if level == 0:
+                for status_code in status_codes:
+                    if status_code in json1_keys:
+                        if json1[status_code] != json2[status_code]:
+                            return False
+
+
+            flag = True
+            for key in json1_keys:
+                if flag:
+                    flag = structureCompare(json1[key], json2[key], int(level+1))
+
+            return flag
+
+        elif isinstance(json1, list):
+            return len(json1) == len(json2)
+
+        else:
+            # default not compare specified value
+            # return json1 == json2
+            return True
+
+
+def isStructureSimilar(oldContent, newContent):
+
+    return structureCompare(json.loads(oldContent), json.loads(newContent))
+
 def checkBypass(self, oldStatusCode, newStatusCode, oldContent,
                  newContent, filters, requestResponse, andOrEnforcement):
-    if oldStatusCode == newStatusCode:
-        auth_enforced = 0
-        if len(filters) > 0:
-            auth_enforced = auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andOrEnforcement)
-        if auth_enforced:
-            return self.ENFORCED_STR
-        elif oldContent == newContent:
-            return self.BYPASSSED_STR
-        else:
-            return self.IS_ENFORCED_STR
-    else:
+    # get content type in response
+    contentType = ""
+    headers = self._helpers.analyzeResponse(requestResponse.getResponse()).getHeaders()
+    for header in headers:
+        if header.startswith("Content-Type"):
+            contentType = header.split(":")[1].strip()
+
+
+    if oldStatusCode != newStatusCode:
+        print("[check reaso] status code")
         return self.ENFORCED_STR
+
+    if len(filters) > 0:
+        auth_enforced = auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andOrEnforcement)
+        if auth_enforced:
+            print("[check reason] key words")
+            return self.ENFORCED_STR
+
+    if oldContent == newContent:
+        print("[check reason] full content compare")
+        return self.BYPASSSED_STR
+
+    if not isContentLengthSimilar(oldContent, newContent):
+        print("[check reason] content length similarity")
+        return self.ENFORCED_STR
+
+    if contentType and str(contentType).__contains__("json") and not isStructureSimilar(oldContent, newContent):
+        print("[check reason] structure similarity")
+        return self.ENFORCED_STR
+
+    # return self.IS_ENFORCED_STR
+
+    return self.BYPASSSED_STR
+
 
 def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
     # Check unauthorized request
@@ -291,6 +372,14 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
         statusCodeUnauthorized = analyzedResponseUnauthorized.getHeaders()[0]
         contentUnauthorized = getResponseBody(self, requestResponseUnauthorized)
 
+    # replay original traffic
+    originalMessageInfo = makeMessage(self, messageInfo, False, False)
+    originalRequestResponse = makeRequest(self, messageInfo, originalMessageInfo)
+    originalResponse = originalRequestResponse.getResponse()
+    analyzedResponseOriginal = self._helpers.analyzeResponse(originalResponse)
+    originalHeaders = analyzedResponseOriginal.getHeaders()
+
+
     message = makeMessage(self, messageInfo, True, True)
     requestResponse = makeRequest(self, messageInfo, message)
     newResponse = requestResponse.getResponse()
@@ -298,7 +387,7 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
 
     oldStatusCode = originalHeaders[0]
     newStatusCode = analyzedResponse.getHeaders()[0]
-    oldContent = getResponseBody(self, messageInfo)
+    oldContent = getResponseBody(self, originalRequestResponse)
     newContent = getResponseBody(self, requestResponse)
 
     EDFilters = self.EDModel.toArray()
@@ -315,9 +404,9 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
     method = self._helpers.analyzeRequest(messageInfo.getRequest()).getMethod()
 
     if checkUnauthorized:
-        self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(requestResponse), method, self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression,self._callbacks.saveBuffersToTempFiles(requestResponseUnauthorized),impressionUnauthorized)) # same requests not include again.
+        self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(requestResponse), method, self._helpers.analyzeRequest(requestResponse).getUrl(),originalRequestResponse,impression,self._callbacks.saveBuffersToTempFiles(requestResponseUnauthorized),impressionUnauthorized)) # same requests not include again.
     else:
-        self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(requestResponse), method, self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression,None,"Disabled")) # same requests not include again.
+        self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(requestResponse), method, self._helpers.analyzeRequest(requestResponse).getUrl(),originalRequestResponse,impression,None,"Disabled")) # same requests not include again.
 
     SwingUtilities.invokeLater(UpdateTableEDT(self,"insert",row,row))
     self.currentRequestNumber = self.currentRequestNumber + 1
