@@ -273,9 +273,9 @@ def isContentLengthSimilar(oldContent, newContent):
     new_length = len(newContent)
 
     if old_length > new_length:
-        return new_length/old_length < threshole
+        return float(new_length)/old_length < threshole
     else:
-        return old_length/new_length < threshole
+        return float(old_length)/new_length < threshole
 
     return True
 
