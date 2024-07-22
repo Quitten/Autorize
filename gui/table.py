@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*- 
 
 from javax.swing.table import AbstractTableModel
-from java.awt.event import ActionListener
 from java.awt.event import MouseAdapter
 from java.awt.event import ItemListener
 from javax.swing import RowFilter
