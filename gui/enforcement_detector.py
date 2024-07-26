@@ -11,6 +11,7 @@ from javax.swing import JPanel
 from javax.swing import JButton
 from javax.swing import JTextArea
 from javax.swing import JComboBox
+from javax.swing import GroupLayout
 from javax.swing import JScrollPane
 from javax.swing import DefaultListModel
 from javax.swing.border import LineBorder
@@ -159,18 +160,170 @@ class EnforcementDetectors():
         self._extender.AndOrTypeUnauth.setBounds(390, 170, 120, 30)
 
         self._extender.EDPnlUnauth = JPanel()
-        self._extender.EDPnlUnauth.setLayout(None)
-        self._extender.EDPnlUnauth.setBounds(0, 0, 1000, 1000)
-        self._extender.EDPnlUnauth.add(EDLType)
-        self._extender.EDPnlUnauth.add(self._extender.EDTypeUnauth)
-        self._extender.EDPnlUnauth.add(EDLContent)
-        self._extender.EDPnlUnauth.add(scrollEDTextUnauth)
-        self._extender.EDPnlUnauth.add(self._extender.EDAddUnauth)
-        self._extender.EDPnlUnauth.add(self._extender.AndOrTypeUnauth)
-        self._extender.EDPnlUnauth.add(self._extender.EDDelUnauth)
-        self._extender.EDPnlUnauth.add(self._extender.EDModUnauth)
-        self._extender.EDPnlUnauth.add(EDLabelList)
-        self._extender.EDPnlUnauth.add(scrollEDListUnauth)
+        layout = GroupLayout(self._extender.EDPnlUnauth)
+        self._extender.EDPnlUnauth.setLayout(layout)
+        layout.setAutoCreateGaps(True)
+        layout.setAutoCreateContainerGaps(True)
+
+        layout.setHorizontalGroup(
+            layout.createSequentialGroup()
+                .addGroup(
+                    layout.createParallelGroup()
+                        .addComponent(
+                            EDLType,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            EDLContent,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            EDLabelList,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                    )
+                .addGroup(
+                    layout.createParallelGroup()
+                        .addComponent(
+                            self._extender.EDTypeUnauth,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            self._extender.EDTypeUnauth,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            scrollEDTextUnauth,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            scrollEDListUnauth,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        
+                    )
+                .addGroup(
+                    layout.createParallelGroup()
+                        .addComponent(
+                            self._extender.EDAddUnauth,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            self._extender.AndOrTypeUnauth,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            self._extender.EDDelUnauth,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            self._extender.EDModUnauth,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                )
+            )
+        
+        
+
+        layout.setVerticalGroup(
+            layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(
+                        EDLType,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                        self._extender.EDTypeUnauth,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                )
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(
+                        EDLContent,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                        .addComponent(
+                            scrollEDTextUnauth,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            self._extender.EDAddUnauth,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                    )
+                )
+                   
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(
+                        EDLabelList,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                        scrollEDListUnauth,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(
+                                self._extender.AndOrTypeUnauth,
+                                GroupLayout.PREFERRED_SIZE,
+                                GroupLayout.PREFERRED_SIZE,
+                                GroupLayout.PREFERRED_SIZE,
+                            )
+                        .addComponent(
+                            self._extender.EDDelUnauth,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            self._extender.EDModUnauth,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                    )
+                )
+            )
+        
+
+
 
     def addEDFilter(self, event):
         addFilterHelper(self._extender.EDType, self._extender.EDModel, self._extender.EDText)
