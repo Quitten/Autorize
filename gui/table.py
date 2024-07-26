@@ -1,19 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
 
-from javax.swing.table import AbstractTableModel
-from java.awt.event import MouseAdapter
-from java.awt.event import ItemListener
-from javax.swing import RowFilter
-from javax.swing import JCheckBox
+from java.awt import Color
+from java.lang import String
+from java.lang import Integer
+from java.lang import Runnable
 from javax.swing import JTable
 from javax.swing import JLabel
 from javax.swing import JPanel
-from java.lang import Runnable
-from java.lang import Integer
-from java.lang import String
-from java.awt import Color
+from javax.swing import RowFilter
+from javax.swing import JCheckBox
+from javax.swing import GroupLayout
 from javax.swing import ListSelectionModel
+from java.awt.event import MouseAdapter
+from java.awt.event import ItemListener
+from javax.swing.table import AbstractTableModel
 from javax.swing.event import ListSelectionListener
 
 from helpers.filters import expand, collapse
@@ -69,18 +70,137 @@ class TableFilter():
         self._extender.showDisabledUnauthenticated.addItemListener(TabTableFilter(self._extender))        
 
         self._extender.filterPnl = JPanel()
-        self._extender.filterPnl.setLayout(None)
-        self._extender.filterPnl.setBounds(0, 0, 1000, 1000)
+        layout = GroupLayout(self._extender.filterPnl)
+        self._extender.filterPnl.setLayout(layout)
+        layout.setAutoCreateGaps(True)
+        layout.setAutoCreateContainerGaps(True)
 
-        self._extender.filterPnl.add(filterLModified)
-        self._extender.filterPnl.add(filterLUnauthenticated)
-        self._extender.filterPnl.add(self._extender.showAuthBypassModified)
-        self._extender.filterPnl.add(self._extender.showAuthPotentiallyEnforcedModified)
-        self._extender.filterPnl.add(self._extender.showAuthEnforcedModified)
-        self._extender.filterPnl.add(self._extender.showAuthBypassUnauthenticated)
-        self._extender.filterPnl.add(self._extender.showAuthPotentiallyEnforcedUnauthenticated)
-        self._extender.filterPnl.add(self._extender.showAuthEnforcedUnauthenticated)                
-        self._extender.filterPnl.add(self._extender.showDisabledUnauthenticated)
+        layout.setHorizontalGroup(layout.createSequentialGroup()
+            .addGroup(layout.createParallelGroup()
+                .addComponent(
+                    filterLModified,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.showAuthBypassModified,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.showAuthPotentiallyEnforcedModified,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.showAuthEnforcedModified,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+            .addGroup(layout.createParallelGroup()
+                .addComponent(
+                    filterLUnauthenticated,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.showAuthBypassUnauthenticated,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.showAuthPotentiallyEnforcedUnauthenticated,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.showAuthEnforcedUnauthenticated,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.showDisabledUnauthenticated,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+        )
+        
+        
+        layout.setVerticalGroup(layout.createSequentialGroup()
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addComponent(
+                    filterLModified,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    filterLUnauthenticated,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addGroup(layout.createSequentialGroup()
+                    .addComponent(
+                        self._extender.showAuthBypassModified,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                        self._extender.showAuthPotentiallyEnforcedModified,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                        self._extender.showAuthEnforcedModified,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                )
+                .addGroup(layout.createSequentialGroup()
+                    .addComponent(
+                        self._extender.showAuthBypassUnauthenticated,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                        self._extender.showAuthPotentiallyEnforcedUnauthenticated,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                        self._extender.showAuthEnforcedUnauthenticated,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                        self._extender.showDisabledUnauthenticated,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                )
+            )
+        )
 
 class TabTableFilter(ItemListener):
     def __init__(self, extender):
