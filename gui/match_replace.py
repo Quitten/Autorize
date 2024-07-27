@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
 
+from java.awt import Color
+from javax.swing import JList
+from javax.swing import JPanel
 from javax.swing import JLabel
+from javax.swing import JButton
 from javax.swing import JComboBox
 from javax.swing import JTextArea
 from javax.swing import JScrollPane
+from javax.swing import GroupLayout
 from javax.swing import DefaultListModel
-from javax.swing import JList
-from javax.swing import JPanel
-from javax.swing import JButton
-
-from java.awt import Color
 from javax.swing.border import LineBorder
 
 import re
@@ -91,20 +91,176 @@ class MatchReplace():
         self._extender.MRFeedback.setBounds(column1X, row6Y, column3X + buttonWidth, labelHeight)
 
         self._extender.MRPnl = JPanel()
-        self._extender.MRPnl.setLayout(None)
-        self._extender.MRPnl.setBounds(0, 0, 1000, 1000)
-        self._extender.MRPnl.add(MRTypeLabel)
-        self._extender.MRPnl.add(self._extender.MRType)
-        self._extender.MRPnl.add(MContent)
-        self._extender.MRPnl.add(scrollMText)
-        self._extender.MRPnl.add(RContent)
-        self._extender.MRPnl.add(scrollRText)
-        self._extender.MRPnl.add(self._extender.MRAdd)
-        self._extender.MRPnl.add(MRLabelList)
-        self._extender.MRPnl.add(scrollMRList)
-        self._extender.MRPnl.add(self._extender.MRDel)
-        self._extender.MRPnl.add(self._extender.MRMod)
-        self._extender.MRPnl.add(self._extender.MRFeedback)
+        layout = GroupLayout(self._extender.MRPnl)
+        self._extender.MRPnl.setLayout(layout)
+        layout.setAutoCreateGaps(True)
+        layout.setAutoCreateContainerGaps(True)
+
+        layout.setHorizontalGroup(layout.createSequentialGroup()
+            .addGroup(layout.createParallelGroup()
+                .addComponent(
+                    MRTypeLabel,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    MContent,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    RContent,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    MRLabelList,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+            .addGroup(layout.createParallelGroup()
+                .addComponent(
+                    self._extender.MRType,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    scrollMText,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    scrollRText,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.MRAdd,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.MRFeedback,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    scrollMRList,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(
+                    self._extender.MRMod,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.MRDel,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+        )
+        
+        layout.setVerticalGroup(layout.createSequentialGroup()
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addComponent(
+                    MRTypeLabel,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.MRType,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addComponent(
+                    MContent,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    scrollMText,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addComponent(
+                    RContent,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    scrollRText,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(
+                    self._extender.MRAdd,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.MRFeedback,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addComponent(
+                    MRLabelList,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    scrollMRList,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.MRMod,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.MRDel,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+        )
 
     def addMRFilter(self, event):
         typeName = self._extender.MRType.getSelectedItem()
