@@ -4,20 +4,19 @@
 import sys
 sys.path.append("..")
 
-from javax.swing import JComboBox
+from java.awt import Color
+from javax.swing import JList
 from javax.swing import JLabel
 from javax.swing import JPanel
-from javax.swing import JList
-from javax.swing import JScrollPane
-from javax.swing import JTextArea
 from javax.swing import JButton
+from javax.swing import JComboBox
+from javax.swing import JTextArea
+from javax.swing import JScrollPane
+from javax.swing import GroupLayout
 from javax.swing import DefaultListModel
-from java.awt import Color
 from javax.swing.border import LineBorder
-
 from helpers.filters import addFilterHelper, delFilterHelper, modFilterHelper
 
-import re
 
 class InterceptionFilters():
     def __init__(self, extender):
@@ -90,17 +89,151 @@ class InterceptionFilters():
         self._extender.IFMod.setBounds(390, 250, 120, 30)
 
         self._extender.filtersPnl = JPanel()
-        self._extender.filtersPnl.setLayout(None)
-        self._extender.filtersPnl.setBounds(0, 0, 1000, 1000)
-        self._extender.filtersPnl.add(IFLType)
-        self._extender.filtersPnl.add(self._extender.IFType)
-        self._extender.filtersPnl.add(IFLContent)
-        self._extender.filtersPnl.add(scrollIFText)
-        self._extender.filtersPnl.add(self._extender.IFAdd)
-        self._extender.filtersPnl.add(self._extender.IFDel)
-        self._extender.filtersPnl.add(self._extender.IFMod)
-        self._extender.filtersPnl.add(IFLabelList)
-        self._extender.filtersPnl.add(scrollIFList)
+        layout = GroupLayout(self._extender.filtersPnl)
+        self._extender.filtersPnl.setLayout(layout)
+        layout.setAutoCreateGaps(True)
+        layout.setAutoCreateContainerGaps(True)
+
+        layout.setHorizontalGroup(
+            layout.createSequentialGroup()
+                .addGroup(
+                    layout.createParallelGroup()
+                        .addComponent(
+                            IFLType,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            IFLContent,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            IFLabelList,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                    )
+                .addGroup(
+                    layout.createParallelGroup()
+                        .addComponent(
+                            self._extender.IFType,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            scrollIFText,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            scrollIFList,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        
+                    )
+                .addGroup(
+                    layout.createParallelGroup()
+                        .addComponent(
+                            self._extender.IFAdd,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                .addGroup(
+                    layout.createSequentialGroup()
+                        .addComponent(
+                            self._extender.IFDel,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            self._extender.IFMod,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                    )
+                        
+                )
+            )
+        
+
+        layout.setVerticalGroup(
+            layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(
+                        IFLType,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                        self._extender.IFType,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                )
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(
+                        IFLContent,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                        scrollIFText,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                        self._extender.IFAdd,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                )
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(
+                        IFLabelList,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                        scrollIFList,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                            self._extender.IFDel,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                    .addComponent(
+                        self._extender.IFMod,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                )
+        )
+        
+
+
+
 
     def addIFFilter(self, event):
         addFilterHelper(self._extender.IFType, self._extender.IFModel, self._extender.IFText)

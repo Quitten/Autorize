@@ -4,18 +4,18 @@
 import sys
 sys.path.append("..")
 
-from javax.swing import JFileChooser
-from javax.swing import JComboBox
-from javax.swing import JButton
+from java.io import File
+from java.awt import Font
 from javax.swing import JLabel
 from javax.swing import JLabel
 from javax.swing import JPanel
 from javax.swing import JFrame
-from java.awt import Font
-from java.io import File
+from javax.swing import JButton
 from javax.swing import JCheckBox
+from javax.swing import JComboBox
+from javax.swing import GroupLayout
+from javax.swing import JFileChooser
 from java.awt.event import ItemListener
-
 
 from save_restore import SaveRestore
 
@@ -26,9 +26,7 @@ class RemoveDups(ItemListener):
     def itemStateChanged(self, e):
         return True
 
-
 class Export():
-
     def __init__(self, extender):
         self._extender = extender
         self.BYPASSSED_STR = extender.BYPASSSED_STR
@@ -37,69 +35,205 @@ class Export():
         self._log = extender._log
         self.save_restore = SaveRestore(extender)
 
-
     def draw(self):
-            """ init Save/Restore
-            """
+        """ init Save/Restore
+        """
 
-            exportLabel = JLabel("Export:")
-            exportLabel.setBounds(10, 10, 100, 30)
-            labelFont = exportLabel.getFont()
-            boldFont = Font(labelFont.getFontName(), Font.BOLD, labelFont.getSize())
-            exportLabel.setFont(boldFont)
+        exportLabel = JLabel("Export:")
+        exportLabel.setBounds(10, 10, 100, 30)
+        labelFont = exportLabel.getFont()
+        boldFont = Font(labelFont.getFontName(), Font.BOLD, labelFont.getSize())
+        exportLabel.setFont(boldFont)
 
-            exportLType = JLabel("File Type:")
-            exportLType.setBounds(10, 50, 100, 30)
+        exportLType = JLabel("File Type:")
+        exportLType.setBounds(10, 50, 100, 30)
 
-            exportFileTypes = ["HTML", "CSV"]
-            self.exportType = JComboBox(exportFileTypes)
-            self.exportType.setBounds(100, 50, 200, 30)
+        exportFileTypes = ["HTML", "CSV"]
+        self.exportType = JComboBox(exportFileTypes)
+        self.exportType.setBounds(100, 50, 200, 30)
 
-            exportES = ["All Statuses", "As table filter",
-                        self._extender.BYPASSSED_STR,
-                        self._extender.IS_ENFORCED_STR,
-                        self._extender.ENFORCED_STR]
-            self.exportES = JComboBox(exportES)
-            self.exportES.setBounds(100, 90, 200, 30)
+        exportES = ["All Statuses", "As table filter",
+                    self._extender.BYPASSSED_STR,
+                    self._extender.IS_ENFORCED_STR,
+                    self._extender.ENFORCED_STR]
+        self.exportES = JComboBox(exportES)
+        self.exportES.setBounds(100, 90, 200, 30)
 
-            exportLES = JLabel("Statuses:")
-            exportLES.setBounds(10, 90, 100, 30)
+        exportLES = JLabel("Statuses:")
+        exportLES.setBounds(10, 90, 100, 30)
 
-            self.removeDuplicates = JCheckBox("Remove Duplicates")
-            self.removeDuplicates.setBounds(8, 120, 300, 30)
-            self.removeDuplicates.setSelected(True)
-            self.removeDuplicates.addItemListener(RemoveDups(self._extender))
+        self.removeDuplicates = JCheckBox("Remove Duplicates")
+        self.removeDuplicates.setBounds(8, 120, 300, 30)
+        self.removeDuplicates.setSelected(True)
+        self.removeDuplicates.addItemListener(RemoveDups(self._extender))
 
-            self.exportButton = JButton("Export",
-                                        actionPerformed=self.export)
-            self.exportButton.setBounds(390, 50, 100, 30)
+        self.exportButton = JButton("Export",
+                                    actionPerformed=self.export)
+        self.exportButton.setBounds(390, 50, 100, 30)
 
-            saveRestoreLabel = JLabel("State (incl. Configuration):")
-            saveRestoreLabel.setBounds(10, 160, 250, 30)
-            saveRestoreLabel.setFont(boldFont)
+        saveRestoreLabel = JLabel("State (incl. Configuration):")
+        saveRestoreLabel.setBounds(10, 160, 250, 30)
+        saveRestoreLabel.setFont(boldFont)
 
-            self.saveStateButton = JButton("Save",
-                                        actionPerformed=self.saveStateAction)
-            self.saveStateButton.setBounds(10, 200, 100, 30)
+        self.saveStateButton = JButton("Save",
+                                    actionPerformed=self.saveStateAction)
+        self.saveStateButton.setBounds(10, 200, 100, 30)
 
-            self.restoreStateButton = JButton("Restore",
-                                            actionPerformed=self.restoreStateAction)
-            self.restoreStateButton.setBounds(390, 200, 100, 30)
+        self.restoreStateButton = JButton("Restore",
+                                        actionPerformed=self.restoreStateAction)
+        self.restoreStateButton.setBounds(390, 200, 100, 30)
 
-            self._extender.exportPnl = JPanel()
-            exportPnl = self._extender.exportPnl
-            exportPnl.setLayout(None)
-            exportPnl.setBounds(0, 0, 1000, 1000)
-            exportPnl.add(exportLabel)
-            exportPnl.add(exportLType)
-            exportPnl.add(self.exportType)
-            exportPnl.add(exportLES)
-            exportPnl.add(self.exportES)
-            exportPnl.add(self.exportButton)
-            exportPnl.add(saveRestoreLabel)
-            exportPnl.add(self.saveStateButton)
-            exportPnl.add(self.restoreStateButton)
-            exportPnl.add(self.removeDuplicates)
+        self._extender.exportPnl = JPanel()
+        layout = GroupLayout(self._extender.exportPnl)
+        self._extender.exportPnl.setLayout(layout)
+        layout.setAutoCreateGaps(True)
+        layout.setAutoCreateContainerGaps(True)
+
+        layout.setHorizontalGroup(layout.createSequentialGroup()
+            .addGroup(layout.createParallelGroup()
+                .addComponent(
+                    exportLabel,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    exportLType,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    exportLES,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self.removeDuplicates,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    saveRestoreLabel,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self.saveStateButton,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+            .addGroup(layout.createParallelGroup()
+                .addComponent(
+                    self.exportES,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self.exportType,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+            .addGroup(layout.createParallelGroup()
+                .addComponent(
+                    self.exportButton,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self.restoreStateButton,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+        )
+        
+        layout.setVerticalGroup(layout.createSequentialGroup()
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addComponent(
+                    exportLabel,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addComponent(
+                    exportLType,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self.exportType,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self.exportButton,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addComponent(
+                    exportLES,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self.exportES,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(
+                    self.removeDuplicates,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(
+                    saveRestoreLabel,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+            )
+            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addComponent(
+                    self.saveStateButton,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self.restoreStateButton,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )    
+            )
+        )
+         
+
 
     def export(self, event):
             if self.exportType.getSelectedItem() == "HTML":
