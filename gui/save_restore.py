@@ -4,7 +4,6 @@
 from javax.swing import SwingUtilities
 from javax.swing import JFileChooser
 from javax.swing import JFrame
-from java.io import File
 
 from table import LogEntry, UpdateTableEDT
 from helpers.http import get_cookie_header_from_message, get_authorization_header_from_message, IHttpRequestResponseImplementation

@@ -8,6 +8,7 @@ from javax.swing import JToggleButton
 from javax.swing import JScrollPane
 from javax.swing import JTabbedPane
 from javax.swing import JOptionPane
+from javax.swing import GroupLayout
 from javax.swing import JSplitPane
 from javax.swing import JComboBox
 from javax.swing import JTextArea
@@ -68,6 +69,7 @@ class ConfigurationTab():
         self._extender.replaceString = JTextArea(self.DEFUALT_REPLACE_TEXT, 5, 30)
         self._extender.replaceString.setWrapStyleWord(True)
         self._extender.replaceString.setLineWrap(True)
+        
         scrollReplaceString = JScrollPane(self._extender.replaceString)
         scrollReplaceString.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         scrollReplaceString.setBounds(10, 150, 470, 150)
@@ -98,23 +100,218 @@ class ConfigurationTab():
         self._extender.filtersTabs.setBounds(0, 350, 2000, 700)
 
         self.config_pnl = JPanel()
-        self.config_pnl.setBounds(0, 0, 1000, 1000)
-        self.config_pnl.setLayout(None)
-        self.config_pnl.add(self._extender.startButton)
-        self.config_pnl.add(self._extender.clearButton)
-        self.config_pnl.add(scrollReplaceString)
-        self.config_pnl.add(fromLastRequestLabel)
-        self.config_pnl.add(self._extender.saveHeadersButton)
-        self.config_pnl.add(self._extender.removeHeadersButton)
-        self.config_pnl.add(self._extender.savedHeadersTitlesCombo)
-        self.config_pnl.add(self._extender.fetchCookiesHeaderButton)
-        self.config_pnl.add(self._extender.fetchAuthorizationHeaderButton)
-        self.config_pnl.add(self._extender.autoScroll)
-        self.config_pnl.add(self._extender.interceptRequestsfromRepeater)
-        self.config_pnl.add(self._extender.ignore304)
-        self.config_pnl.add(self._extender.prevent304)
-        self.config_pnl.add(self._extender.doUnauthorizedRequest)
-        self.config_pnl.add(self._extender.replaceQueryParam)
+        layout = GroupLayout(self.config_pnl)
+        self.config_pnl.setLayout(layout)
+        layout.setAutoCreateGaps(True)
+        layout.setAutoCreateContainerGaps(True)
+
+        layout.setHorizontalGroup(
+            layout.createSequentialGroup()
+                .addGroup(
+                    layout.createParallelGroup()
+                    .addComponent(
+                            self._extender.startButton,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            )
+                    
+                    .addComponent(
+                        self._extender.clearButton,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        )
+                    .addComponent(
+                        self._extender.savedHeadersTitlesCombo,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        )
+                    .addComponent(
+                        scrollReplaceString,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        )
+                    .addComponent(
+                        fromLastRequestLabel,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        )
+                    .addGroup(layout.createSequentialGroup()
+                    .addComponent(
+                        self._extender.fetchCookiesHeaderButton,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            self._extender.fetchAuthorizationHeaderButton,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                    )
+                    
+                        
+                    )
+                .addGroup(
+                    layout.createParallelGroup()
+                        .addComponent(
+                            self._extender.ignore304,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            self._extender.prevent304,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            self._extender.interceptRequestsfromRepeater,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            self._extender.doUnauthorizedRequest,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            self._extender.autoScroll,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            self._extender.replaceQueryParam,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            self._extender.saveHeadersButton,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            self._extender.removeHeadersButton,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )           
+                    )
+            )
+        
+        layout.setVerticalGroup(
+                layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+
+                    .addComponent(
+                            self._extender.startButton,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            )
+                    .addComponent(
+                        self._extender.ignore304,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                )
+                    .addComponent(
+                        self._extender.prevent304,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                        self._extender.interceptRequestsfromRepeater,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                        self._extender.doUnauthorizedRequest,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                    .addComponent(
+                        self._extender.replaceQueryParam,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(
+                        self._extender.clearButton,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        )
+                    .addComponent(
+                            self._extender.autoScroll,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                )
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(
+                        self._extender.savedHeadersTitlesCombo,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        )
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(
+                            self._extender.saveHeadersButton,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
+                            self._extender.removeHeadersButton,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        ))
+                )
+                .addComponent(
+                        scrollReplaceString,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        )
+                .addComponent(
+                        fromLastRequestLabel,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                .addComponent(
+                        self._extender.fetchCookiesHeaderButton,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        )
+                    .addComponent(
+                            self._extender.fetchAuthorizationHeaderButton,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        ))
+                )
         
         self._extender._cfg_splitpane = JSplitPane(JSplitPane.VERTICAL_SPLIT)
         self._extender._cfg_splitpane.setResizeWeight(0.5)

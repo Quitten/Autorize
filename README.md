@@ -1,14 +1,14 @@
 # Autorize
 Autorize is an automatic authorization enforcement detection extension for Burp Suite. It was written in Python by Barak Tawily, an application security expert. Autorize was designed to help security testers by performing automatic authorization tests. With the last release now Autorize also perform automatic authentication tests.
 
-![alt tag](https://raw.githubusercontent.com/Quitten/Autorize/master/Autorizev1.3.png)
+![alt tag](https://raw.githubusercontent.com/Quitten/Autorize/master/Autorize.png)
 
 # Installation 
 1.	Download Burp Suite (obviously): http://portswigger.net/burp/download.html
 2.	Download Jython standalone JAR: http://www.jython.org/download.html
 3.	Open burp -> Extender -> Options -> Python Environment -> Select File -> Choose the Jython standalone JAR
 4.	Install Autorize from the BApp Store or follow these steps:
-5.	Download the Autorize.py file.
+5.	Download Autorize source code: `git clone git@github.com:Quitten/Autorize.git`
 6.	Open Burp -> Extender -> Extensions -> Add -> Choose Autorize.py file.
 7.	See the Autorize tab and enjoy automatic authorization detection :)
 

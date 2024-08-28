@@ -23,7 +23,7 @@ from authorization.authorization import handle_message, retestAllRequests
 
 from thread import start_new_thread
 
-from table import Table, LogEntry, TableRowFilter, UpdateTableEDT
+from table import Table, TableRowFilter
 from helpers.filters import expand, collapse
 from javax.swing import KeyStroke
 from javax.swing import JTable
@@ -31,9 +31,6 @@ from javax.swing import AbstractAction
 from java.awt.event import KeyEvent
 from java.awt.event import InputEvent
 from javax.swing import SwingUtilities
-from javax.swing import ListSelectionModel
-from javax.swing.ListSelectionModel import MULTIPLE_INTERVAL_SELECTION
-
 
 class ITabImpl(ITab):
     def __init__(self, extender):

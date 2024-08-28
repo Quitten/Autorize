@@ -282,6 +282,15 @@ def checkBypass(self, oldStatusCode, newStatusCode, oldContent,
         return self.ENFORCED_STR
 
 def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
+    # Check unauthorized request
+    if checkUnauthorized:
+        messageUnauthorized = makeMessage(self, messageInfo, True, False)
+        requestResponseUnauthorized = makeRequest(self, messageInfo, messageUnauthorized)
+        unauthorizedResponse = requestResponseUnauthorized.getResponse()
+        analyzedResponseUnauthorized = self._helpers.analyzeResponse(unauthorizedResponse)
+        statusCodeUnauthorized = analyzedResponseUnauthorized.getHeaders()[0]
+        contentUnauthorized = getResponseBody(self, requestResponseUnauthorized)
+
     message = makeMessage(self, messageInfo, True, True)
     requestResponse = makeRequest(self, messageInfo, message)
     newResponse = requestResponse.getResponse()
@@ -291,15 +300,6 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
     newStatusCode = analyzedResponse.getHeaders()[0]
     oldContent = getResponseBody(self, messageInfo)
     newContent = getResponseBody(self, requestResponse)
-
-    # Check unauthorized request
-    if checkUnauthorized:
-        messageUnauthorized = makeMessage(self, messageInfo, True, False)
-        requestResponseUnauthorized = makeRequest(self, messageInfo, messageUnauthorized)
-        unauthorizedResponse = requestResponseUnauthorized.getResponse()
-        analyzedResponseUnauthorized = self._helpers.analyzeResponse(unauthorizedResponse)
-        statusCodeUnauthorized = analyzedResponseUnauthorized.getHeaders()[0]
-        contentUnauthorized = getResponseBody(self, requestResponseUnauthorized)
 
     EDFilters = self.EDModel.toArray()
 
