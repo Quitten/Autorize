@@ -15,6 +15,7 @@ from javax.swing import JPanel
 from java.awt import GridLayout
 from java.awt import Toolkit
 from java.lang import Math
+from java.awt import Dimension
 
 from burp import ITab
 from burp import IMessageEditorController
@@ -70,6 +71,7 @@ class Tabs():
         self._extender._splitpane = JSplitPane(JSplitPane.HORIZONTAL_SPLIT)
         self._extender._splitpane.setResizeWeight(1)
         self._extender.scrollPane = JScrollPane(self._extender.logTable)
+        self._extender.scrollPane.setMinimumSize(Dimension(1,1))
         self._extender._splitpane.setLeftComponent(self._extender.scrollPane)
         self._extender.scrollPane.getVerticalScrollBar().addAdjustmentListener(AutoScrollListener(self._extender))
 
@@ -169,6 +171,7 @@ class Tabs():
         
         self._extender.tabs.addTab("Configuration", self._extender._cfg_splitpane)
         self._extender.tabs.setSelectedIndex(1)
+        self._extender.tabs.setMinimumSize(Dimension(1,1))
         self._extender._splitpane.setRightComponent(self._extender.tabs)
 
 
