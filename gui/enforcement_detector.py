@@ -65,7 +65,7 @@ class EnforcementDetectors():
 
         self._extender.EDModel = DefaultListModel()
         self._extender.EDList = JList(self._extender.EDModel)
-
+        self._extender.EDList.setPrototypeCellValue("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
         scrollEDList = JScrollPane(self._extender.EDList)
         scrollEDList.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         scrollEDList.setBounds(80, 175, 300, 110)
@@ -274,7 +274,7 @@ class EnforcementDetectors():
 
         self._extender.EDModelUnauth = DefaultListModel()
         self._extender.EDListUnauth = JList(self._extender.EDModelUnauth)
-
+        self._extender.EDListUnauth.setPrototypeCellValue("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
         scrollEDListUnauth = JScrollPane(self._extender.EDListUnauth)
         scrollEDListUnauth.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         scrollEDListUnauth.setBounds(80, 175, 300, 110)

@@ -55,6 +55,7 @@ class InterceptionFilters():
        
         self._extender.IFModel = DefaultListModel()
         self._extender.IFList = JList(self._extender.IFModel)
+        self._extender.IFList.setPrototypeCellValue("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
         scrollIFList = JScrollPane(self._extender.IFList)
         scrollIFList.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
@@ -225,7 +226,7 @@ class InterceptionFilters():
                 )
             )
         )
-        
+    
 
 
 
