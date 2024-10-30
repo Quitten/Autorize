@@ -58,6 +58,7 @@ class InterceptionFilters():
 
         scrollIFList = JScrollPane(self._extender.IFList)
         scrollIFList.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
+        scrollIFList.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED)
         scrollIFList.setBounds(80, 175, 300, 110)
 
         # Adding some default interception filters
