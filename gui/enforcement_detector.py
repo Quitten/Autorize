@@ -4,7 +4,6 @@
 import sys
 sys.path.append("..")
 
-from java.awt import Color
 from javax.swing import JLabel
 from javax.swing import JList
 from javax.swing import JPanel
@@ -69,7 +68,6 @@ class EnforcementDetectors():
         scrollEDList = JScrollPane(self._extender.EDList)
         scrollEDList.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         scrollEDList.setBounds(80, 175, 300, 110)
-        scrollEDList.setBorder(LineBorder(Color.BLACK))
 
         self._extender.EDAdd = JButton("Add filter", actionPerformed=self.addEDFilter)
         self._extender.EDAdd.setBounds(390, 85, 120, 30)
@@ -278,7 +276,6 @@ class EnforcementDetectors():
         scrollEDListUnauth = JScrollPane(self._extender.EDListUnauth)
         scrollEDListUnauth.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         scrollEDListUnauth.setBounds(80, 175, 300, 110)
-        scrollEDListUnauth.setBorder(LineBorder(Color.BLACK))
 
         self._extender.EDAddUnauth = JButton("Add filter",
                                    actionPerformed=self.addEDFilterUnauth)
