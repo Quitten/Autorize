@@ -160,8 +160,6 @@ class MatchReplace():
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                 )
-            )
-            .addGroup(layout.createSequentialGroup()
                 .addComponent(
                     self._extender.MRMod,
                     GroupLayout.PREFERRED_SIZE,
@@ -247,18 +245,18 @@ class MatchReplace():
                     GroupLayout.PREFERRED_SIZE,
                     GroupLayout.PREFERRED_SIZE,
                 )
-                .addComponent(
-                    self._extender.MRMod,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self._extender.MRDel,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
+            )
+            .addComponent(
+                self._extender.MRMod,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+            )
+            .addComponent(
+                self._extender.MRDel,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
+                GroupLayout.PREFERRED_SIZE,
             )
         )
 
