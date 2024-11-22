@@ -223,8 +223,10 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
 
     for filter in filters:
         filter = self._helpers.bytesToString(bytes(filter))
-        inverse = "NOT" in filter
-        filter = filter.replace(" NOT", "")
+        filter_kv = filter.split(":", 1)
+        inverse = "NOT" in filter_kv[0]
+        filter_kv[0] = filter_kv[0].replace(" NOT", "")
+        filter = ":".join(filter_kv)
 
         if filter.startswith("Status code equals: "):
             statusCode = filter[20:]
