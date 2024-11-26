@@ -4,7 +4,6 @@
 import sys
 sys.path.append("..")
 
-from java.awt import Color
 from javax.swing import JLabel
 from javax.swing import JList
 from javax.swing import JPanel
@@ -65,11 +64,10 @@ class EnforcementDetectors():
 
         self._extender.EDModel = DefaultListModel()
         self._extender.EDList = JList(self._extender.EDModel)
-
+        self._extender.EDList.setPrototypeCellValue("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
         scrollEDList = JScrollPane(self._extender.EDList)
         scrollEDList.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         scrollEDList.setBounds(80, 175, 300, 110)
-        scrollEDList.setBorder(LineBorder(Color.BLACK))
 
         self._extender.EDAdd = JButton("Add filter", actionPerformed=self.addEDFilter)
         self._extender.EDAdd.setBounds(390, 85, 120, 30)
@@ -131,10 +129,6 @@ class EnforcementDetectors():
                             GroupLayout.PREFERRED_SIZE,
                             GroupLayout.PREFERRED_SIZE,
                         )
-                        
-                    )
-                .addGroup(
-                    layout.createParallelGroup()
                         .addComponent(
                             self._extender.EDAdd,
                             GroupLayout.PREFERRED_SIZE,
@@ -159,11 +153,9 @@ class EnforcementDetectors():
                             GroupLayout.PREFERRED_SIZE,
                             GroupLayout.PREFERRED_SIZE,
                         )
-                )
+                    )
             )
         
-        
-
         layout.setVerticalGroup(
             layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
@@ -194,15 +186,15 @@ class EnforcementDetectors():
                             GroupLayout.PREFERRED_SIZE,
                             GroupLayout.PREFERRED_SIZE,
                         )
-                        .addComponent(
-                            self._extender.EDAdd,
-                            GroupLayout.PREFERRED_SIZE,
-                            GroupLayout.PREFERRED_SIZE,
-                            GroupLayout.PREFERRED_SIZE,
-                        )
+                        
                     )
                 )
-                   
+                .addComponent(
+                    self._extender.EDAdd,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(
                         EDLabelList,
@@ -211,31 +203,29 @@ class EnforcementDetectors():
                         GroupLayout.PREFERRED_SIZE,
                     )
                     .addComponent(
-                        scrollEDList,
+                        self._extender.AndOrType,
                         GroupLayout.PREFERRED_SIZE,
                         GroupLayout.PREFERRED_SIZE,
                         GroupLayout.PREFERRED_SIZE,
                     )
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(
-                                self._extender.AndOrType,
-                                GroupLayout.PREFERRED_SIZE,
-                                GroupLayout.PREFERRED_SIZE,
-                                GroupLayout.PREFERRED_SIZE,
-                            )
-                        .addComponent(
-                            self._extender.EDDel,
-                            GroupLayout.PREFERRED_SIZE,
-                            GroupLayout.PREFERRED_SIZE,
-                            GroupLayout.PREFERRED_SIZE,
-                        )
-                        .addComponent(
-                            self._extender.EDMod,
-                            GroupLayout.PREFERRED_SIZE,
-                            GroupLayout.PREFERRED_SIZE,
-                            GroupLayout.PREFERRED_SIZE,
-                        )
-                    )
+                )
+                .addComponent(
+                    scrollEDList,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.EDDel,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.EDMod,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
                 )
             )
 
@@ -282,11 +272,10 @@ class EnforcementDetectors():
 
         self._extender.EDModelUnauth = DefaultListModel()
         self._extender.EDListUnauth = JList(self._extender.EDModelUnauth)
-
+        self._extender.EDListUnauth.setPrototypeCellValue("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
         scrollEDListUnauth = JScrollPane(self._extender.EDListUnauth)
         scrollEDListUnauth.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         scrollEDListUnauth.setBounds(80, 175, 300, 110)
-        scrollEDListUnauth.setBorder(LineBorder(Color.BLACK))
 
         self._extender.EDAddUnauth = JButton("Add filter",
                                    actionPerformed=self.addEDFilterUnauth)
@@ -351,10 +340,6 @@ class EnforcementDetectors():
                             GroupLayout.PREFERRED_SIZE,
                             GroupLayout.PREFERRED_SIZE,
                         )
-                        
-                    )
-                .addGroup(
-                    layout.createParallelGroup()
                         .addComponent(
                             self._extender.EDAddUnauth,
                             GroupLayout.PREFERRED_SIZE,
@@ -379,7 +364,7 @@ class EnforcementDetectors():
                             GroupLayout.PREFERRED_SIZE,
                             GroupLayout.PREFERRED_SIZE,
                         )
-                )
+                    )
             )
         
         
@@ -407,22 +392,21 @@ class EnforcementDetectors():
                         GroupLayout.PREFERRED_SIZE,
                         GroupLayout.PREFERRED_SIZE,
                     )
-                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(
-                            scrollEDTextUnauth,
-                            GroupLayout.PREFERRED_SIZE,
-                            GroupLayout.PREFERRED_SIZE,
-                            GroupLayout.PREFERRED_SIZE,
-                        )
-                        .addComponent(
-                            self._extender.EDAddUnauth,
-                            GroupLayout.PREFERRED_SIZE,
-                            GroupLayout.PREFERRED_SIZE,
-                            GroupLayout.PREFERRED_SIZE,
-                        )
+                    .addComponent(
+                        scrollEDTextUnauth,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
                     )
                 )
-                   
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(
+                        self._extender.EDAddUnauth,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.PREFERRED_SIZE,
+                    )
+                )
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(
                         EDLabelList,
@@ -431,36 +415,31 @@ class EnforcementDetectors():
                         GroupLayout.PREFERRED_SIZE,
                     )
                     .addComponent(
-                        scrollEDListUnauth,
+                        self._extender.AndOrTypeUnauth,
                         GroupLayout.PREFERRED_SIZE,
                         GroupLayout.PREFERRED_SIZE,
                         GroupLayout.PREFERRED_SIZE,
-                    )
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(
-                                self._extender.AndOrTypeUnauth,
-                                GroupLayout.PREFERRED_SIZE,
-                                GroupLayout.PREFERRED_SIZE,
-                                GroupLayout.PREFERRED_SIZE,
-                            )
-                        .addComponent(
-                            self._extender.EDDelUnauth,
-                            GroupLayout.PREFERRED_SIZE,
-                            GroupLayout.PREFERRED_SIZE,
-                            GroupLayout.PREFERRED_SIZE,
-                        )
-                        .addComponent(
-                            self._extender.EDModUnauth,
-                            GroupLayout.PREFERRED_SIZE,
-                            GroupLayout.PREFERRED_SIZE,
-                            GroupLayout.PREFERRED_SIZE,
-                        )
                     )
                 )
+                .addComponent(
+                    scrollEDListUnauth,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.EDDelUnauth,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
+                .addComponent(
+                    self._extender.EDModUnauth,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                    GroupLayout.PREFERRED_SIZE,
+                )
             )
-        
-
-
 
     def addEDFilter(self, event):
         addFilterHelper(self._extender.EDType, self._extender.EDModel, self._extender.EDText)
