@@ -31,9 +31,9 @@ class ConfigurationTab():
                                     actionPerformed=self.startOrStop)
         self._extender.startButton.setBounds(10, 20, 230, 30)
 
-        self._extender.clearButton = JButton("Clear List", actionPerformed=self.clearList)
+        self._extender.clearButton = JButton("Clear table", actionPerformed=self.clearTable)
         self._extender.clearButton.setBounds(10, 80, 100, 30)
-        self._extender.autoScroll = JCheckBox("Auto Scroll")
+        self._extender.autoScroll = JCheckBox("Auto scroll")
         self._extender.autoScroll.setBounds(145, 80, 130, 30)
 
         self._extender.ignore304 = JCheckBox("Ignore 304/204 status code responses")
@@ -90,7 +90,7 @@ class ConfigurationTab():
         self._extender.filtersTabs = JTabbedPane()
         self._extender.filtersTabs = self._extender.filtersTabs
         self._extender.filtersTabs.addTab("Enforcement Detector", self._extender.EDPnl)
-        self._extender.filtersTabs.addTab("Detector Unauthenticated", self._extender.EDPnlUnauth)
+        self._extender.filtersTabs.addTab("Unauthentication Detector ", self._extender.EDPnlUnauth)
         self._extender.filtersTabs.addTab("Interception Filters", self._extender.filtersPnl)
         self._extender.filtersTabs.addTab("Match/Replace", self._extender.MRPnl)
         self._extender.filtersTabs.addTab("Table Filter", self._extender.filterPnl)
@@ -115,7 +115,6 @@ class ConfigurationTab():
                             GroupLayout.PREFERRED_SIZE,
                             GroupLayout.PREFERRED_SIZE,
                             )
-                    
                     .addComponent(
                         self._extender.clearButton,
                         GroupLayout.PREFERRED_SIZE,
@@ -233,12 +232,20 @@ class ConfigurationTab():
                         GroupLayout.PREFERRED_SIZE,
                         GroupLayout.PREFERRED_SIZE,
                     )
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(
-                        self._extender.interceptRequestsfromRepeater,
+                        self._extender.clearButton,
                         GroupLayout.PREFERRED_SIZE,
                         GroupLayout.PREFERRED_SIZE,
                         GroupLayout.PREFERRED_SIZE,
-                    )
+                        )
+                    .addComponent(
+                            self._extender.interceptRequestsfromRepeater,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                )
                     .addComponent(
                         self._extender.doUnauthorizedRequest,
                         GroupLayout.PREFERRED_SIZE,
@@ -251,20 +258,12 @@ class ConfigurationTab():
                         GroupLayout.PREFERRED_SIZE,
                         GroupLayout.PREFERRED_SIZE,
                     )
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .addComponent(
-                        self._extender.clearButton,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                        )
                     .addComponent(
                             self._extender.autoScroll,
                             GroupLayout.PREFERRED_SIZE,
                             GroupLayout.PREFERRED_SIZE,
                             GroupLayout.PREFERRED_SIZE,
                         )
-                )
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                     .addComponent(
                         self._extender.savedHeadersTitlesCombo,
@@ -329,7 +328,7 @@ class ConfigurationTab():
             self._extender.startButton.setSelected(False)
             self._extender.intercept = 0
     
-    def clearList(self, event):
+    def clearTable(self, event):
         self._extender._lock.acquire()
         oldSize = self._extender._log.size()
         self._extender._log.clear()
