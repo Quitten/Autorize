@@ -16,6 +16,7 @@ from javax.swing import JCheckBox
 from javax.swing import JButton
 from javax.swing import JPanel
 from javax.swing import JLabel
+from java.awt import Dimension
 
 from table import UpdateTableEDT
 
@@ -104,6 +105,10 @@ class ConfigurationTab():
         self.config_pnl.setLayout(layout)
         layout.setAutoCreateGaps(True)
         layout.setAutoCreateContainerGaps(True)
+
+        minsize = Dimension(0, 0)
+        self._extender.filtersTabs.setMinimumSize(minsize)
+        self.config_pnl.setMinimumSize(minsize)
 
         layout.setHorizontalGroup(
             layout.createSequentialGroup()
