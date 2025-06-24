@@ -4,6 +4,9 @@
 import re
 from burp import IHttpRequestResponse
 
+uriRegex = r'^[A-Z]+ (/[^\s]*) HTTP/\d\.\d'
+
+
 def isStatusCodesReturned(self, messageInfo, statusCodes):
     firstHeader = self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders()[0]
     if type(statusCodes) == list:
@@ -74,14 +77,12 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
         # simple string replace
         for k, v in self.badProgrammerMRModel.items():
             if(v["type"] == "Path (simple string):"):
-                uriRegex = r'^[A-Z]+ (/[^\s]*) HTTP/\d\.\d'
                 matchUri = re.search(uriRegex, headers[0], re.MULTILINE)
                 if matchUri:
                     currentPath = (matchUri.group(1))
                     replacedPath = currentPath.replace(v["match"], v["replace"])
                     headers[0] = headers[0].replace(currentPath, replacedPath)
             if(v["type"] == "Path (regex):"):
-                uriRegex = r'^[A-Z]+ (/[^\s]*) HTTP/\d\.\d'
                 matchUri = re.search(uriRegex, headers[0], re.MULTILINE)
                 if matchUri:
                     currentPath = (matchUri.group(1))
