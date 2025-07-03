@@ -4,9 +4,6 @@
 import re
 from burp import IHttpRequestResponse
 
-uriRegex = r'^[A-Z]+ (/[^\s]*) HTTP/\d\.\d'
-
-
 def isStatusCodesReturned(self, messageInfo, statusCodes):
     firstHeader = self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders()[0]
     if type(statusCodes) == list:
@@ -76,17 +73,18 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
         msgBody = self._helpers.bytesToString(msgBody)
         # simple string replace
         for k, v in self.badProgrammerMRModel.items():
+            uriPath = headers[0].split(" ")[1]
             if(v["type"] == "Path (simple string):"):
-                matchUri = re.search(uriRegex, headers[0], re.MULTILINE)
+                matchUri = re.search(v["match"], uriPath, re.MULTILINE)
                 if matchUri:
-                    currentPath = (matchUri.group(1))
+                    currentPath = matchUri.group()
                     replacedPath = currentPath.replace(v["match"], v["replace"])
                     headers[0] = headers[0].replace(currentPath, replacedPath)
             if(v["type"] == "Path (regex):"):
-                matchUri = re.search(uriRegex, headers[0], re.MULTILINE)
+                matchUri = v["regexMatch"].search(uriPath, re.MULTILINE)
                 if matchUri:
-                    currentPath = (matchUri.group(1))
-                    replacedPath = re.sub(v["regexMatch"], v["replace"], currentPath)
+                    currentPath = matchUri.group()
+                    replacedPath = v["regexMatch"].sub(v["replace"], currentPath)
                     headers[0] = headers[0].replace(currentPath, replacedPath)
             if(v["type"] == "Body (simple string):") :
                 msgBody = msgBody.replace(v["match"], v["replace"])
