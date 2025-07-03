@@ -36,7 +36,9 @@ class MatchReplace():
         MRStrings = ["Headers (simple string):",
                      "Headers (regex):",
                      "Body (simple string):",
-                     "Body (regex):"]
+                     "Body (regex):",
+                     "Path (simple string):",
+                     "Path (regex):"]
         row1Y = 10
         row2Y = row1Y + labelHeight + padding
         row3Y = row2Y + editHeight + padding

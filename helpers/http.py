@@ -73,6 +73,19 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
         msgBody = self._helpers.bytesToString(msgBody)
         # simple string replace
         for k, v in self.badProgrammerMRModel.items():
+            uriPath = headers[0].split(" ")[1]
+            if(v["type"] == "Path (simple string):"):
+                matchUri = re.search(v["match"], uriPath, re.MULTILINE)
+                if matchUri:
+                    currentPath = matchUri.group()
+                    replacedPath = currentPath.replace(v["match"], v["replace"])
+                    headers[0] = headers[0].replace(currentPath, replacedPath)
+            if(v["type"] == "Path (regex):"):
+                matchUri = v["regexMatch"].search(uriPath, re.MULTILINE)
+                if matchUri:
+                    currentPath = matchUri.group()
+                    replacedPath = v["regexMatch"].sub(v["replace"], currentPath)
+                    headers[0] = headers[0].replace(currentPath, replacedPath)
             if(v["type"] == "Body (simple string):") :
                 msgBody = msgBody.replace(v["match"], v["replace"])
             if(v["type"] == "Body (regex):") :
