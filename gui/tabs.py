@@ -174,6 +174,7 @@ class Tabs():
         self._extender.tabs.setMinimumSize(Dimension(1,1))
         self._extender._splitpane.setRightComponent(self._extender.tabs)
 
+        self._extender.tabs.addTab("User", self._extender.userPanel)
 
 class SendRequestRepeater(ActionListener):
     def __init__(self, extender, callbacks, original):
