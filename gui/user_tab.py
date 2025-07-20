@@ -1,8 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
 
-from javax.swing import (JPanel, JLabel, JButton, JTabbedPane, JOptionPane)
-from java.awt import BorderLayout, FlowLayout, Font
+from javax.swing import JPanel
+from javax.swing import JLabel
+from javax.swing import JButton
+from javax.swing import JTabbedPane
+from javax.swing import JOptionPane
+from java.awt import BorderLayout
+from java.awt import FlowLayout
+from java.awt import Font
 from java.awt.event import ActionListener
 
 from gui.enforcement_detector import EnforcementDetectors
@@ -13,7 +19,8 @@ class UserTab():
         self._extender = extender
         self.user_count = 0
         self.user_tabs = {}
-    
+        self.user_names = []
+
     def draw(self):
         self._extender.userPanel = JPanel(BorderLayout())
         
@@ -45,21 +52,24 @@ class UserTab():
     def add_user(self):
         self.user_count += 1
         user_name = "User {}".format(self.user_count)
-        
+        unique_user_name = self.get_unique_name(user_name)
+
+        self.user_names.append(unique_user_name)
+
         userPanel = JPanel(BorderLayout())
         
         headerPanel = JPanel(FlowLayout(FlowLayout.LEFT))
-        headerLabel = JLabel(user_name)
+        headerLabel = JLabel(unique_user_name)
         headerLabel.setFont(Font("Tahoma", Font.BOLD, 12))
         headerPanel.add(headerLabel)
         
         userSubTabs = JTabbedPane()
         
-        user_ed = UserEnforcementDetector(self._extender, self.user_count)
+        user_ed = UserEnforcementDetector(self.user_count)
         user_ed.draw()
         user_ed.draw_unauthenticated()
         
-        user_mr = UserMatchReplace(self._extender, self.user_count)
+        user_mr = UserMatchReplace(self.user_count)
         user_mr.draw()
         
         userSubTabs.addTab("Enforcement Detector", user_ed.EDPnl)
@@ -72,6 +82,8 @@ class UserTab():
         userPanel.add(userSubTabs, BorderLayout.CENTER)
         
         self.user_tabs[self.user_count] = {
+            'user_id': self.user_count,
+            'user_name': unique_user_name,
             'panel': userPanel,
             'subtabs': userSubTabs,
             'ed_instance': user_ed,
@@ -79,7 +91,7 @@ class UserTab():
             'header_label': headerLabel
         }
         
-        self.userTabs.addTab(user_name, userPanel)
+        self.userTabs.addTab(unique_user_name, userPanel)
         
         self.userTabs.setSelectedIndex(self.userTabs.getTabCount() - 1)
     
@@ -95,8 +107,57 @@ class UserTab():
     def duplicate_user(self):
         selected_index = self.userTabs.getSelectedIndex()
         if selected_index >= 0:
-            self.add_user()
+            selected_panel = self.userTabs.getComponentAt(selected_index)
+            source_user_data = None
+            
+            for user_id, user_data in self.user_tabs.items():
+                if user_data['panel'] == selected_panel:
+                    source_user_data = user_data
+                    break
+            
+            if source_user_data:
+                self.add_user()
+                new_user_id = self.user_count
+                new_user_data = self.user_tabs[new_user_id]
+
+                self.copy_ed_settings(source_user_data['ed_instance'], new_user_data['ed_instance'])
+                self.copy_mr_settings(source_user_data['mr_instance'], new_user_data['mr_instance'])
     
+    def copy_ed_settings(self, source_ed, target_ed):
+        target_ed.EDModel.clear()
+        for i in range(source_ed.EDModel.getSize()):
+            target_ed.EDModel.addElement(source_ed.EDModel.getElementAt(i))
+        
+        target_ed.EDType.setSelectedIndex(source_ed.EDType.getSelectedIndex())
+        target_ed.EDText.setText(source_ed.EDText.getText())
+        target_ed.AndOrType.setSelectedIndex(source_ed.AndOrType.getSelectedIndex())
+        
+        target_ed.EDModelUnauth.clear()
+        for i in range(source_ed.EDModelUnauth.getSize()):
+            target_ed.EDModelUnauth.addElement(source_ed.EDModelUnauth.getElementAt(i))
+        
+        target_ed.EDTypeUnauth.setSelectedIndex(source_ed.EDTypeUnauth.getSelectedIndex())
+        target_ed.EDTextUnauth.setText(source_ed.EDTextUnauth.getText())
+        target_ed.AndOrTypeUnauth.setSelectedIndex(source_ed.AndOrTypeUnauth.getSelectedIndex())
+
+    def copy_mr_settings(self, source_mr, target_mr):
+        target_mr.MRModel.clear()
+        for i in range(source_mr.MRModel.getSize()):
+            target_mr.MRModel.addElement(source_mr.MRModel.getElementAt(i))
+        
+        target_mr.MRType.setSelectedIndex(source_mr.MRType.getSelectedIndex())
+        target_mr.MText.setText(source_mr.MText.getText())
+        target_mr.RText.setText(source_mr.RText.getText())
+        
+        target_mr.badProgrammerMRModel.clear()
+        for key, value in source_mr.badProgrammerMRModel.items():
+            if hasattr(value, 'copy'):
+                target_mr.badProgrammerMRModel[key] = value.copy()
+            elif isinstance(value, dict):
+                target_mr.badProgrammerMRModel[key] = dict(value)
+            else:
+                target_mr.badProgrammerMRModel[key] = value
+                            
     def rename_user(self):
         selected_index = self.userTabs.getSelectedIndex()
         if selected_index >= 0:
@@ -104,57 +165,73 @@ class UserTab():
             new_name = JOptionPane.showInputDialog(None, "Enter new name for user:", "Rename User", JOptionPane.QUESTION_MESSAGE, None, None, current_name)
             
             if new_name and new_name.strip():
-                self.userTabs.setTitleAt(selected_index, new_name.strip())
-                for user_id, user_data in self.user_tabs.items():
+                unique_name = self.get_unique_name(new_name.strip())
+
+                self.userTabs.setTitleAt(selected_index, unique_name)
+                for user_data in self.user_tabs.items():
                     if user_data['panel'] == self.userTabs.getComponentAt(selected_index):
-                        user_data['header_label'].setText(new_name.strip())
+                        user_data['header_label'].setText(unique_name)
+                        user_data['user_name'] = unique_name
                         break
 
+    def get_unique_name(self, name):
+        if name not in self.user_names:
+            return name
+        
+        counter = 1
+        while True:
+            candidate_name = "{} Copy".format(name) if counter == 1 else "{} Copy {}".format(name, counter)
+            
+            if candidate_name not in self.user_names:
+                return candidate_name
+            
+            counter += 1
+            
+            if counter > 100:
+                return "{} Copy {}".format(name, counter)
+        
 class UserEnforcementDetector(EnforcementDetectors):
-    def __init__(self, extender, user_id):
-        EnforcementDetectors.__init__(self, extender)
+    def __init__(self, user_id):
+        self.isolated_extender = type('IsolatedExtender', (object,), {})()
         self.user_id = user_id
-        self.prefix = "User{}_".format(user_id)
-    
+        
+        EnforcementDetectors.__init__(self, self.isolated_extender)
+
     def draw(self):
         EnforcementDetectors.draw(self)
-        
-        self.EDPnl = self._extender.EDPnl
-        setattr(self._extender, self.prefix + "EDPnl", self._extender.EDPnl)
-        setattr(self._extender, self.prefix + "EDType", self._extender.EDType)
-        setattr(self._extender, self.prefix + "EDText", self._extender.EDText)
-        setattr(self._extender, self.prefix + "EDModel", self._extender.EDModel)
-        setattr(self._extender, self.prefix + "EDList", self._extender.EDList)
-        setattr(self._extender, self.prefix + "AndOrType", self._extender.AndOrType)
-    
+        self.EDPnl = self.isolated_extender.EDPnl
+        self.EDType = self.isolated_extender.EDType
+        self.EDText = self.isolated_extender.EDText
+        self.EDModel = self.isolated_extender.EDModel
+        self.EDList = self.isolated_extender.EDList
+        self.AndOrType = self.isolated_extender.AndOrType
+
     def draw_unauthenticated(self):
         EnforcementDetectors.draw_unauthenticated(self)
-        
-        self.EDPnlUnauth = self._extender.EDPnlUnauth
-        setattr(self._extender, self.prefix + "EDPnlUnauth", self._extender.EDPnlUnauth)
-        setattr(self._extender, self.prefix + "EDTypeUnauth", self._extender.EDTypeUnauth)
-        setattr(self._extender, self.prefix + "EDTextUnauth", self._extender.EDTextUnauth)
-        setattr(self._extender, self.prefix + "EDModelUnauth", self._extender.EDModelUnauth)
-        setattr(self._extender, self.prefix + "EDListUnauth", self._extender.EDListUnauth)
-        setattr(self._extender, self.prefix + "AndOrTypeUnauth", self._extender.AndOrTypeUnauth)
+        self.EDPnlUnauth = self.isolated_extender.EDPnlUnauth
+        self.EDTypeUnauth = self.isolated_extender.EDTypeUnauth
+        self.EDTextUnauth = self.isolated_extender.EDTextUnauth
+        self.EDModelUnauth = self.isolated_extender.EDModelUnauth
+        self.EDListUnauth = self.isolated_extender.EDListUnauth
+        self.AndOrTypeUnauth = self.isolated_extender.AndOrTypeUnauth
 
 class UserMatchReplace(MatchReplace):
-    def __init__(self, extender, user_id):
-        MatchReplace.__init__(self, extender)
+    def __init__(self, user_id):
+        self.isolated_extender = type('IsolatedExtender', (object,), {})()
         self.user_id = user_id
-        self.prefix = "User{}_".format(user_id)
-    
+        
+        MatchReplace.__init__(self, self.isolated_extender)
+
     def draw(self):
         MatchReplace.draw(self)
-        
-        self.MRPnl = self._extender.MRPnl
-        setattr(self._extender, self.prefix + "MRPnl", self._extender.MRPnl)
-        setattr(self._extender, self.prefix + "MRType", self._extender.MRType)
-        setattr(self._extender, self.prefix + "MText", self._extender.MText)
-        setattr(self._extender, self.prefix + "RText", self._extender.RText)
-        setattr(self._extender, self.prefix + "MRModel", self._extender.MRModel)
-        setattr(self._extender, self.prefix + "MRList", self._extender.MRList)
-        setattr(self._extender, self.prefix + "badProgrammerMRModel", self._extender.badProgrammerMRModel)
+
+        self.MRPnl = self.isolated_extender.MRPnl
+        self.MRType = self.isolated_extender.MRType
+        self.MText = self.isolated_extender.MText
+        self.RText = self.isolated_extender.RText
+        self.MRModel = self.isolated_extender.MRModel
+        self.MRList = self.isolated_extender.MRList
+        self.badProgrammerMRModel = self.isolated_extender.badProgrammerMRModel
 
 class AddUserAction(ActionListener):
     def __init__(self, user_tab):

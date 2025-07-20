@@ -90,10 +90,10 @@ class ConfigurationTab():
 
         self._extender.filtersTabs = JTabbedPane()
         self._extender.filtersTabs = self._extender.filtersTabs
-        self._extender.filtersTabs.addTab("Enforcement Detector", self._extender.EDPnl)
-        self._extender.filtersTabs.addTab("Unauthentication Detector ", self._extender.EDPnlUnauth)
+        # self._extender.filtersTabs.addTab("Enforcement Detector", self._extender.EDPnl)
+        # self._extender.filtersTabs.addTab("Unauthentication Detector ", self._extender.EDPnlUnauth)
         self._extender.filtersTabs.addTab("Interception Filters", self._extender.filtersPnl)
-        self._extender.filtersTabs.addTab("Match/Replace", self._extender.MRPnl)
+        # self._extender.filtersTabs.addTab("Match/Replace", self._extender.MRPnl)
         self._extender.filtersTabs.addTab("Table Filter", self._extender.filterPnl)
         self._extender.filtersTabs.addTab("Save/Restore", self._extender.exportPnl)
 
