@@ -9,6 +9,7 @@ from gui.tabs import Tabs, ITabImpl
 from gui.table import TableFilter
 from gui.export import Export
 from gui.menu import MenuImpl
+from gui.user_tab import UserTab
 
 from java.util import ArrayList
 from threading import Lock
@@ -53,6 +54,9 @@ class Initiator():
 
         cfg_tab = ConfigurationTab(self._extender)
         cfg_tab.draw()
+
+        user_tab = UserTab(self._extender)
+        user_tab.draw()
 
         tabs = Tabs(self._extender)
         tabs.draw()
