@@ -41,7 +41,6 @@ def capture_last_authorization_header(self, messageInfo):
         self.lastAuthorizationHeader = authorization
         self.fetchAuthorizationHeaderButton.setEnabled(True)
 
-
 def valid_tool(self, toolFlag):
     return (toolFlag == self._callbacks.TOOL_PROXY or
             (toolFlag == self._callbacks.TOOL_REPEATER and
@@ -190,25 +189,186 @@ def handle_message(self, toolFlag, messageIsRequest, messageInfo):
                         return
 
                 if no_filters_defined(self):
-                    checkAuthorization(self, messageInfo,
-                    self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),
-                                            self.doUnauthorizedRequest.isSelected())
+                    # checkAuthorization(self, messageInfo,
+                    # self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),
+                    #                         self.doUnauthorizedRequest.isSelected())
+                    checkAuthorizationAllUsers(self, messageInfo, self.doUnauthorizedRequest.isSelected())
                 else:
                     if message_passed_interception_filters(self, messageInfo):
-                        checkAuthorization(self, messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
+                        # checkAuthorization(self, messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
+                        checkAuthorizationAllUsers(self, messageInfo, self.doUnauthorizedRequest.isSelected())
+
+def checkAuthorizationAllUsers(self, messageInfo, checkUnauthorized=True):
+    # if not hasattr(self, 'userTab') or not self.userTab or len(self.userTab.user_tabs) == 0:
+    #     checkAuthorization(self, messageInfo, self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(), checkUnauthorized)
+    #     return
+    
+    originalHeaders = self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders()
+    
+    requestResponseUnauthorized = None
+    impressionUnauthorized = "Disabled"
+    
+    if checkUnauthorized:
+        messageUnauthorized = makeMessage(self, messageInfo, True, False)
+        requestResponseUnauthorized = makeRequest(self, messageInfo, messageUnauthorized)
+        if requestResponseUnauthorized and requestResponseUnauthorized.getResponse():
+            unauthorizedResponse = requestResponseUnauthorized.getResponse()
+            analyzedResponseUnauthorized = self._helpers.analyzeResponse(unauthorizedResponse)
+            statusCodeUnauthorized = analyzedResponseUnauthorized.getHeaders()[0]
+            contentUnauthorized = getResponseBody(self, requestResponseUnauthorized)
+
+            message = makeMessage(self, messageInfo, True, True)
+            requestResponse = makeRequest(self, messageInfo, message)
+            newResponse = requestResponse.getResponse()
+            analyzedResponse = self._helpers.analyzeResponse(newResponse)
+
+            oldStatusCode = originalHeaders[0]
+            newStatusCode = analyzedResponse.getHeaders()[0]
+            oldContent = getResponseBody(self, messageInfo)
+            newContent = getResponseBody(self, requestResponse)
+
+            EDFiltersUnauth = self.EDModelUnauth.toArray()
+            impressionUnauthorized = checkBypass(self, oldStatusCode, statusCodeUnauthorized,
+                                                oldContent, contentUnauthorized,
+                                                EDFiltersUnauth, requestResponseUnauthorized,
+                                                self.AndOrTypeUnauth.getSelectedItem())
+            
+    self._lock.acquire()
+    
+    row = self._log.size()
+    method = self._helpers.analyzeRequest(messageInfo.getRequest()).getMethod()
+    original_url = self._helpers.analyzeRequest(messageInfo).getUrl()
+    
+    logEntry = LogEntry(self.currentRequestNumber, 
+                       method, 
+                       original_url,
+                       messageInfo, 
+                       requestResponseUnauthorized if checkUnauthorized else None, 
+                       impressionUnauthorized)
+    
+    for user_id, user_data in self.userTab.user_tabs.items():
+        user_name = user_data['user_name']
+        ed_instance = user_data['ed_instance']
+        mr_instance = user_data['mr_instance']
+        
+        message = makeUserMessage(self, messageInfo, True, True, mr_instance)
+        requestResponse = makeRequest(self, messageInfo, message)
+        
+        if requestResponse and requestResponse.getResponse():
+            newResponse = requestResponse.getResponse()
+            analyzedResponse = self._helpers.analyzeResponse(newResponse)
+            newStatusCode = analyzedResponse.getHeaders()[0]
+            oldContent = getResponseBody(self, messageInfo)
+            newContent = getResponseBody(self, requestResponse)
+            
+            EDFilters = ed_instance.EDModel.toArray()
+            impression = checkBypass(self, originalHeaders[0], newStatusCode, oldContent, newContent, 
+                                   EDFilters, requestResponse, ed_instance.AndOrType.getSelectedItem())
+            
+            savedRequestResponse = self._callbacks.saveBuffersToTempFiles(requestResponse)
+            logEntry.add_user_enforcement(user_id, savedRequestResponse, impression)
+    
+    self._log.add(logEntry)
+    SwingUtilities.invokeLater(UpdateTableEDT(self,"insert",row,row))
+    self.currentRequestNumber = self.currentRequestNumber + 1
+    self._lock.release()
+
+def makeUserMessage(self, messageInfo, removeOrNot, authorizeOrNot, mr_instance):
+    requestInfo = self._helpers.analyzeRequest(messageInfo)
+    headers = list(requestInfo.getHeaders())
+    
+    if removeOrNot:
+        if hasattr(self, 'replaceString') and self.replaceString.getText():
+            removeHeaders = self.replaceString.getText().split('\n')
+            removeHeaders = [header.split(':')[0].strip() + ':' for header in removeHeaders if ':' in header]
+            
+            headers_to_remove = []
+            for header in headers[1:]:
+                for removeHeader in removeHeaders:
+                    if header.lower().startswith(removeHeader.lower()):
+                        headers_to_remove.append(header)
+            
+            for header in headers_to_remove:
+                if header in headers:
+                    headers.remove(header)
+
+        if authorizeOrNot:
+            for i in range(mr_instance.MRModel.getSize()):
+                rule_key = mr_instance.MRModel.getElementAt(i)
+                rule_data = mr_instance.badProgrammerMRModel.get(rule_key)
+                
+                if rule_data:
+                    rule_type = rule_data['type']
+                    match_pattern = rule_data['match']
+                    replace_pattern = rule_data['replace']
+                    regex_match = rule_data.get('regexMatch')
+                    
+                    if rule_type == "Headers (simple string):":
+                        modifiedHeaders = [h.replace(match_pattern, replace_pattern) for h in headers[1:]]
+                        headers = [headers[0]] + modifiedHeaders
+                    elif rule_type == "Headers (regex):":
+                        if regex_match:
+                            modifiedHeaders = [regex_match.sub(replace_pattern, h) for h in headers[1:]]
+                            headers = [headers[0]] + modifiedHeaders
+
+            if hasattr(self, 'replaceString') and self.replaceString.getText():
+                replaceStringLines = self.replaceString.getText().split("\n")
+                for h in replaceStringLines:
+                    if h.strip() and ':' in h:
+                        headers.append(h.strip())
+
+    msgBody = messageInfo.getRequest()[requestInfo.getBodyOffset():]
+
+    if authorizeOrNot and msgBody is not None:
+        msgBody_str = self._helpers.bytesToString(msgBody)
+        
+        for i in range(mr_instance.MRModel.getSize()):
+            rule_key = mr_instance.MRModel.getElementAt(i)
+            rule_data = mr_instance.badProgrammerMRModel.get(rule_key)
+            
+            if rule_data:
+                rule_type = rule_data['type']
+                match_pattern = rule_data['match']
+                replace_pattern = rule_data['replace']
+                regex_match = rule_data.get('regexMatch')
+                
+                if rule_type == "Path (simple string):":
+                    uriPath = headers[0].split(" ")[1]
+                    if match_pattern in uriPath:
+                        headers[0] = headers[0].replace(match_pattern, replace_pattern)
+                elif rule_type == "Path (regex):":
+                    if regex_match:
+                        uriPath = headers[0].split(" ")[1]
+                        if regex_match.search(uriPath):
+                            headers[0] = regex_match.sub(replace_pattern, headers[0])
+                
+                elif rule_type == "Body (simple string):":
+                    msgBody_str = msgBody_str.replace(match_pattern, replace_pattern)
+                elif rule_type == "Body (regex):":
+                    if regex_match:
+                        msgBody_str = regex_match.sub(replace_pattern, msgBody_str)
+        
+        msgBody = self._helpers.stringToBytes(msgBody_str)
+    
+    return self._helpers.buildHttpMessage(headers, msgBody)
 
 def send_request_to_autorize(self, messageInfo):
     if messageInfo.getResponse() is None:
         message = makeMessage(self, messageInfo,False,False)
         requestResponse = makeRequest(self, messageInfo, message)
-        checkAuthorization(self, requestResponse,self._helpers.analyzeResponse(requestResponse.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
+        # checkAuthorization(self, requestResponse,self._helpers.analyzeResponse(requestResponse.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
+        checkAuthorizationAllUsers(self, requestResponse, self.doUnauthorizedRequest.isSelected())
     else:
         request = messageInfo.getRequest()
         response = messageInfo.getResponse()
         httpService = messageInfo.getHttpService()
         newHttpRequestResponse = IHttpRequestResponseImplementation(httpService,request,response)
         newHttpRequestResponsePersisted = self._callbacks.saveBuffersToTempFiles(newHttpRequestResponse)
-        checkAuthorization(self, newHttpRequestResponsePersisted,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
+        
+        if hasattr(self, 'userTab') and self.userTab and len(self.userTab.user_tabs) > 0:
+            checkAuthorizationAllUsers(self, newHttpRequestResponsePersisted, self.doUnauthorizedRequest.isSelected())
+        else:
+            checkAuthorization(self, newHttpRequestResponsePersisted, self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(), self.doUnauthorizedRequest.isSelected())
 
 def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andOrEnforcement):
     response = requestResponse.getResponse()
@@ -332,4 +492,6 @@ def retestAllRequests(self):
     self.logTable.setAutoCreateRowSorter(True)
     for i in range(self.tableModel.getRowCount()):
         logEntry = self._log.get(self.logTable.convertRowIndexToModel(i))
+        logEntry._userEnforcements.clear()
         handle_message(self, "AUTORIZE", False, logEntry._originalrequestResponse)
+

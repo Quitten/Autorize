@@ -226,47 +226,94 @@ class TableModel(AbstractTableModel):
             return 0
 
     def getColumnCount(self):
-        return 8
+        base_columns = 6
+        user_count = len(self._extender.userTab.user_tabs) if hasattr(self._extender, 'userTab') and self._extender.userTab else 0
+        return base_columns + (user_count * 2)
 
     def getColumnName(self, columnIndex):
-        data = ['ID','Method', 'URL', 'Orig. Len', 'Modif. Len', "Unauth. Len",
-                "Authz. Status", "Unauth. Status"]
+        base_columns = ['ID', 'Method', 'URL', 'Orig. Len', 'Unauth.len', 'Unauth. Status']
+
+        if columnIndex < len(base_columns):
+            return base_columns[columnIndex]
+        
         try:
-            return data[columnIndex]
-        except IndexError:
+            if hasattr(self._extender, 'userTab') and self._extender.userTab:
+                user_index = (columnIndex - len(base_columns)) // 2
+                col_type = (columnIndex - len(base_columns)) % 2
+
+                user_ids = sorted(self._extender.userTab.user_tabs.keys())
+
+                if user_index < len(user_ids):
+                    user_id = user_ids[user_index]
+                    user_name = self._extender.userTab.user_tabs[user_id]['user_name']
+                    
+                    col_names = [
+                        "{} Modif. Len".format(user_name), 
+                        "{} Authz. Status".format(user_name)
+                    ]
+
+                    return col_names[col_type]
+
+            return ""
+        
+        except (IndexError, KeyError):
             return ""
 
     def getColumnClass(self, columnIndex):
-        data = [Integer, String, String, Integer, Integer, Integer, String, String]
+        base_classes = [Integer, String, String, Integer, Integer, String]
+        
+        if columnIndex < len(base_classes):
+            return base_classes[columnIndex]
+        
         try:
-            return data[columnIndex]
+            col_type = (columnIndex - len(base_classes)) % 2
+            user_col_classes = [Integer, String]
+            return user_col_classes[col_type]
+        
         except IndexError:
             return ""
 
     def getValueAt(self, rowIndex, columnIndex):
         logEntry = self._extender._log.get(rowIndex)
-        if columnIndex == 0:
+        
+        if columnIndex == 0: # ID
             return logEntry._id
-        if columnIndex == 1:
+        if columnIndex == 1: # METHOD
             return logEntry._method
-        if columnIndex == 2:
+        if columnIndex == 2: # URL
             return logEntry._url.toString()
-        if columnIndex == 3:
+        if columnIndex == 3: # Original Request Length
             response = logEntry._originalrequestResponse.getResponse()
             return len(logEntry._originalrequestResponse.getResponse()) - self._extender._helpers.analyzeResponse(response).getBodyOffset()
-        if columnIndex == 4:
-            response = logEntry._requestResponse.getResponse()
-            return len(logEntry._requestResponse.getResponse()) - self._extender._helpers.analyzeResponse(response).getBodyOffset()
-        if columnIndex == 5:
+        if columnIndex == 4: # Unauthorized Request Length
             if logEntry._unauthorizedRequestResponse is not None:
                 response = logEntry._unauthorizedRequestResponse.getResponse()
                 return len(logEntry._unauthorizedRequestResponse.getResponse()) - self._extender._helpers.analyzeResponse(response).getBodyOffset()
             else:
                 return 0
-        if columnIndex == 6:
-            return logEntry._enfocementStatus   
-        if columnIndex == 7:
-            return logEntry._enfocementStatusUnauthorized        
+        if columnIndex == 5:
+            return logEntry._enfocementStatusUnauthorized
+
+        # User columns
+        if hasattr(self._extender, 'userTab') and self._extender.userTab and columnIndex >= 6:
+            user_index = (columnIndex - 6) // 2
+            col_type = (columnIndex - 6) % 2
+
+            user_ids = sorted(self._extender.userTab.user_tabs.keys())
+            if user_index < len(user_ids):
+                user_id = user_ids[user_index]
+                user_name = self._extender.userTab.user_tabs[user_id]['user_name']
+                
+                user_data = logEntry.get_user_enforcement(user_id)
+                if user_data:
+                    if col_type == 0:  # Modified Length
+                        if user_data['requestResponse'] and user_data['requestResponse'].getResponse():
+                            response = user_data['requestResponse'].getResponse()
+                            return len(response) - self._extender._helpers.analyzeResponse(response).getBodyOffset()
+                        return 0
+                    elif col_type == 1:  # Authorization Status
+                        return user_data['enforcementStatus']
+                        
         return ""
 
 class TableSelectionListener(ListSelectionListener):
@@ -284,15 +331,34 @@ class Table(JTable):
         self._extender.tableModel = TableModel(extender)
         self.setModel(self._extender.tableModel)
         self.addMouseListener(Mouseclick(self._extender))
-        self.getColumnModel().getColumn(0).setPreferredWidth(450)
         self.setRowSelectionAllowed(True)
+
         # Enables multi-row selection
         self.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
+        self.updateColumnWidths()
+
+    def updateColumnWidths(self):
+         if self.getColumnCount() > 0:
+            self.getColumnModel().getColumn(0).setPreferredWidth(50)
+            self.getColumnModel().getColumn(1).setPreferredWidth(80)
+            self.getColumnModel().getColumn(2).setPreferredWidth(300)
+            self.getColumnModel().getColumn(3).setPreferredWidth(80)
+            self.getColumnModel().getColumn(4).setPreferredWidth(80)
+            self.getColumnModel().getColumn(5).setPreferredWidth(120)
+            
+            if hasattr(self._extender, 'userTab'):
+                user_count = len(self._extender.userTab.user_tabs)
+                if user_count > 0:
+                    col_width = 100
+                    
+                    for i in range(6, self.getColumnCount()):
+                        self.getColumnModel().getColumn(i).setPreferredWidth(col_width)
 
     def prepareRenderer(self, renderer, row, col):
         comp = JTable.prepareRenderer(self, renderer, row, col)
         value = self._extender.tableModel.getValueAt(self._extender.logTable.convertRowIndexToModel(row), col)
-        if col == 6 or col == 7:
+
+        if col >= 5:
             if value == self._extender.BYPASSSED_STR:
                 comp.setBackground(Color(255, 153, 153))
                 comp.setForeground(Color.BLACK)
@@ -302,6 +368,12 @@ class Table(JTable):
             elif value == self._extender.ENFORCED_STR:
                 comp.setBackground(Color(204, 255, 153))
                 comp.setForeground(Color.BLACK)
+            elif value == "Disabled":
+                comp.setBackground(Color(211, 211, 211))
+                comp.setForeground(Color.BLACK)
+            else:
+                comp.setForeground(Color.BLACK)
+                comp.setBackground(Color.WHITE)
         else:
             comp.setForeground(Color.BLACK)
             comp.setBackground(Color.WHITE)
@@ -314,10 +386,29 @@ class Table(JTable):
         return comp
     
     def changeSelection(self, row, col, toggle, extend):
-        # show the log entry for the selected row
         logEntry = self._extender._log.get(self._extender.logTable.convertRowIndexToModel(row))
-        self._extender._requestViewer.setMessage(logEntry._requestResponse.getRequest(), True)
-        self._extender._responseViewer.setMessage(logEntry._requestResponse.getResponse(), False)
+        
+        current_user_name = "Original"
+        current_request_response = logEntry._originalrequestResponse
+        
+        if col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
+            user_index = (col - 6) // 2
+            user_ids = sorted(self._extender.userTab.user_tabs.keys())
+            if user_index < len(user_ids):
+                user_id = user_ids[user_index]
+                user_name = self._extender.userTab.user_tabs[user_id]['user_name']
+                user_data = logEntry.get_user_enforcement(user_id)
+                if user_data and user_data['requestResponse']:
+                    current_user_name = user_name
+                    current_request_response = user_data['requestResponse']
+        
+        if col >= 4 and col < 6:  # Unauthenticated columns
+            current_request_response = logEntry._unauthorizedRequestResponse
+   
+            current_user_name = "Unauthenticated"
+
+        self._extender._requestViewer.setMessage(current_request_response.getRequest(), True)
+        self._extender._responseViewer.setMessage(current_request_response.getResponse(), False)
         self._extender._originalrequestViewer.setMessage(logEntry._originalrequestResponse.getRequest(), True)
         self._extender._originalresponseViewer.setMessage(logEntry._originalrequestResponse.getResponse(), False)
 
@@ -330,37 +421,54 @@ class Table(JTable):
 
         self._extender._currentlyDisplayedItem = logEntry
 
-        if col == 3:
+        self.updateTabTitles(current_user_name)
+
+        if col == 2:  # URL column
             collapse(self._extender, self._extender.modified_requests_tabs)
             collapse(self._extender, self._extender.unauthenticated_requests_tabs)
             expand(self._extender, self._extender.original_requests_tabs)
-        elif col == 4 or col == 6:
+        elif col >= 6:  # User columns
             collapse(self._extender, self._extender.original_requests_tabs)
             collapse(self._extender, self._extender.unauthenticated_requests_tabs)
             expand(self._extender, self._extender.modified_requests_tabs)
-        elif col == 5 or col == 7:
+        elif col == 4 or col == 5:  # Unauth Status
             collapse(self._extender, self._extender.original_requests_tabs)
             collapse(self._extender, self._extender.modified_requests_tabs)
             expand(self._extender, self._extender.unauthenticated_requests_tabs)
-        else:
-            collapse(self._extender, self._extender.original_requests_tabs)
-            collapse(self._extender, self._extender.modified_requests_tabs)
-            collapse(self._extender, self._extender.unauthenticated_requests_tabs)
 
         JTable.changeSelection(self, row, col, toggle, extend)
         return
+    
+    def updateTabTitles(self, user_name):
+        if hasattr(self._extender, 'modified_requests_tabs'):
+            self._extender.modified_requests_tabs.setTitleAt(0, "{} Modified Request".format(user_name))
+            self._extender.modified_requests_tabs.setTitleAt(1, "{} Modified Response".format(user_name))
 
 class LogEntry:
-    def __init__(self, id, requestResponse, method, url, originalrequestResponse, enforcementStatus, unauthorizedRequestResponse, enforcementStatusUnauthorized):
+    def __init__(self, id, method, url, originalrequestResponse, unauthorizedRequestResponse=None, enforcementStatusUnauthorized="Disabled"):
         self._id = id
-        self._requestResponse = requestResponse
-        self._originalrequestResponse = originalrequestResponse
         self._method = method
         self._url = url
-        self._enfocementStatus =  enforcementStatus
+        self._originalrequestResponse = originalrequestResponse
         self._unauthorizedRequestResponse = unauthorizedRequestResponse
-        self._enfocementStatusUnauthorized =  enforcementStatusUnauthorized
-        return
+        self._enfocementStatusUnauthorized = enforcementStatusUnauthorized
+        
+        self._userEnforcements = {}
+        
+    def add_user_enforcement(self, user_id, requestResponse, enforcementStatus):
+        self._userEnforcements[user_id] = {
+            'requestResponse': requestResponse,
+            'enforcementStatus': enforcementStatus
+        }
+    
+    def get_user_enforcement(self, user_id):
+        return self._userEnforcements.get(user_id, None)
+    
+    def get_all_users(self):
+        return list(self._userEnforcements.keys())
+    
+    def has_user_data(self, user_id):
+        return user_id in self._userEnforcements
 
 class Mouseclick(MouseAdapter):
     def __init__(self, extender):
@@ -375,22 +483,19 @@ class TableRowFilter(RowFilter):
         self._extender = extender
 
     def include(self, entry):
-        if self._extender.showAuthBypassModified.isSelected() and self._extender.BYPASSSED_STR == entry.getValue(6):
+        modif_status = entry.getValue(7) if entry.getValueCount() > 7 else ""
+        unauth_status = entry.getValue(5) if entry.getValueCount() > 5 else ""
+        
+        if (self._extender.showAuthBypassModified.isSelected() and self._extender.BYPASSSED_STR == modif_status) or \
+           (self._extender.showAuthPotentiallyEnforcedModified.isSelected() and self._extender.IS_ENFORCED_STR == modif_status) or \
+           (self._extender.showAuthEnforcedModified.isSelected() and self._extender.ENFORCED_STR == modif_status) or \
+           (self._extender.showAuthBypassUnauthenticated.isSelected() and self._extender.BYPASSSED_STR == unauth_status) or \
+           (self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and self._extender.IS_ENFORCED_STR == unauth_status) or \
+           (self._extender.showAuthEnforcedUnauthenticated.isSelected() and self._extender.ENFORCED_STR == unauth_status) or \
+           (self._extender.showDisabledUnauthenticated.isSelected() and "Disabled" == unauth_status):
             return True
-        elif self._extender.showAuthPotentiallyEnforcedModified.isSelected() and self._extender.IS_ENFORCED_STR == entry.getValue(6):
-            return True
-        elif self._extender.showAuthEnforcedModified.isSelected() and self._extender.ENFORCED_STR == entry.getValue(6):
-            return True
-        elif self._extender.showAuthBypassUnauthenticated.isSelected() and self._extender.BYPASSSED_STR == entry.getValue(7):
-            return True
-        elif self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and self._extender.IS_ENFORCED_STR == entry.getValue(7):
-            return True
-        elif self._extender.showAuthEnforcedUnauthenticated.isSelected() and self._extender.ENFORCED_STR == entry.getValue(7):
-            return True
-        elif self._extender.showDisabledUnauthenticated.isSelected() and "Disabled" == entry.getValue(7):
-            return True
-        else:
-            return False
+        
+        return False
 
 class UpdateTableEDT(Runnable):
     def __init__(self,extender,action,firstRow,lastRow):

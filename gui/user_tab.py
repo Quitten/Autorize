@@ -67,14 +67,11 @@ class UserTab():
         
         user_ed = UserEnforcementDetector(self.user_count)
         user_ed.draw()
-        user_ed.draw_unauthenticated()
         
         user_mr = UserMatchReplace(self.user_count)
         user_mr.draw()
         
         userSubTabs.addTab("Enforcement Detector", user_ed.EDPnl)
-        
-        userSubTabs.addTab("Unauthentication Detector", user_ed.EDPnlUnauth)
         
         userSubTabs.addTab("Match/Replace", user_mr.MRPnl)
         
@@ -94,18 +91,48 @@ class UserTab():
         self.userTabs.addTab(unique_user_name, userPanel)
         
         self.userTabs.setSelectedIndex(self.userTabs.getTabCount() - 1)
-    
+
+        self.refreshTableStructure()
+
     def remove_user(self):
         if self.userTabs.getTabCount() <= 1:
             JOptionPane.showMessageDialog(None, "Cannot remove the last user!", "Warning", JOptionPane.WARNING_MESSAGE)
             return
         
         selected_index = self.userTabs.getSelectedIndex()
+
         if selected_index >= 0:
-            self.userTabs.removeTabAt(selected_index)
-    
+            selected_panel = self.userTabs.getComponentAt(selected_index)
+
+            user_id_to_remove = None
+            user_name_to_remove = None
+
+            for user_id, user_data in self.user_tabs.items():
+                if user_data['panel'] == selected_panel:
+                    user_id_to_remove = user_id
+                    user_name_to_remove = user_data['user_name']
+                    break
+
+            if user_id_to_remove and user_name_to_remove:
+                if user_name_to_remove in self.user_names:
+                    self.user_names.remove(user_name_to_remove)
+
+                del self.user_tabs[user_id_to_remove]
+
+                self.userTabs.removeTabAt(selected_index)
+
+                self.refreshTableStructure()
+
+    def reset_user(self):
+        self.userTabs.removeAll()
+        self.user_tabs.clear()
+        del self.user_names[:]
+        self.user_count = 0
+        self.add_user()
+        
     def duplicate_user(self):
         selected_index = self.userTabs.getSelectedIndex()
+
         if selected_index >= 0:
             selected_panel = self.userTabs.getComponentAt(selected_index)
             source_user_data = None
@@ -131,14 +158,6 @@ class UserTab():
         target_ed.EDType.setSelectedIndex(source_ed.EDType.getSelectedIndex())
         target_ed.EDText.setText(source_ed.EDText.getText())
         target_ed.AndOrType.setSelectedIndex(source_ed.AndOrType.getSelectedIndex())
-        
-        target_ed.EDModelUnauth.clear()
-        for i in range(source_ed.EDModelUnauth.getSize()):
-            target_ed.EDModelUnauth.addElement(source_ed.EDModelUnauth.getElementAt(i))
-        
-        target_ed.EDTypeUnauth.setSelectedIndex(source_ed.EDTypeUnauth.getSelectedIndex())
-        target_ed.EDTextUnauth.setText(source_ed.EDTextUnauth.getText())
-        target_ed.AndOrTypeUnauth.setSelectedIndex(source_ed.AndOrTypeUnauth.getSelectedIndex())
 
     def copy_mr_settings(self, source_mr, target_mr):
         target_mr.MRModel.clear()
@@ -160,19 +179,29 @@ class UserTab():
                             
     def rename_user(self):
         selected_index = self.userTabs.getSelectedIndex()
+
         if selected_index >= 0:
             current_name = self.userTabs.getTitleAt(selected_index)
             new_name = JOptionPane.showInputDialog(None, "Enter new name for user:", "Rename User", JOptionPane.QUESTION_MESSAGE, None, None, current_name)
             
             if new_name and new_name.strip():
+                if current_name in self.user_names:
+                    self.user_names.remove(current_name)
+
                 unique_name = self.get_unique_name(new_name.strip())
+                self.user_names.append(unique_name)
 
                 self.userTabs.setTitleAt(selected_index, unique_name)
-                for user_data in self.user_tabs.items():
-                    if user_data['panel'] == self.userTabs.getComponentAt(selected_index):
+
+                selected_panel = self.userTabs.getComponentAt(selected_index)
+
+                for user_id, user_data in self.user_tabs.items():
+                    if user_data['panel'] == selected_panel:
                         user_data['header_label'].setText(unique_name)
                         user_data['user_name'] = unique_name
                         break
+
+                self.refreshTableStructure()
 
     def get_unique_name(self, name):
         if name not in self.user_names:
@@ -189,8 +218,15 @@ class UserTab():
             
             if counter > 100:
                 return "{} Copy {}".format(name, counter)
-        
+    
+    def refreshTableStructure(self):
+        if hasattr(self._extender, 'tableModel'):
+            self._extender.tableModel.fireTableStructureChanged()
+        if hasattr(self._extender, 'logTable'):
+            self._extender.logTable.updateColumnWidths()
+            
 class UserEnforcementDetector(EnforcementDetectors):
+
     def __init__(self, user_id):
         self.isolated_extender = type('IsolatedExtender', (object,), {})()
         self.user_id = user_id
@@ -205,15 +241,6 @@ class UserEnforcementDetector(EnforcementDetectors):
         self.EDModel = self.isolated_extender.EDModel
         self.EDList = self.isolated_extender.EDList
         self.AndOrType = self.isolated_extender.AndOrType
-
-    def draw_unauthenticated(self):
-        EnforcementDetectors.draw_unauthenticated(self)
-        self.EDPnlUnauth = self.isolated_extender.EDPnlUnauth
-        self.EDTypeUnauth = self.isolated_extender.EDTypeUnauth
-        self.EDTextUnauth = self.isolated_extender.EDTextUnauth
-        self.EDModelUnauth = self.isolated_extender.EDModelUnauth
-        self.EDListUnauth = self.isolated_extender.EDListUnauth
-        self.AndOrTypeUnauth = self.isolated_extender.AndOrTypeUnauth
 
 class UserMatchReplace(MatchReplace):
     def __init__(self, user_id):

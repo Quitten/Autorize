@@ -257,74 +257,125 @@ class Export():
             fileToSave = fileChooser.getSelectedFile()
 
         enforcementStatusFilter = self.exportES.getSelectedItem()
+        
+        header_html = "<thead><tr><th width=\"3%\">ID</th><th width=\"5%\">Method</th><th width=\"30%\">URL</th><th width=\"7%\">Original length</th><th width=\"7%\">Unauth length</th><th width=\"10%\">Unauth Status</th>"
+        
+        if hasattr(self._extender, 'userTab') and self._extender.userTab:
+            for user_id, user_data in self._extender.userTab.user_tabs.items():
+                user_name = user_data['user_name']
+                header_html += "<th width=\"7%\">{} Len</th><th width=\"10%\">{} Status</th>".format(user_name, user_name)
+        
+        header_html += "</tr></thead>"
+        
         htmlContent = """<html><title>Autorize Report by Barak Tawily</title>
         <style>
         .datagrid table { border-collapse: collapse; text-align: left; width: 100%; }
-            .datagrid {font: normal 12px/150% Arial, Helvetica, sans-serif; background: #fff; overflow: hidden; border: 1px solid #006699; -webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; }
-            .datagrid table td, .datagrid table th { padding: 3px 10px; }
-            .datagrid table thead th {background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #006699), color-stop(1, #00557F) );background:-moz-linear-gradient( center top, #006699 5%, #00557F 100% );filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#006699', endColorstr='#00557F');background-color:#006699; color:#FFFFFF; font-size: 15px; font-weight: bold; border-left: 1px solid #0070A8; } .datagrid table thead th:first-child { border: none; }.datagrid table tbody td { color: #00496B; border-left: 1px solid #E1EEF4;font-size: 12px;font-weight: normal; }.datagrid table tbody .alt td { background: #E1EEF4; color: #00496B; }.datagrid table tbody td:first-child { border-left: none; }.datagrid table tbody tr:last-child td { border-bottom: none; }.datagrid table tfoot td div { border-top: 1px solid #006699;background: #E1EEF4;} .datagrid table tfoot td { padding: 0; font-size: 12px } .datagrid table tfoot td div{ padding: 2px; }.datagrid table tfoot td ul { margin: 0; padding:0; list-style: none; text-align: right; }.datagrid table tfoot  li { display: inline; }.datagrid table tfoot li a { text-decoration: none; display: inline-block;  padding: 2px 8px; margin: 1px;color: #FFFFFF;border: 1px solid #006699;-webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #006699), color-stop(1, #00557F) );background:-moz-linear-gradient( center top, #006699 5%, #00557F 100% );filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#006699', endColorstr='#00557F');background-color:#006699; }.datagrid table tfoot ul.active, .datagrid table tfoot ul a:hover { text-decoration: none;border-color: #006699; color: #FFFFFF; background: none; background-color:#00557F;}div.dhtmlx_window_active, div.dhx_modal_cover_dv { position: fixed !important; }
-        table {
-        width: 100%;
-        table-layout: fixed;
-        }
-        td {
-            border: 1px solid #35f;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        td.a {
-            width: 13%;
-            white-space: nowrap;
-        }
-        td.b {
-            width: 9%;
-            word-wrap: break-word;
-        }
+        .datagrid {font: normal 12px/150% Arial, Helvetica, sans-serif; background: #fff; overflow: hidden; border: 1px solid #006699; -webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; }
+        .datagrid table td, .datagrid table th { padding: 3px 10px; }
+        .datagrid table thead th {background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #006699), color-stop(1, #00557F) );background:-moz-linear-gradient( center top, #006699 5%, #00557F 100% );filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#006699', endColorstr='#00557F');background-color:#006699; color:#FFFFFF; font-size: 15px; font-weight: bold; border-left: 1px solid #0070A8; }
+        .datagrid table thead th:first-child { border: none; }
+        .datagrid table tbody td { color: #00496B; border-left: 1px solid #E1EEF4;font-size: 12px;font-weight: normal; }
+        .datagrid table tbody .alt td { background: #E1EEF4; color: #00496B; }
+        .datagrid table tbody td:first-child { border-left: none; }
+        .datagrid table tbody tr:last-child td { border-bottom: none; }
         </style>
         <body>
         <h1>Autorize Report<h1>
-        <div class="datagrid"><table>
-        <thead><tr><th width=\"3%\">ID</th><th width=\"5%\">Method</th><th width=\"43%\">URL</th><th width=\"9%\">Original length</th><th width=\"9%\">Modified length</th><th width=\"9%\">Unauthorized length</th><th width=\"11%\">Authorization Enforcement Status</th><th width=\"11%\">Authorization Unauthenticated Status</th></tr></thead>
+        <div class="datagrid"><table>""" + header_html + """
         <tbody>"""
-        unique_HTML_lines = set()  # set to keep track of unique values
-        for i in range(0,self._log.size()):
+        
+        unique_HTML_lines = set()
+        for i in range(0, self._log.size()):
+            logEntry = self._log.get(i)
+            
             if self.removeDuplicates.isSelected():
-                # line data only looks for method, url, and authorized status. Does not factor in size of request during comparision
-                lineData = "\t%s\t%s\t%s\t%s\n" % (self._log.get(i)._method, self._log.get(i)._url, self._log.get(i)._enfocementStatus,self._log.get(i)._enfocementStatusUnauthorized)
-                if lineData in unique_HTML_lines:  # Skip if line is already in set
+                user_statuses = []
+                for user_id in sorted(logEntry.get_all_users()):
+                    user_data = logEntry.get_user_enforcement(user_id)
+                    if user_data:
+                        user_statuses.append(user_data['enforcementStatus'])
+                
+                lineData = "\t%s\t%s\t%s\t%s" % (logEntry._method, logEntry._url, 
+                                                logEntry._enfocementStatusUnauthorized, 
+                                                "\t".join(user_statuses))
+                if lineData in unique_HTML_lines:
                     continue
-                else:  # Add line to set and continue with execution
+                else:
                     unique_HTML_lines.add(lineData)
-            color_modified = ""
-            if self._log.get(i)._enfocementStatus == self.BYPASSSED_STR:
-                color_modified = "red"
-            elif self._log.get(i)._enfocementStatus == self.IS_ENFORCED_STR:
-                color_modified = "yellow"
-            elif self._log.get(i)._enfocementStatus == self.ENFORCED_STR:
-                color_modified = "LawnGreen"
 
-            color_unauthorized = ""
-            if self._log.get(i)._enfocementStatusUnauthorized == self.BYPASSSED_STR:
-                color_unauthorized = "red"
-            elif self._log.get(i)._enfocementStatusUnauthorized == self.IS_ENFORCED_STR:
-                color_unauthorized = "yellow"
-            elif self._log.get(i)._enfocementStatusUnauthorized == self.ENFORCED_STR:
-                color_unauthorized = "LawnGreen"
+            row_html = "<tr><td>%d</td><td>%s</td><td><a href=\"%s\">%s</a></td>" % (
+                logEntry._id, logEntry._method, logEntry._url, logEntry._url)
 
+            orig_len = len(logEntry._originalrequestResponse.getResponse()) if logEntry._originalrequestResponse else 0
+            row_html += "<td>%d</td>" % orig_len
+            
+            unauth_len = 0
+            if logEntry._unauthorizedRequestResponse:
+                unauth_len = len(logEntry._unauthorizedRequestResponse.getResponse())
+            
+            unauth_color = ""
+            if logEntry._enfocementStatusUnauthorized == self.BYPASSSED_STR:
+                unauth_color = "red"
+            elif logEntry._enfocementStatusUnauthorized == self.IS_ENFORCED_STR:
+                unauth_color = "yellow"
+            elif logEntry._enfocementStatusUnauthorized == self.ENFORCED_STR:
+                unauth_color = "LawnGreen"
+            
+            row_html += "<td>%d</td><td bgcolor=\"%s\">%s</td>" % (unauth_len, unauth_color, logEntry._enfocementStatusUnauthorized)
+            
+            # User data
+            if hasattr(self._extender, 'userTab') and self._extender.userTab:
+                for user_id in sorted(self._extender.userTab.user_tabs.keys()):
+                    user_data = logEntry.get_user_enforcement(user_id)
+                    if user_data and user_data['requestResponse']:
+                        user_len = len(user_data['requestResponse'].getResponse())
+                        user_status = user_data['enforcementStatus']
+                        
+                        user_color = ""
+                        if user_status == self.BYPASSSED_STR:
+                            user_color = "red"
+                        elif user_status == self.IS_ENFORCED_STR:
+                            user_color = "yellow"
+                        elif user_status == self.ENFORCED_STR:
+                            user_color = "LawnGreen"
+                        
+                        row_html += "<td>%d</td><td bgcolor=\"%s\">%s</td>" % (user_len, user_color, user_status)
+                    else:
+                        row_html += "<td>0</td><td>N/A</td>"
+            
+            row_html += "</tr>"
+            
+            should_include = False
             if enforcementStatusFilter == "All Statuses":
-                htmlContent += "<tr><td>%d</td><td>%s</td><td><a href=\"%s\">%s</a></td><td>%d</td><td>%d</td><td>%d</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td></tr>" % (self._log.get(i)._id, self._log.get(i)._method, self._log.get(i)._url, self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse is not None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse is not None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse is not None else 0, color_modified, self._log.get(i)._enfocementStatus, color_unauthorized, self._log.get(i)._enfocementStatusUnauthorized)
+                should_include = True
             elif enforcementStatusFilter == "As table filter":
-                if ((self._extender.showAuthBypassModified.isSelected() and self.BYPASSSED_STR == self._log.get(i)._enfocementStatus) or
-                    (self._extender.showAuthPotentiallyEnforcedModified.isSelected() and "Is enforced???" == self._log.get(i)._enfocementStatus) or
-                    (self._extender.showAuthEnforcedModified.isSelected() and self.ENFORCED_STR == self._log.get(i)._enfocementStatus) or
-                    (self._extender.showAuthBypassUnauthenticated.isSelected() and self.BYPASSSED_STR == self._log.get(i)._enfocementStatusUnauthorized) or
-                    (self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and "Is enforced???" == self._log.get(i)._enfocementStatusUnauthorized) or
-                    (self._extender.showAuthEnforcedUnauthenticated.isSelected() and self.ENFORCED_STR == self._log.get(i)._enfocementStatusUnauthorized) or
-                    (self._extender.showDisabledUnauthenticated.isSelected() and "Disabled" == self._log.get(i)._enfocementStatusUnauthorized)):
-                    htmlContent += "<tr><td>%d</td><td>%s</td><td><a href=\"%s\">%s</a></td><td>%d</td><td>%d</td><td>%d</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td></tr>" % (self._log.get(i)._id, self._log.get(i)._method, self._log.get(i)._url, self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse is not None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse is not None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse is not None else 0, color_modified, self._log.get(i)._enfocementStatus, color_unauthorized, self._log.get(i)._enfocementStatusUnauthorized)
+                if ((self._extender.showAuthBypassUnauthenticated.isSelected() and self.BYPASSSED_STR == logEntry._enfocementStatusUnauthorized) or
+                    (self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and self.IS_ENFORCED_STR == logEntry._enfocementStatusUnauthorized) or
+                    (self._extender.showAuthEnforcedUnauthenticated.isSelected() and self.ENFORCED_STR == logEntry._enfocementStatusUnauthorized) or
+                    (self._extender.showDisabledUnauthenticated.isSelected() and "Disabled" == logEntry._enfocementStatusUnauthorized)):
+                    should_include = True
+                
+                for user_id in logEntry.get_all_users():
+                    user_data = logEntry.get_user_enforcement(user_id)
+                    if user_data:
+                        user_status = user_data['enforcementStatus']
+                        if ((self._extender.showAuthBypassModified.isSelected() and self.BYPASSSED_STR == user_status) or
+                            (self._extender.showAuthPotentiallyEnforcedModified.isSelected() and self.IS_ENFORCED_STR == user_status) or
+                            (self._extender.showAuthEnforcedModified.isSelected() and self.ENFORCED_STR == user_status)):
+                            should_include = True
+                            break
             else:
-                if (enforcementStatusFilter == self._log.get(i)._enfocementStatus) or (enforcementStatusFilter == self._log.get(i)._enfocementStatusUnauthorized):
-                    htmlContent += "<tr><td>%d</td><td>%s</td><td><a href=\"%s\">%s</a></td><td>%d</td><td>%d</td><td>%d</td><td bgcolor=\"%s\">%s</td><td bgcolor=\"%s\">%s</td></tr>" % (self._log.get(i)._id, self._log.get(i)._method, self._log.get(i)._url, self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse is not None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse is not None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse is not None else 0, color_modified, self._log.get(i)._enfocementStatus, color_unauthorized, self._log.get(i)._enfocementStatusUnauthorized)
+                if enforcementStatusFilter == logEntry._enfocementStatusUnauthorized:
+                    should_include = True
+                else:
+                    for user_id in logEntry.get_all_users():
+                        user_data = logEntry.get_user_enforcement(user_id)
+                        if user_data and enforcementStatusFilter == user_data['enforcementStatus']:
+                            should_include = True
+                            break
+            
+            if should_include:
+                htmlContent += row_html
 
         htmlContent += "</tbody></table></div></body></html>"
         f = open(fileToSave.getAbsolutePath(), 'w')
@@ -341,32 +392,85 @@ class Export():
             fileToSave = fileChooser.getSelectedFile()
 
         enforcementStatusFilter = self.exportES.getSelectedItem()
-        csvContent = "id\tMethod\tURL\tOriginal length\tModified length\tUnauthorized length\tAuthorization Enforcement Status\tAuthorization Unauthenticated Status\n"
+        
+        csvContent = "ID\tMethod\tURL\tOriginal Length\tUnauth Length\tUnauth Status"
+        
+        if hasattr(self._extender, 'userTab') and self._extender.userTab:
+            for user_id, user_data in self._extender.userTab.user_tabs.items():
+                user_name = user_data['user_name']
+                csvContent += "\t{} Length\t{} Status".format(user_name, user_name)
+        
+        csvContent += "\n"
 
-        unique_CVS_lines = set()
+        unique_CSV_lines = set()
         for i in range(0, self._log.size()):
+            logEntry = self._log.get(i)
+            
             if self.removeDuplicates.isSelected():
-                # line data only looks for method, url, and authorized status. Does not factor in size of request during comparision
-                lineData = "\t%s\t%s\t%s\t%s\n" % (self._log.get(i)._method, self._log.get(i)._url, self._log.get(i)._enfocementStatus,self._log.get(i)._enfocementStatusUnauthorized)
-                if lineData in unique_CVS_lines:  # Skip if line is already in set
+                user_statuses = []
+                for user_id in sorted(logEntry.get_all_users()):
+                    user_data = logEntry.get_user_enforcement(user_id)
+                    if user_data:
+                        user_statuses.append(user_data['enforcementStatus'])
+                
+                lineData = "\t%s\t%s\t%s\t%s\n" % (logEntry._method, logEntry._url, 
+                                                logEntry._enfocementStatusUnauthorized, 
+                                                "\t".join(user_statuses))
+                if lineData in unique_CSV_lines:
                     continue
-                else:  # Add line to set and continue with execution
-                    unique_CVS_lines.add(lineData)
-            if enforcementStatusFilter == "All Statuses":
-                csvContent += "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id, self._log.get(i)._method, self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse is not None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse is not None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse is not None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
-            elif enforcementStatusFilter == "As table filter":
-                if ((self._extender.showAuthBypassModified.isSelected() and self.BYPASSSED_STR == self._log.get(i)._enfocementStatus) or
-                    (self._extender.showAuthPotentiallyEnforcedModified.isSelected() and "Is enforced???" == self._log.get(i)._enfocementStatus) or
-                    (self._extender.showAuthEnforcedModified.isSelected() and self.ENFORCED_STR == self._log.get(i)._enfocementStatus) or
-                    (self._extender.showAuthBypassUnauthenticated.isSelected() and self.BYPASSSED_STR == self._log.get(i)._enfocementStatusUnauthorized) or
-                    (self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and "Is enforced???" == self._log.get(i)._enfocementStatusUnauthorized) or
-                    (self._extender.showAuthEnforcedUnauthenticated.isSelected() and self.ENFORCED_STR == self._log.get(i)._enfocementStatusUnauthorized) or
-                    (self._extender.showDisabledUnauthenticated.isSelected() and "Disabled" == self._log.get(i)._enfocementStatusUnauthorized)):
-                    csvContent += "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id, self._log.get(i)._method, self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse is not None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse is not None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse is not None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
-            else:
-                if (enforcementStatusFilter == self._log.get(i)._enfocementStatus) or (enforcementStatusFilter == self._log.get(i)._enfocementStatusUnauthorized):
-                    csvContent += "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%s\n" % (self._log.get(i)._id, self._log.get(i)._method, self._log.get(i)._url, len(self._log.get(i)._originalrequestResponse.getResponse()) if self._log.get(i)._originalrequestResponse is not None else 0, len(self._log.get(i)._requestResponse.getResponse()) if self._log.get(i)._requestResponse is not None else 0, len(self._log.get(i)._unauthorizedRequestResponse.getResponse()) if self._log.get(i)._unauthorizedRequestResponse is not None else 0, self._log.get(i)._enfocementStatus, self._log.get(i)._enfocementStatusUnauthorized)
+                else:
+                    unique_CSV_lines.add(lineData)
 
+            orig_len = len(logEntry._originalrequestResponse.getResponse()) if logEntry._originalrequestResponse else 0
+            unauth_len = len(logEntry._unauthorizedRequestResponse.getResponse()) if logEntry._unauthorizedRequestResponse else 0
+            
+            csv_row = "%d\t%s\t%s\t%d\t%d\t%s" % (
+                logEntry._id, logEntry._method, logEntry._url, orig_len, unauth_len, logEntry._enfocementStatusUnauthorized)
+            
+            # User data
+            if hasattr(self._extender, 'userTab') and self._extender.userTab:
+                for user_id in sorted(self._extender.userTab.user_tabs.keys()):
+                    user_data = logEntry.get_user_enforcement(user_id)
+                    if user_data and user_data['requestResponse']:
+                        user_len = len(user_data['requestResponse'].getResponse())
+                        user_status = user_data['enforcementStatus']
+                        csv_row += "\t%d\t%s" % (user_len, user_status)
+                    else:
+                        csv_row += "\t0\tN/A"
+            
+            csv_row += "\n"
+            
+            should_include = False
+            if enforcementStatusFilter == "All Statuses":
+                should_include = True
+            elif enforcementStatusFilter == "As table filter":
+                if ((self._extender.showAuthBypassUnauthenticated.isSelected() and self.BYPASSSED_STR == logEntry._enfocementStatusUnauthorized) or
+                    (self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and self.IS_ENFORCED_STR == logEntry._enfocementStatusUnauthorized) or
+                    (self._extender.showAuthEnforcedUnauthenticated.isSelected() and self.ENFORCED_STR == logEntry._enfocementStatusUnauthorized) or
+                    (self._extender.showDisabledUnauthenticated.isSelected() and "Disabled" == logEntry._enfocementStatusUnauthorized)):
+                    should_include = True
+                
+                for user_id in logEntry.get_all_users():
+                    user_data = logEntry.get_user_enforcement(user_id)
+                    if user_data:
+                        user_status = user_data['enforcementStatus']
+                        if ((self._extender.showAuthBypassModified.isSelected() and self.BYPASSSED_STR == user_status) or
+                            (self._extender.showAuthPotentiallyEnforcedModified.isSelected() and self.IS_ENFORCED_STR == user_status) or
+                            (self._extender.showAuthEnforcedModified.isSelected() and self.ENFORCED_STR == user_status)):
+                            should_include = True
+                            break
+            else:
+                if enforcementStatusFilter == logEntry._enfocementStatusUnauthorized:
+                    should_include = True
+                else:
+                    for user_id in logEntry.get_all_users():
+                        user_data = logEntry.get_user_enforcement(user_id)
+                        if user_data and enforcementStatusFilter == user_data['enforcementStatus']:
+                            should_include = True
+                            break
+            
+            if should_include:
+                csvContent += csv_row
 
         f = open(fileToSave.getAbsolutePath(), 'w')
         f.writelines(csvContent)

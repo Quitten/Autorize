@@ -58,6 +58,8 @@ class Initiator():
         user_tab = UserTab(self._extender)
         user_tab.draw()
 
+        self._extender.userTab = user_tab
+
         tabs = Tabs(self._extender)
         tabs.draw()
     
