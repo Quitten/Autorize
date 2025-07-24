@@ -32,13 +32,9 @@ class SaveRestore():
             "interceptRequestsfromRepeater",
             "doUnauthorizedRequest",
             "replaceQueryParam",
-            "showAuthBypassModified",
-            "showAuthPotentiallyEnforcedModified",
-            "showAuthEnforcedModified",
-            "showAuthBypassUnauthenticated",
-            "showAuthPotentiallyEnforcedUnauthenticated",
-            "showAuthEnforcedUnauthenticated",
-            "showDisabledUnauthenticated"
+            "showBypassed",
+            "showIsEnforced", 
+            "showEnforced"
         ]
 
     def saveState(self):
@@ -74,15 +70,18 @@ class SaveRestore():
                     tempRow = ["UserConfigs", base64.b64encode(json.dumps(user_configs))]
                     csvwriter.writerow(tempRow)
 
-                for EDFilterUnauth in self._extender.EDModelUnauth.toArray():
-                    tempRow = ["EDFilterUnauth", base64.b64encode(EDFilterUnauth)]
-                    csvwriter.writerow(tempRow)
+                if hasattr(self._extender, 'EDModelUnauth'):
+                    for EDFilterUnauth in self._extender.EDModelUnauth.toArray():
+                        tempRow = ["EDFilterUnauth", base64.b64encode(EDFilterUnauth)]
+                        csvwriter.writerow(tempRow)
 
-                for IFFilter in self._extender.IFModel.toArray():
-                    tempRow = ["IFFilter", base64.b64encode(IFFilter)]
-                    csvwriter.writerow(tempRow)
+                if hasattr(self._extender, 'IFModel'):
+                    for IFFilter in self._extender.IFModel.toArray():
+                        tempRow = ["IFFilter", base64.b64encode(IFFilter)]
+                        csvwriter.writerow(tempRow)
 
                 d = dict((c, getattr(self._extender, c).isSelected()) for c in self._checkBoxes)
+
                 tempRow = ["CheckBoxes", json.dumps(d)]
                 csvwriter.writerow(tempRow)
 
@@ -144,6 +143,9 @@ class SaveRestore():
 
         if userSelection == JFileChooser.APPROVE_OPTION:
             importFile = fileChooser.getSelectedFile()
+            
+            self._extender._log.clear()
+            self._extender.tableModel.fireTableDataChanged()
 
             with open(importFile.getAbsolutePath(), 'r') as csvfile:
 
@@ -186,6 +188,16 @@ class SaveRestore():
                                     user_data['mr_instance'].MRModel.addElement(key)
                         continue
 
+                    if row[0] == "EDFilterUnauth":
+                        if hasattr(self._extender, 'EDModelUnauth'):
+                            self._extender.EDModelUnauth.addElement(base64.b64decode(row[1]))
+                        continue
+
+                    if row[0] == "IFFilter":
+                        if hasattr(self._extender, 'IFModel'):
+                            self._extender.IFModel.addElement(base64.b64decode(row[1]))
+                        continue
+    
                     if row[0] == "CheckBoxes":
                         d = json.loads(row[1])
                         for k in d:
@@ -201,6 +213,7 @@ class SaveRestore():
                         continue
 
                     # Request/response list
+
                     if len(row) >= 12:
                         tempOriginalRequestResponseHost = row[0]
                         tempOriginalRequestResponsePort = row[1]
@@ -230,9 +243,6 @@ class SaveRestore():
 
                         tempEnforcementStatusUnauthorized = row[10]
 
-                        self._extender._lock.acquire()
-                        row_index = self._extender._log.size()
-
                         method = self._extender._helpers.analyzeRequest(tempOriginalRequestResponse).getMethod()
                         original_url = self._extender._helpers.analyzeRequest(tempOriginalRequestResponse).getUrl()
 
@@ -253,6 +263,6 @@ class SaveRestore():
                                 logEntry.add_user_enforcement(user_id, savedUserRequestResponse, user_data['status'])
 
                         self._extender._log.add(logEntry)
-                        SwingUtilities.invokeLater(UpdateTableEDT(self._extender, "insert", row_index, row_index))
                         self._extender.currentRequestNumber = self._extender.currentRequestNumber + 1
-                        self._extender._lock.release()
+
+                    self._extender.tableModel.fireTableDataChanged()

@@ -232,8 +232,6 @@ class Export():
                 )    
             )
         )
-         
-
 
     def export(self, event):
             if self.exportType.getSelectedItem() == "HTML":
@@ -247,6 +245,45 @@ class Export():
     def restoreStateAction(self, event):
         self.save_restore.restoreState()
 
+    def shouldIncludeRow(self, logEntry, enforcementStatusFilter):
+        should_include = False
+        
+        if enforcementStatusFilter == "All Statuses":
+            should_include = True
+        elif enforcementStatusFilter == "As table filter":
+            # Check if the new filter system allows this status
+            if hasattr(self._extender, 'showBypassed') and hasattr(self._extender, 'showIsEnforced') and hasattr(self._extender, 'showEnforced'):
+                # Check unauthenticated status
+                unauth_status = logEntry._enfocementStatusUnauthorized
+                if ((self._extender.showBypassed.isSelected() and self.BYPASSSED_STR == unauth_status) or
+                    (self._extender.showIsEnforced.isSelected() and self.IS_ENFORCED_STR == unauth_status) or
+                    (self._extender.showEnforced.isSelected() and self.ENFORCED_STR == unauth_status) or
+                    ("Disabled" == unauth_status)):
+                    should_include = True
+                
+                for user_id in logEntry.get_all_users():
+                    user_data = logEntry.get_user_enforcement(user_id)
+                    if user_data:
+                        user_status = user_data['enforcementStatus']
+                        if ((self._extender.showBypassed.isSelected() and self.BYPASSSED_STR == user_status) or
+                            (self._extender.showIsEnforced.isSelected() and self.IS_ENFORCED_STR == user_status) or
+                            (self._extender.showEnforced.isSelected() and self.ENFORCED_STR == user_status)):
+                            should_include = True
+                            break
+            else:
+                should_include = True
+        else:
+            if enforcementStatusFilter == logEntry._enfocementStatusUnauthorized:
+                should_include = True
+            else:
+                for user_id in logEntry.get_all_users():
+                    user_data = logEntry.get_user_enforcement(user_id)
+                    if user_data and enforcementStatusFilter == user_data['enforcementStatus']:
+                        should_include = True
+                        break
+        
+        return should_include
+
     def exportToHTML(self):
         parentFrame = JFrame()
         fileChooser = JFileChooser()
@@ -258,26 +295,40 @@ class Export():
 
         enforcementStatusFilter = self.exportES.getSelectedItem()
         
+        # Build header with user columns
         header_html = "<thead><tr><th width=\"3%\">ID</th><th width=\"5%\">Method</th><th width=\"30%\">URL</th><th width=\"7%\">Original length</th><th width=\"7%\">Unauth length</th><th width=\"10%\">Unauth Status</th>"
         
         if hasattr(self._extender, 'userTab') and self._extender.userTab:
-            for user_id, user_data in self._extender.userTab.user_tabs.items():
-                user_name = user_data['user_name']
+            for user_id in sorted(self._extender.userTab.user_tabs.keys()):
+                user_name = self._extender.userTab.user_tabs[user_id]['user_name']
                 header_html += "<th width=\"7%\">{} Len</th><th width=\"10%\">{} Status</th>".format(user_name, user_name)
         
         header_html += "</tr></thead>"
         
+        # Use original HTML styling from document 2
         htmlContent = """<html><title>Autorize Report by Barak Tawily</title>
         <style>
         .datagrid table { border-collapse: collapse; text-align: left; width: 100%; }
-        .datagrid {font: normal 12px/150% Arial, Helvetica, sans-serif; background: #fff; overflow: hidden; border: 1px solid #006699; -webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; }
-        .datagrid table td, .datagrid table th { padding: 3px 10px; }
-        .datagrid table thead th {background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #006699), color-stop(1, #00557F) );background:-moz-linear-gradient( center top, #006699 5%, #00557F 100% );filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#006699', endColorstr='#00557F');background-color:#006699; color:#FFFFFF; font-size: 15px; font-weight: bold; border-left: 1px solid #0070A8; }
-        .datagrid table thead th:first-child { border: none; }
-        .datagrid table tbody td { color: #00496B; border-left: 1px solid #E1EEF4;font-size: 12px;font-weight: normal; }
-        .datagrid table tbody .alt td { background: #E1EEF4; color: #00496B; }
-        .datagrid table tbody td:first-child { border-left: none; }
-        .datagrid table tbody tr:last-child td { border-bottom: none; }
+            .datagrid {font: normal 12px/150% Arial, Helvetica, sans-serif; background: #fff; overflow: hidden; border: 1px solid #006699; -webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; }
+            .datagrid table td, .datagrid table th { padding: 3px 10px; }
+            .datagrid table thead th {background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #006699), color-stop(1, #00557F) );background:-moz-linear-gradient( center top, #006699 5%, #00557F 100% );filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#006699', endColorstr='#00557F');background-color:#006699; color:#FFFFFF; font-size: 15px; font-weight: bold; border-left: 1px solid #0070A8; } .datagrid table thead th:first-child { border: none; }.datagrid table tbody td { color: #00496B; border-left: 1px solid #E1EEF4;font-size: 12px;font-weight: normal; }.datagrid table tbody .alt td { background: #E1EEF4; color: #00496B; }.datagrid table tbody td:first-child { border-left: none; }.datagrid table tbody tr:last-child td { border-bottom: none; }.datagrid table tfoot td div { border-top: 1px solid #006699;background: #E1EEF4;} .datagrid table tfoot td { padding: 0; font-size: 12px } .datagrid table tfoot td div{ padding: 2px; }.datagrid table tfoot td ul { margin: 0; padding:0; list-style: none; text-align: right; }.datagrid table tfoot  li { display: inline; }.datagrid table tfoot li a { text-decoration: none; display: inline-block;  padding: 2px 8px; margin: 1px;color: #FFFFFF;border: 1px solid #006699;-webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #006699), color-stop(1, #00557F) );background:-moz-linear-gradient( center top, #006699 5%, #00557F 100% );filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#006699', endColorstr='#00557F');background-color:#006699; }.datagrid table tfoot ul.active, .datagrid table tfoot ul a:hover { text-decoration: none;border-color: #006699; color: #FFFFFF; background: none; background-color:#00557F;}div.dhtmlx_window_active, div.dhx_modal_cover_dv { position: fixed !important; }
+        table {
+        width: 100%;
+        table-layout: fixed;
+        }
+        td {
+            border: 1px solid #35f;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        td.a {
+            width: 13%;
+            white-space: nowrap;
+        }
+        td.b {
+            width: 9%;
+            word-wrap: break-word;
+        }
         </style>
         <body>
         <h1>Autorize Report<h1>
@@ -302,6 +353,9 @@ class Export():
                     continue
                 else:
                     unique_HTML_lines.add(lineData)
+
+            if not self.shouldIncludeRow(logEntry, enforcementStatusFilter):
+                continue
 
             row_html = "<tr><td>%d</td><td>%s</td><td><a href=\"%s\">%s</a></td>" % (
                 logEntry._id, logEntry._method, logEntry._url, logEntry._url)
@@ -344,44 +398,13 @@ class Export():
                         row_html += "<td>0</td><td>N/A</td>"
             
             row_html += "</tr>"
-            
-            should_include = False
-            if enforcementStatusFilter == "All Statuses":
-                should_include = True
-            elif enforcementStatusFilter == "As table filter":
-                if ((self._extender.showAuthBypassUnauthenticated.isSelected() and self.BYPASSSED_STR == logEntry._enfocementStatusUnauthorized) or
-                    (self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and self.IS_ENFORCED_STR == logEntry._enfocementStatusUnauthorized) or
-                    (self._extender.showAuthEnforcedUnauthenticated.isSelected() and self.ENFORCED_STR == logEntry._enfocementStatusUnauthorized) or
-                    (self._extender.showDisabledUnauthenticated.isSelected() and "Disabled" == logEntry._enfocementStatusUnauthorized)):
-                    should_include = True
-                
-                for user_id in logEntry.get_all_users():
-                    user_data = logEntry.get_user_enforcement(user_id)
-                    if user_data:
-                        user_status = user_data['enforcementStatus']
-                        if ((self._extender.showAuthBypassModified.isSelected() and self.BYPASSSED_STR == user_status) or
-                            (self._extender.showAuthPotentiallyEnforcedModified.isSelected() and self.IS_ENFORCED_STR == user_status) or
-                            (self._extender.showAuthEnforcedModified.isSelected() and self.ENFORCED_STR == user_status)):
-                            should_include = True
-                            break
-            else:
-                if enforcementStatusFilter == logEntry._enfocementStatusUnauthorized:
-                    should_include = True
-                else:
-                    for user_id in logEntry.get_all_users():
-                        user_data = logEntry.get_user_enforcement(user_id)
-                        if user_data and enforcementStatusFilter == user_data['enforcementStatus']:
-                            should_include = True
-                            break
-            
-            if should_include:
-                htmlContent += row_html
+            htmlContent += row_html
 
         htmlContent += "</tbody></table></div></body></html>"
         f = open(fileToSave.getAbsolutePath(), 'w')
         f.writelines(htmlContent)
         f.close()
-
+        
     def exportToCSV(self):
         parentFrame = JFrame()
         fileChooser = JFileChooser()
@@ -393,12 +416,12 @@ class Export():
 
         enforcementStatusFilter = self.exportES.getSelectedItem()
         
-        csvContent = "ID\tMethod\tURL\tOriginal Length\tUnauth Length\tUnauth Status"
+        csvContent = "ID,Method,URL,Original Length,Unauth Length,Unauth Status"
         
         if hasattr(self._extender, 'userTab') and self._extender.userTab:
-            for user_id, user_data in self._extender.userTab.user_tabs.items():
-                user_name = user_data['user_name']
-                csvContent += "\t{} Length\t{} Status".format(user_name, user_name)
+            for user_id in sorted(self._extender.userTab.user_tabs.keys()):
+                user_name = self._extender.userTab.user_tabs[user_id]['user_name']
+                csvContent += ",{} Length,{} Status".format(user_name, user_name)
         
         csvContent += "\n"
 
@@ -413,19 +436,24 @@ class Export():
                     if user_data:
                         user_statuses.append(user_data['enforcementStatus'])
                 
-                lineData = "\t%s\t%s\t%s\t%s\n" % (logEntry._method, logEntry._url, 
+                lineData = ",{},{},{},{}".format(logEntry._method, logEntry._url, 
                                                 logEntry._enfocementStatusUnauthorized, 
-                                                "\t".join(user_statuses))
+                                                ",".join(user_statuses))
                 if lineData in unique_CSV_lines:
                     continue
                 else:
                     unique_CSV_lines.add(lineData)
 
+            if not self.shouldIncludeRow(logEntry, enforcementStatusFilter):
+                continue
+
             orig_len = len(logEntry._originalrequestResponse.getResponse()) if logEntry._originalrequestResponse else 0
             unauth_len = len(logEntry._unauthorizedRequestResponse.getResponse()) if logEntry._unauthorizedRequestResponse else 0
             
-            csv_row = "%d\t%s\t%s\t%d\t%d\t%s" % (
-                logEntry._id, logEntry._method, logEntry._url, orig_len, unauth_len, logEntry._enfocementStatusUnauthorized)
+            url_safe = '"{}"'.format(str(logEntry._url).replace('"', '""'))
+            
+            csv_row = '{},{},{},{},{},"{}"'.format(
+                logEntry._id, logEntry._method, url_safe, orig_len, unauth_len, logEntry._enfocementStatusUnauthorized)
             
             # User data
             if hasattr(self._extender, 'userTab') and self._extender.userTab:
@@ -434,43 +462,12 @@ class Export():
                     if user_data and user_data['requestResponse']:
                         user_len = len(user_data['requestResponse'].getResponse())
                         user_status = user_data['enforcementStatus']
-                        csv_row += "\t%d\t%s" % (user_len, user_status)
+                        csv_row += ',{},"{}"'.format(user_len, user_status)
                     else:
-                        csv_row += "\t0\tN/A"
+                        csv_row += ',0,"N/A"'
             
             csv_row += "\n"
-            
-            should_include = False
-            if enforcementStatusFilter == "All Statuses":
-                should_include = True
-            elif enforcementStatusFilter == "As table filter":
-                if ((self._extender.showAuthBypassUnauthenticated.isSelected() and self.BYPASSSED_STR == logEntry._enfocementStatusUnauthorized) or
-                    (self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and self.IS_ENFORCED_STR == logEntry._enfocementStatusUnauthorized) or
-                    (self._extender.showAuthEnforcedUnauthenticated.isSelected() and self.ENFORCED_STR == logEntry._enfocementStatusUnauthorized) or
-                    (self._extender.showDisabledUnauthenticated.isSelected() and "Disabled" == logEntry._enfocementStatusUnauthorized)):
-                    should_include = True
-                
-                for user_id in logEntry.get_all_users():
-                    user_data = logEntry.get_user_enforcement(user_id)
-                    if user_data:
-                        user_status = user_data['enforcementStatus']
-                        if ((self._extender.showAuthBypassModified.isSelected() and self.BYPASSSED_STR == user_status) or
-                            (self._extender.showAuthPotentiallyEnforcedModified.isSelected() and self.IS_ENFORCED_STR == user_status) or
-                            (self._extender.showAuthEnforcedModified.isSelected() and self.ENFORCED_STR == user_status)):
-                            should_include = True
-                            break
-            else:
-                if enforcementStatusFilter == logEntry._enfocementStatusUnauthorized:
-                    should_include = True
-                else:
-                    for user_id in logEntry.get_all_users():
-                        user_data = logEntry.get_user_enforcement(user_id)
-                        if user_data and enforcementStatusFilter == user_data['enforcementStatus']:
-                            should_include = True
-                            break
-            
-            if should_include:
-                csvContent += csv_row
+            csvContent += csv_row
 
         f = open(fileToSave.getAbsolutePath(), 'w')
         f.writelines(csvContent)
