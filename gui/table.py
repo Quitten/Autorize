@@ -6,14 +6,13 @@ from java.lang import String
 from java.lang import Integer
 from java.lang import Runnable
 from javax.swing import JTable
-from javax.swing import JLabel
 from javax.swing import JPanel
 from javax.swing import RowFilter
 from javax.swing import JCheckBox
-from javax.swing import GroupLayout
 from javax.swing import ListSelectionModel
 from java.awt.event import MouseAdapter
 from java.awt.event import ItemListener
+from java.awt import FlowLayout
 from javax.swing.table import AbstractTableModel
 from javax.swing.event import ListSelectionListener
 
@@ -27,187 +26,34 @@ class TableFilter():
         """
         init show tab
         """
+        self._extender.filterPnl = JPanel(FlowLayout(FlowLayout.LEFT))
 
-        filterLModified = JLabel("Modified:")
-        filterLModified.setBounds(10, 10, 100, 30)
+        self._extender.showBypassed = JCheckBox(self._extender.BYPASSSED_STR)
+        self._extender.showBypassed.setSelected(True)
+        self._extender.showBypassed.addItemListener(TabTableFilter(self._extender))
 
-        filterLUnauthenticated = JLabel("Unauthenticated:")
-        filterLUnauthenticated.setBounds(250, 10, 100, 30)
+        self._extender.showIsEnforced = JCheckBox("Is enforced???")
+        self._extender.showIsEnforced.setSelected(True)
+        self._extender.showIsEnforced.addItemListener(TabTableFilter(self._extender))
 
-        self._extender.showAuthBypassModified = JCheckBox(self._extender.BYPASSSED_STR)
-        self._extender.showAuthBypassModified.setBounds(10, 35, 200, 30)
-        self._extender.showAuthBypassModified.setSelected(True)
-        self._extender.showAuthBypassModified.addItemListener(TabTableFilter(self._extender))
+        self._extender.showEnforced = JCheckBox(self._extender.ENFORCED_STR)
+        self._extender.showEnforced.setSelected(True)
+        self._extender.showEnforced.addItemListener(TabTableFilter(self._extender))
 
-        self._extender.showAuthPotentiallyEnforcedModified = JCheckBox("Is enforced???")
-        self._extender.showAuthPotentiallyEnforcedModified.setBounds(10, 60, 200, 30)
-        self._extender.showAuthPotentiallyEnforcedModified.setSelected(True)
-        self._extender.showAuthPotentiallyEnforcedModified.addItemListener(TabTableFilter(self._extender))
-
-        self._extender.showAuthEnforcedModified = JCheckBox(self._extender.ENFORCED_STR)
-        self._extender.showAuthEnforcedModified.setBounds(10, 85, 200, 30)
-        self._extender.showAuthEnforcedModified.setSelected(True)
-        self._extender.showAuthEnforcedModified.addItemListener(TabTableFilter(self._extender))
-
-        self._extender.showAuthBypassUnauthenticated = JCheckBox(self._extender.BYPASSSED_STR)
-        self._extender.showAuthBypassUnauthenticated.setBounds(250, 35, 200, 30)
-        self._extender.showAuthBypassUnauthenticated.setSelected(True)
-        self._extender.showAuthBypassUnauthenticated.addItemListener(TabTableFilter(self._extender))
-
-        self._extender.showAuthPotentiallyEnforcedUnauthenticated = JCheckBox("Is enforced???")
-        self._extender.showAuthPotentiallyEnforcedUnauthenticated.setBounds(250, 60, 200, 30)
-        self._extender.showAuthPotentiallyEnforcedUnauthenticated.setSelected(True)
-        self._extender.showAuthPotentiallyEnforcedUnauthenticated.addItemListener(TabTableFilter(self._extender))
-
-        self._extender.showAuthEnforcedUnauthenticated = JCheckBox(self._extender.ENFORCED_STR)
-        self._extender.showAuthEnforcedUnauthenticated.setBounds(250, 85, 200, 30)
-        self._extender.showAuthEnforcedUnauthenticated.setSelected(True)
-        self._extender.showAuthEnforcedUnauthenticated.addItemListener(TabTableFilter(self._extender))
-
-        self._extender.showDisabledUnauthenticated = JCheckBox("Disabled")
-        self._extender.showDisabledUnauthenticated.setBounds(250, 110, 200, 30)
-        self._extender.showDisabledUnauthenticated.setSelected(True)
-        self._extender.showDisabledUnauthenticated.addItemListener(TabTableFilter(self._extender))        
-
-        self._extender.filterPnl = JPanel()
-        layout = GroupLayout(self._extender.filterPnl)
-        self._extender.filterPnl.setLayout(layout)
-        layout.setAutoCreateGaps(True)
-        layout.setAutoCreateContainerGaps(True)
-
-        layout.setHorizontalGroup(layout.createSequentialGroup()
-            .addGroup(layout.createParallelGroup()
-                .addComponent(
-                    filterLModified,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self._extender.showAuthBypassModified,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self._extender.showAuthPotentiallyEnforcedModified,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self._extender.showAuthEnforcedModified,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-            )
-            .addGroup(layout.createParallelGroup()
-                .addComponent(
-                    filterLUnauthenticated,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self._extender.showAuthBypassUnauthenticated,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self._extender.showAuthPotentiallyEnforcedUnauthenticated,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self._extender.showAuthEnforcedUnauthenticated,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    self._extender.showDisabledUnauthenticated,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-            )
-        )
-        
-        
-        layout.setVerticalGroup(layout.createSequentialGroup()
-            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addComponent(
-                    filterLModified,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-                .addComponent(
-                    filterLUnauthenticated,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                    GroupLayout.PREFERRED_SIZE,
-                )
-            )
-            .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                .addGroup(layout.createSequentialGroup()
-                    .addComponent(
-                        self._extender.showAuthBypassModified,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                    )
-                    .addComponent(
-                        self._extender.showAuthPotentiallyEnforcedModified,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                    )
-                    .addComponent(
-                        self._extender.showAuthEnforcedModified,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                    )
-                )
-                .addGroup(layout.createSequentialGroup()
-                    .addComponent(
-                        self._extender.showAuthBypassUnauthenticated,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                    )
-                    .addComponent(
-                        self._extender.showAuthPotentiallyEnforcedUnauthenticated,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                    )
-                    .addComponent(
-                        self._extender.showAuthEnforcedUnauthenticated,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                    )
-                    .addComponent(
-                        self._extender.showDisabledUnauthenticated,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                        GroupLayout.PREFERRED_SIZE,
-                    )
-                )
-            )
-        )
+        self._extender.filterPnl.add(self._extender.showBypassed)
+        self._extender.filterPnl.add(self._extender.showIsEnforced)
+        self._extender.filterPnl.add(self._extender.showEnforced)
 
 class TabTableFilter(ItemListener):
     def __init__(self, extender):
         self._extender = extender
 
     def itemStateChanged(self, e):
-        self._extender.tableSorter.sort()
+        if hasattr(self._extender, 'tableSorter'):
+            self._extender.tableSorter.sort()
+
+        if hasattr(self._extender, 'logTable'):
+            self._extender.logTable.repaint()
 
 class TableModel(AbstractTableModel):
     def __init__(self, extender):
@@ -315,6 +161,15 @@ class TableModel(AbstractTableModel):
                         return user_data['enforcementStatus']
                         
         return ""
+    
+class ColorConstants:
+    BLACK = Color.BLACK
+    WHITE = Color.WHITE
+    BYPASSED_BG = Color(255, 153, 153)    # Light red
+    IS_ENFORCED_BG = Color(255, 204, 153) # Light orange
+    ENFORCED_BG = Color(204, 255, 153)    # Light green
+    DISABLED_BG = Color(211, 211, 211)    # Light gray
+    SELECTED_BG = Color(201, 215, 255) 
 
 class TableSelectionListener(ListSelectionListener):
     """Class Responsible for the multi-row deletion"""
@@ -339,52 +194,97 @@ class Table(JTable):
 
     def updateColumnWidths(self):
          if self.getColumnCount() > 0:
-            self.getColumnModel().getColumn(0).setPreferredWidth(50)
-            self.getColumnModel().getColumn(1).setPreferredWidth(80)
-            self.getColumnModel().getColumn(2).setPreferredWidth(300)
-            self.getColumnModel().getColumn(3).setPreferredWidth(80)
-            self.getColumnModel().getColumn(4).setPreferredWidth(80)
-            self.getColumnModel().getColumn(5).setPreferredWidth(120)
+            column_model = self.getColumnModel()
+
+            widths = [50, 80, 300, 80, 80, 120]
+            for i, width in enumerate(widths):
+                column_model.getColumn(i).setPreferredWidth(width)
             
-            if hasattr(self._extender, 'userTab'):
+            if hasattr(self._extender, 'userTab') and self._extender.userTab:
                 user_count = len(self._extender.userTab.user_tabs)
-                if user_count > 0:
-                    col_width = 100
-                    
-                    for i in range(6, self.getColumnCount()):
-                        self.getColumnModel().getColumn(i).setPreferredWidth(col_width)
+                for i in range(6, 6 + (user_count << 1)):  # Bit shift for multiply by 2
+                    column_model.getColumn(i).setPreferredWidth(100)
 
     def prepareRenderer(self, renderer, row, col):
         comp = JTable.prepareRenderer(self, renderer, row, col)
-        value = self._extender.tableModel.getValueAt(self._extender.logTable.convertRowIndexToModel(row), col)
+        
+        if col < 4:
+            comp.setForeground(ColorConstants.BLACK)
+            comp.setBackground(ColorConstants.WHITE)
 
-        if col >= 5:
-            if value == self._extender.BYPASSSED_STR:
-                comp.setBackground(Color(255, 153, 153))
-                comp.setForeground(Color.BLACK)
-            elif value == self._extender.IS_ENFORCED_STR:
-                comp.setBackground(Color(255, 204, 153))
-                comp.setForeground(Color.BLACK)
-            elif value == self._extender.ENFORCED_STR:
-                comp.setBackground(Color(204, 255, 153))
-                comp.setForeground(Color.BLACK)
-            elif value == "Disabled":
-                comp.setBackground(Color(211, 211, 211))
-                comp.setForeground(Color.BLACK)
+            selected_rows = self._extender.logTable.getSelectedRows()
+            if row in selected_rows:
+                comp.setBackground(ColorConstants.SELECTED_BG)
+            
+            return comp
+    
+        model_row = self._extender.logTable.convertRowIndexToModel(row)
+        value = self._extender.tableModel.getValueAt(model_row, col)
+
+        comp.setForeground(Color.BLACK)
+        comp.setBackground(Color.WHITE)
+
+        should_mask = False
+        
+        if col == 4:  # Unauthenticated length
+            status_value = self._extender.tableModel.getValueAt(model_row, 5)
+            should_mask = not self.shouldShowStatus(status_value)
+        elif col == 5:  # Unauthenticated status
+            should_mask = not self.shouldShowStatus(value)
+        elif col >= 6:  # User columns
+            if col & 1:
+                should_mask = not self.shouldShowStatus(value)
             else:
-                comp.setForeground(Color.BLACK)
-                comp.setBackground(Color.WHITE)
-        else:
-            comp.setForeground(Color.BLACK)
-            comp.setBackground(Color.WHITE)
+                status_col = col + 1
+                if status_col < self._extender.tableModel.getColumnCount():
+                    status_value = self._extender.tableModel.getValueAt(model_row, status_col)
+                    should_mask = not self.shouldShowStatus(status_value)
 
-        selectedRows = self._extender.logTable.getSelectedRows()
-        if row in selectedRows:
-            comp.setBackground(Color(201, 215, 255))
-            comp.setForeground(Color.BLACK)
+        if should_mask:
+            comp.setText("")
+            comp.setBackground(Color.WHITE)
+            comp.setForeground(Color.WHITE)
+        elif col >= 4:
+            if col == 5 or (col >= 6 and col & 1):
+                if value == self._extender.BYPASSSED_STR:
+                    comp.setBackground(ColorConstants.BYPASSED_BG)
+                elif value == self._extender.IS_ENFORCED_STR:
+                    comp.setBackground(ColorConstants.IS_ENFORCED_BG)
+                elif value == self._extender.ENFORCED_STR:
+                    comp.setBackground(ColorConstants.ENFORCED_BG)
+                elif value == "Disabled":
+                    comp.setBackground(ColorConstants.DISABLED_BG)
+                
+                comp.setForeground(ColorConstants.BLACK)
+
+        selected_rows = self._extender.logTable.getSelectedRows()
+        
+        if row in selected_rows and not should_mask:
+            comp.setBackground(ColorConstants.SELECTED_BG)
+            comp.setForeground(ColorConstants.BLACK)
 
         return comp
     
+    def shouldShowStatus(self, status):
+        if not hasattr(self._extender, 'showBypassed'):
+            return True
+        
+        if (self._extender.showBypassed.isSelected() and
+            self._extender.showIsEnforced.isSelected() and
+            self._extender.showEnforced.isSelected()):
+            return True
+        
+        if status == "Disabled":
+            return True
+        elif self._extender.showBypassed.isSelected() and self._extender.BYPASSSED_STR == status:
+            return True
+        elif self._extender.showIsEnforced.isSelected() and self._extender.IS_ENFORCED_STR == status:
+            return True
+        elif self._extender.showEnforced.isSelected() and self._extender.ENFORCED_STR == status:
+            return True
+        
+        return False
+
     def changeSelection(self, row, col, toggle, extend):
         logEntry = self._extender._log.get(self._extender.logTable.convertRowIndexToModel(row))
         
@@ -392,7 +292,7 @@ class Table(JTable):
         current_request_response = logEntry._originalrequestResponse
         
         if col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
-            user_index = (col - 6) // 2
+            user_index = (col - 6) >> 1
             user_ids = sorted(self._extender.userTab.user_tabs.keys())
             if user_index < len(user_ids):
                 user_id = user_ids[user_index]
@@ -444,6 +344,83 @@ class Table(JTable):
             self._extender.modified_requests_tabs.setTitleAt(0, "{} Modified Request".format(user_name))
             self._extender.modified_requests_tabs.setTitleAt(1, "{} Modified Response".format(user_name))
 
+class TableExtension:
+    def prepareRenderer(self, renderer, row, col):
+        comp = JTable.prepareRenderer(self, renderer, row, col)
+
+        if col < 5:
+            comp.setForeground(ColorConstants.BLACK)
+            comp.setBackground(ColorConstants.WHITE)
+            
+            selected_rows = self._extender.logTable.getSelectedRows()
+            if row in selected_rows:
+                comp.setBackground(ColorConstants.SELECTED_BG)
+                comp.setForeground(ColorConstants.BLACK)
+            
+            return comp
+
+        model_row = self._extender.logTable.convertRowIndexToModel(row)
+        value = self._extender.tableModel.getValueAt(model_row, col)
+
+        comp.setForeground(ColorConstants.BLACK)
+        comp.setBackground(ColorConstants.WHITE)
+        should_mask = False
+        
+        if col == 5:
+            should_mask = not self.shouldShowStatus(value)
+        elif col >= 6:
+            if col & 1:  # Odd columns are status
+                should_mask = not self.shouldShowStatus(value)
+            else:  # Even columns are length
+                status_col = col + 1
+                if status_col < self._extender.tableModel.getColumnCount():
+                    status_value = self._extender.tableModel.getValueAt(model_row, status_col)
+                    should_mask = not self.shouldShowStatus(status_value)
+
+        if should_mask:
+            comp.setText("")
+            comp.setBackground(ColorConstants.WHITE)
+            comp.setForeground(ColorConstants.WHITE)
+        else:
+            if col & 1 or col == 5:  # Status columns
+                if value == self._extender.BYPASSSED_STR:
+                    comp.setBackground(ColorConstants.BYPASSED_BG)
+                elif value == self._extender.IS_ENFORCED_STR:
+                    comp.setBackground(ColorConstants.IS_ENFORCED_BG)
+                elif value == self._extender.ENFORCED_STR:
+                    comp.setBackground(ColorConstants.ENFORCED_BG)
+                elif value == "Disabled":
+                    comp.setBackground(ColorConstants.DISABLED_BG)
+                
+                comp.setForeground(ColorConstants.BLACK)
+
+        selected_rows = self._extender.logTable.getSelectedRows()
+        if row in selected_rows and (not should_mask or col < 5):
+            comp.setBackground(ColorConstants.SELECTED_BG)
+            comp.setForeground(ColorConstants.BLACK)
+
+        return comp
+    
+    def shouldShowStatus(self, status):
+        if not hasattr(self._extender, 'showBypassed'):
+            return True
+        
+        if (self._extender.showBypassed.isSelected() and
+            self._extender.showIsEnforced.isSelected() and
+            self._extender.showEnforced.isSelected()):
+            return True
+        
+        if status == "Disabled":
+            return True
+        elif self._extender.showBypassed.isSelected() and self._extender.BYPASSSED_STR == status:
+            return True
+        elif self._extender.showIsEnforced.isSelected() and self._extender.IS_ENFORCED_STR == status:
+            return True
+        elif self._extender.showEnforced.isSelected() and self._extender.ENFORCED_STR == status:
+            return True
+        
+        return False
+    
 class LogEntry:
     def __init__(self, id, method, url, originalrequestResponse, unauthorizedRequestResponse=None, enforcementStatusUnauthorized="Disabled"):
         self._id = id
@@ -483,20 +460,45 @@ class TableRowFilter(RowFilter):
         self._extender = extender
 
     def include(self, entry):
-        modif_status = entry.getValue(7) if entry.getValueCount() > 7 else ""
+        if (hasattr(self._extender, 'showBypassed') and
+            self._extender.showBypassed.isSelected() and
+            self._extender.showIsEnforced.isSelected() and
+            self._extender.showEnforced.isSelected()):
+            return True
+       
         unauth_status = entry.getValue(5) if entry.getValueCount() > 5 else ""
         
-        if (self._extender.showAuthBypassModified.isSelected() and self._extender.BYPASSSED_STR == modif_status) or \
-           (self._extender.showAuthPotentiallyEnforcedModified.isSelected() and self._extender.IS_ENFORCED_STR == modif_status) or \
-           (self._extender.showAuthEnforcedModified.isSelected() and self._extender.ENFORCED_STR == modif_status) or \
-           (self._extender.showAuthBypassUnauthenticated.isSelected() and self._extender.BYPASSSED_STR == unauth_status) or \
-           (self._extender.showAuthPotentiallyEnforcedUnauthenticated.isSelected() and self._extender.IS_ENFORCED_STR == unauth_status) or \
-           (self._extender.showAuthEnforcedUnauthenticated.isSelected() and self._extender.ENFORCED_STR == unauth_status) or \
-           (self._extender.showDisabledUnauthenticated.isSelected() and "Disabled" == unauth_status):
+        if self.statusMatchesFilter(unauth_status):
+            return True
+        
+        if hasattr(self._extender, 'userTab') and self._extender.userTab:
+            user_count = len(self._extender.userTab.user_tabs)
+            
+            for i in range(user_count):
+                status_col = 7 + (i << 1)
+                
+                if status_col < entry.getValueCount():
+                    user_status = entry.getValue(status_col)
+                    if self.statusMatchesFilter(user_status):
+                        return True
+        
+        return False
+    
+    def statusMatchesFilter(self, status):
+        if not hasattr(self._extender, 'showBypassed'):
+            return True
+            
+        if self._extender.showBypassed.isSelected() and self._extender.BYPASSSED_STR == status:
+            return True
+        elif self._extender.showIsEnforced.isSelected() and self._extender.IS_ENFORCED_STR == status:
+            return True
+        elif self._extender.showEnforced.isSelected() and self._extender.ENFORCED_STR == status:
+            return True
+        elif status == "Disabled":
             return True
         
         return False
-
+    
 class UpdateTableEDT(Runnable):
     def __init__(self,extender,action,firstRow,lastRow):
         self._extender=extender
@@ -513,4 +515,3 @@ class UpdateTableEDT(Runnable):
             self._extender.tableModel.fireTableRowsDeleted(self._firstRow, self._lastRow)
         else:
             print("Invalid action in UpdateTableEDT")
-
