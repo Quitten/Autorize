@@ -251,7 +251,6 @@ class Export():
         if enforcementStatusFilter == "All Statuses":
             should_include = True
         elif enforcementStatusFilter == "As table filter":
-            # Check if the new filter system allows this status
             if hasattr(self._extender, 'showBypassed') and hasattr(self._extender, 'showIsEnforced') and hasattr(self._extender, 'showEnforced'):
                 # Check unauthenticated status
                 unauth_status = logEntry._enfocementStatusUnauthorized
@@ -294,8 +293,7 @@ class Export():
             fileToSave = fileChooser.getSelectedFile()
 
         enforcementStatusFilter = self.exportES.getSelectedItem()
-        
-        # Build header with user columns
+
         header_html = "<thead><tr><th width=\"3%\">ID</th><th width=\"5%\">Method</th><th width=\"30%\">URL</th><th width=\"7%\">Original length</th><th width=\"7%\">Unauth length</th><th width=\"10%\">Unauth Status</th>"
         
         if hasattr(self._extender, 'userTab') and self._extender.userTab:
@@ -305,7 +303,6 @@ class Export():
         
         header_html += "</tr></thead>"
         
-        # Use original HTML styling from document 2
         htmlContent = """<html><title>Autorize Report by Barak Tawily</title>
         <style>
         .datagrid table { border-collapse: collapse; text-align: left; width: 100%; }
