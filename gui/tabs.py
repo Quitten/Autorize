@@ -52,16 +52,8 @@ class Tabs():
         """
 
         self._extender.logTable = Table(self._extender)
-
-        tableWidth = self._extender.logTable.getPreferredSize().width
-        self._extender.logTable.getColumn("ID").setPreferredWidth(Math.round(tableWidth / 50 * 2))
-        self._extender.logTable.getColumn("Method").setPreferredWidth(Math.round(tableWidth / 50 * 3))
-        self._extender.logTable.getColumn("URL").setPreferredWidth(Math.round(tableWidth / 50 * 25))
-        self._extender.logTable.getColumn("Orig. Len").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self._extender.logTable.getColumn("Modif. Len").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self._extender.logTable.getColumn("Unauth. Len").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self._extender.logTable.getColumn("Authz. Status").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self._extender.logTable.getColumn("Unauth. Status").setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        
+        self.setupDynamicColumns()
 
         self._extender.tableSorter = TableRowSorter(self._extender.tableModel)
         rowFilter = TableRowFilter(self._extender)
@@ -132,6 +124,7 @@ class Tabs():
         message_editor = MessageEditor(self._extender)
 
         self._extender.tabs = JTabbedPane()
+        
         self._extender._requestViewer = self._extender._callbacks.createMessageEditor(message_editor, False)
         self._extender._responseViewer = self._extender._callbacks.createMessageEditor(message_editor, False)
 
@@ -147,7 +140,7 @@ class Tabs():
         self._extender.original_requests_tabs.addTab("Original Response", self._extender._originalresponseViewer.getComponent())
         self._extender.original_requests_tabs.addTab("Expand", None)
         self._extender.original_requests_tabs.setSelectedIndex(0)
-
+        
         self._extender.unauthenticated_requests_tabs = JTabbedPane()
         self._extender.unauthenticated_requests_tabs.addMouseListener(Mouseclick(self._extender))
         self._extender.unauthenticated_requests_tabs.addTab("Unauthenticated Request", self._extender._unauthorizedrequestViewer.getComponent())
@@ -174,6 +167,18 @@ class Tabs():
         self._extender.tabs.setMinimumSize(Dimension(1,1))
         self._extender._splitpane.setRightComponent(self._extender.tabs)
 
+        self._extender.tabs.addTab("User", self._extender.userPanel)
+
+    def setupDynamicColumns(self):
+        if hasattr(self._extender, 'tableModel'):
+            self._extender.tableModel.fireTableStructureChanged()
+        if hasattr(self._extender, 'logTable'):
+            self._extender.logTable.updateColumnWidths()
+
+    def refreshTable(self):
+        if hasattr(self._extender, 'tableModel'):
+            self._extender.tableModel.fireTableStructureChanged()
+            self.setupDynamicColumns()
 
 class SendRequestRepeater(ActionListener):
     def __init__(self, extender, callbacks, original):
@@ -228,7 +233,6 @@ class DeleteSelectedRequest(AbstractAction):
         self._extender = extender
 
     def actionPerformed(self, e):
-        # Its ready to delete multiple rows at a time once we can figure out how to select multiple row.
         rows = self._extender.logTable.getSelectedRows()
         if len(rows) != 0:
             rows = [self._extender.logTable.convertRowIndexToModel(row) for row in rows]
@@ -256,13 +260,21 @@ class MessageEditor(IMessageEditorController):
         self._extender = extender
 
     def getHttpService(self):
-        return self._extender._currentlyDisplayedItem.getHttpService()
+        return self._extender._currentlyDisplayedItem._originalrequestResponse.getHttpService()
 
     def getRequest(self):
-        return self._extender._currentlyDisplayedItem.getRequest()
+        if hasattr(self._extender, '_currentUserSelection'):
+            user_data = self._extender._currentlyDisplayedItem.get_user_enforcement(self._extender._currentUserSelection)
+            if user_data and user_data['requestResponse']:
+                return user_data['requestResponse'].getRequest()
+        return self._extender._currentlyDisplayedItem._originalrequestResponse.getRequest()
 
     def getResponse(self):
-        return self._extender._currentlyDisplayedItem.getResponse()
+        if hasattr(self._extender, '_currentUserSelection'):
+            user_data = self._extender._currentlyDisplayedItem.get_user_enforcement(self._extender._currentUserSelection)
+            if user_data and user_data['requestResponse']:
+                return user_data['requestResponse'].getResponse()
+        return self._extender._currentlyDisplayedItem._originalrequestResponse.getResponse()
 
 class Mouseclick(MouseAdapter):
     def __init__(self, extender):
