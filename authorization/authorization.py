@@ -198,11 +198,7 @@ def handle_message(self, toolFlag, messageIsRequest, messageInfo):
                         # checkAuthorization(self, messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
                         checkAuthorizationAllUsers(self, messageInfo, self.doUnauthorizedRequest.isSelected())
 
-def checkAuthorizationAllUsers(self, messageInfo, checkUnauthorized=True):
-    # if not hasattr(self, 'userTab') or not self.userTab or len(self.userTab.user_tabs) == 0:
-    #     checkAuthorization(self, messageInfo, self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(), checkUnauthorized)
-    #     return
-    
+def checkAuthorizationAllUsers(self, messageInfo, checkUnauthorized=True):    
     originalHeaders = self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders()
     
     requestResponseUnauthorized = None
@@ -365,10 +361,7 @@ def send_request_to_autorize(self, messageInfo):
         newHttpRequestResponse = IHttpRequestResponseImplementation(httpService,request,response)
         newHttpRequestResponsePersisted = self._callbacks.saveBuffersToTempFiles(newHttpRequestResponse)
         
-        if hasattr(self, 'userTab') and self.userTab and len(self.userTab.user_tabs) > 0:
-            checkAuthorizationAllUsers(self, newHttpRequestResponsePersisted, self.doUnauthorizedRequest.isSelected())
-        else:
-            checkAuthorization(self, newHttpRequestResponsePersisted, self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(), self.doUnauthorizedRequest.isSelected())
+        checkAuthorizationAllUsers(self, newHttpRequestResponsePersisted, self.doUnauthorizedRequest.isSelected())
 
 def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andOrEnforcement):
     response = requestResponse.getResponse()
