@@ -19,7 +19,7 @@ class Initiator():
         self._extender = extender
     
     def init_constants(self):
-        self.contributors = ["Federico Dotta", "mgeeky", "Marcin Woloszyn", "jpginc", "Eric Harris", "Joao Teles"]
+        self.contributors = ["Federico Dotta", "mgeeky", "Marcin Woloszyn", "jpginc", "Eric Harris", "Joao Teles", "Roy Oswaldha"]
         self._extender.version = 1.8
         self._extender._log = ArrayList()
         self._extender._lock = Lock()
