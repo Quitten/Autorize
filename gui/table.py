@@ -335,10 +335,33 @@ class Table(JTable):
             collapse(self._extender, self._extender.original_requests_tabs)
             collapse(self._extender, self._extender.modified_requests_tabs)
             expand(self._extender, self._extender.unauthenticated_requests_tabs)
+        
+        self.updateContextMenuText(col)
 
         JTable.changeSelection(self, row, col, toggle, extend)
         return
-    
+
+    def updateContextMenuText(self, col):
+        modified_text = "Send Modified Request to Repeater"
+        comparer_text = "Send Responses to Comparer"
+        
+        if col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
+            user_index = (col - 6) // 2
+            user_ids = sorted(self._extender.userTab.user_tabs.keys())
+            if user_index < len(user_ids):
+                user_id = user_ids[user_index]
+                user_name = self._extender.userTab.user_tabs[user_id]['user_name']
+                modified_text = "Send {} Request to Repeater".format(user_name)
+                comparer_text = "Send {} Responses to Comparer".format(user_name)
+        elif col == 4 or col == 5:
+            modified_text = "Send Unauthenticated Request to Repeater"
+            comparer_text = "Send Unauthenticated Responses to Comparer"
+        
+        if hasattr(self._extender, 'sendRequestMenu2'):
+            self._extender.sendRequestMenu2.setText(modified_text)
+        if hasattr(self._extender, 'sendResponseMenu'):
+            self._extender.sendResponseMenu.setText(comparer_text)
+
     def updateTabTitles(self, user_name):
         if hasattr(self._extender, 'modified_requests_tabs'):
             self._extender.modified_requests_tabs.setTitleAt(0, "{} Modified Request".format(user_name))

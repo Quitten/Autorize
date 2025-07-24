@@ -146,6 +146,11 @@ class SaveRestore():
             
             self._extender._log.clear()
             self._extender.tableModel.fireTableDataChanged()
+            
+            if hasattr(self._extender, 'EDModelUnauth'):
+                self._extender.EDModelUnauth.clear()
+            if hasattr(self._extender, 'IFModel'):
+                self._extender.IFModel.clear()
 
             with open(importFile.getAbsolutePath(), 'r') as csvfile:
 
