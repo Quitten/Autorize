@@ -293,11 +293,14 @@ class SendRequestToRepeaterAction(AbstractAction):
         self._callbacks = callbacks
 
     def actionPerformed(self, e):
+        # Get the selected row of the JTable
         row = self._extender.logTable.getSelectedRow()
 
+        # Get the LogEntry object for the selected row
         rowModelIndex = self._extender.logTable.convertRowIndexToModel(row)
         entry = self._extender.tableModel.getValueAt(rowModelIndex, 0)
 
+        # Get the modified request
         request = self._extender._currentlyDisplayedItem._requestResponse
         host = request.getHttpService().getHost()
         port = request.getHttpService().getPort()

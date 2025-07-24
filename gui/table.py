@@ -258,7 +258,7 @@ class Table(JTable):
                 comp.setForeground(ColorConstants.BLACK)
 
         selected_rows = self._extender.logTable.getSelectedRows()
-        
+
         if row in selected_rows and not should_mask:
             comp.setBackground(ColorConstants.SELECTED_BG)
             comp.setForeground(ColorConstants.BLACK)
@@ -422,7 +422,7 @@ class TableExtension:
         return False
     
 class LogEntry:
-    def __init__(self, id, method, url, originalrequestResponse, unauthorizedRequestResponse=None, enforcementStatusUnauthorized="Disabled"):
+    def __init__(self, id, method, url, originalrequestResponse, unauthorizedRequestResponse, enforcementStatusUnauthorized):
         self._id = id
         self._method = method
         self._url = url
