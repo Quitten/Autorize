@@ -16,6 +16,8 @@ from javax.swing import SwingUtilities
 from java.net import URL
 import re
 
+from thread import start_new_thread
+
 def tool_needs_to_be_ignored(self, toolFlag):
     for i in range(0, self.IFList.getModel().getSize()):
         if self.IFList.getModel().getElementAt(i).split(":")[0] == "Ignore spider requests":
@@ -485,6 +487,4 @@ def retestAllRequests(self):
     self.logTable.setAutoCreateRowSorter(True)
     for i in range(self.tableModel.getRowCount()):
         logEntry = self._log.get(self.logTable.convertRowIndexToModel(i))
-        logEntry._userEnforcements.clear()
-        handle_message(self, "AUTORIZE", False, logEntry._originalrequestResponse)
-
+        start_new_thread(handle_message, (self, "AUTORIZE", False, logEntry._originalrequestResponse))
