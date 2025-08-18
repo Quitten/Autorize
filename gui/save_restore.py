@@ -27,6 +27,7 @@ class SaveRestore():
         self._extender = extender
         self._checkBoxes = [
             "autoScroll",
+            "displayResponseFirst",
             "ignore304",
             "prevent304",
             "interceptRequestsfromRepeater",

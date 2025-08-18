@@ -37,6 +37,9 @@ class ConfigurationTab():
         self._extender.autoScroll = JCheckBox("Auto scroll")
         self._extender.autoScroll.setBounds(145, 80, 130, 30)
 
+        self._extender.displayResponseFirst = JCheckBox("Display Response first",actionPerformed=self.displayResponseFirstHanlder)
+        self._extender.displayResponseFirst.setBounds(145, 80, 130, 30)
+
         self._extender.ignore304 = JCheckBox("Ignore 304/204 status code responses")
         self._extender.ignore304.setBounds(280, 5, 300, 30)
         self._extender.ignore304.setSelected(True)
@@ -194,6 +197,12 @@ class ConfigurationTab():
                             GroupLayout.PREFERRED_SIZE,
                         )
                         .addComponent(
+                            self._extender.displayResponseFirst,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                        .addComponent(
                             self._extender.replaceQueryParam,
                             GroupLayout.PREFERRED_SIZE,
                             GroupLayout.PREFERRED_SIZE,
@@ -265,6 +274,12 @@ class ConfigurationTab():
                     )
                     .addComponent(
                             self._extender.autoScroll,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                            GroupLayout.PREFERRED_SIZE,
+                        )
+                    .addComponent(
+                            self._extender.displayResponseFirst,
                             GroupLayout.PREFERRED_SIZE,
                             GroupLayout.PREFERRED_SIZE,
                             GroupLayout.PREFERRED_SIZE,
@@ -345,6 +360,16 @@ class ConfigurationTab():
             self._extender.replaceString.setText("paramName=paramValue")
         else:
             self._extender.replaceString.setText(self.DEFUALT_REPLACE_TEXT)
+
+    def displayResponseFirstHanlder(self, event):
+        if self._extender.displayResponseFirst.isSelected():
+            self._extender.original_requests_tabs.setSelectedIndex(1)
+            self._extender.unauthenticated_requests_tabs.setSelectedIndex(1)
+            self._extender.modified_requests_tabs.setSelectedIndex(1)
+        else:
+            self._extender.original_requests_tabs.setSelectedIndex(0)
+            self._extender.unauthenticated_requests_tabs.setSelectedIndex(0)
+            self._extender.modified_requests_tabs.setSelectedIndex(0)
 
     def saveHeaders(self, event):
         savedHeadersTitle = JOptionPane.showInputDialog("Please provide saved headers title:")
