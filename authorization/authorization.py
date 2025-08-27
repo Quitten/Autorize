@@ -186,6 +186,8 @@ def handle_message(self, toolFlag, messageIsRequest, messageInfo):
         handle_304_status_code_prevention(self, messageIsRequest, messageInfo)
 
         if not messageIsRequest:
+            # Allow internal Retest/Repeater-triggered flows (toolFlag == "AUTORIZE")
+            # to bypass the self-origin guard, while still guarding normal Proxy/Repeater traffic.
             if toolFlag == "AUTORIZE" or message_not_from_autorize(self, messageInfo):
                 if self.ignore304.isSelected():
                     if isStatusCodesReturned(self, messageInfo, ["304", "204"]):
