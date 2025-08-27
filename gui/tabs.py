@@ -24,7 +24,7 @@ from authorization.authorization import handle_message, retestAllRequests
 
 from thread import start_new_thread
 
-from table import Table, TableRowFilter
+from table import Table, TableRowFilter, ShiftEditorPopupListener
 from helpers.filters import expand, collapse
 from javax.swing import KeyStroke
 from javax.swing import JTable
@@ -32,6 +32,7 @@ from javax.swing import AbstractAction
 from java.awt.event import KeyEvent
 from java.awt.event import InputEvent
 from javax.swing import SwingUtilities
+from javax.swing.event import PopupMenuListener, PopupMenuEvent
 
 class ITabImpl(ITab):
     def __init__(self, extender):
@@ -84,27 +85,19 @@ class Tabs():
         sendRequestMenu2 = JMenuItem("Send Modified Request to Repeater")
         sendRequestMenu2.addActionListener(SendRequestRepeater(self._extender, self._extender._callbacks, False))
 
-        # Define the key combination for the shortcut
         try:
-            # The keystroke combo is: Mac -> Command + r  /  Windows control + r
-            # This is used to send to the repeater function in burp
             controlR = KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx())
         except:
             controlR = KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK)
 
-        # The keystroke combo is: Mac -> Command + c  /  Windows control + c
-        # This is used to copy the URL to the keyboard.
         controlC = KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.META_DOWN_MASK)
 
-        # Get the input and action maps for the JTable
         inputMap = self._extender.logTable.getInputMap(JTable.WHEN_FOCUSED)
         actionMap = self._extender.logTable.getActionMap()
 
-        # Bind the key combination to the action
         inputMap.put(controlR, "SendRequestToRepeaterAction")
         actionMap.put("SendRequestToRepeaterAction", SendRequestToRepeaterAction(self._extender, self._extender._callbacks))
 
-        # Bind the key combination to the action
         inputMap.put(controlC, "copyToClipBoard")
         actionMap.put("copyToClipBoard",
                       CopySelectedURLToClipBoard(self._extender, self._extender._callbacks))
@@ -128,7 +121,11 @@ class Tabs():
         self._extender.menu.add(copyURLitem)
         self._extender.menu.add(retestSelecteditem)
         self._extender.menu.add(retestAllitem)
-        self._extender.menu.add(deleteSelectedItem) # disabling this feature until bug will be fixed.
+        self._extender.menu.add(deleteSelectedItem) 
+        try:
+            self._extender.menu.addPopupMenuListener(AutorizePopupContextListener(self._extender))
+        except Exception:
+            pass
         message_editor = MessageEditor(self._extender)
 
         self._extender.tabs = JTabbedPane()
@@ -139,7 +136,32 @@ class Tabs():
         self._extender._originalresponseViewer = self._extender._callbacks.createMessageEditor(message_editor, False)
 
         self._extender._unauthorizedrequestViewer = self._extender._callbacks.createMessageEditor(message_editor, False)
-        self._extender._unauthorizedresponseViewer = self._extender._callbacks.createMessageEditor(message_editor, False)        
+        self._extender._unauthorizedresponseViewer = self._extender._callbacks.createMessageEditor(message_editor, False)
+
+        try:
+            def _attach_fallback_listener(comp):
+                try:
+                    comp.addMouseListener(ShiftEditorPopupListener(self._extender))
+                    if hasattr(comp, 'getComponentCount') and hasattr(comp, 'getComponent'):
+                        try:
+                            cnt = comp.getComponentCount()
+                        except Exception:
+                            cnt = 0
+                        for i in range(0, cnt):
+                            try:
+                                _attach_fallback_listener(comp.getComponent(i))
+                            except Exception:
+                                pass
+                except Exception:
+                    pass
+            _attach_fallback_listener(self._extender._requestViewer.getComponent())
+            _attach_fallback_listener(self._extender._responseViewer.getComponent())
+            _attach_fallback_listener(self._extender._originalrequestViewer.getComponent())
+            _attach_fallback_listener(self._extender._originalresponseViewer.getComponent())
+            _attach_fallback_listener(self._extender._unauthorizedrequestViewer.getComponent())
+            _attach_fallback_listener(self._extender._unauthorizedresponseViewer.getComponent())
+        except Exception:
+            pass
 
         self._extender.original_requests_tabs = JTabbedPane()
         self._extender.original_requests_tabs.addMouseListener(Mouseclick(self._extender))
@@ -182,9 +204,13 @@ class SendRequestRepeater(ActionListener):
         self.original = original
 
     def actionPerformed(self, e):
-        if self.original:
-                request = self._extender._currentlyDisplayedItem._originalrequestResponse
+        ctx = getattr(self._extender, '_contextRequestResponse', None)
+        if ctx is not None and not self.original:
+            request = ctx
         else:
+            if self.original:
+                request = self._extender._currentlyDisplayedItem._originalrequestResponse
+            else:
                 request = self._extender._currentlyDisplayedItem._requestResponse
         host = request.getHttpService().getHost()
         port = request.getHttpService().getPort()
@@ -199,10 +225,11 @@ class SendResponseComparer(ActionListener):
         self._callbacks = callbacks
 
     def actionPerformed(self, e):
+        ctx = getattr(self._extender, '_contextRequestResponse', None)
         originalResponse = self._extender._currentlyDisplayedItem._originalrequestResponse
-        modifiedResponse = self._extender._currentlyDisplayedItem._requestResponse
+        modifiedResponse = ctx if ctx is not None else self._extender._currentlyDisplayedItem._requestResponse
         unauthorizedResponse = self._extender._currentlyDisplayedItem._unauthorizedRequestResponse
-        
+
         self._callbacks.sendToComparer(originalResponse.getResponse())
         self._callbacks.sendToComparer(modifiedResponse.getResponse())
         self._callbacks.sendToComparer(unauthorizedResponse.getResponse())
@@ -228,7 +255,6 @@ class DeleteSelectedRequest(AbstractAction):
         self._extender = extender
 
     def actionPerformed(self, e):
-        # Its ready to delete multiple rows at a time once we can figure out how to select multiple row.
         rows = self._extender.logTable.getSelectedRows()
         if len(rows) != 0:
             rows = [self._extender.logTable.convertRowIndexToModel(row) for row in rows]
@@ -256,24 +282,142 @@ class MessageEditor(IMessageEditorController):
         self._extender = extender
 
     def getHttpService(self):
-        return self._extender._currentlyDisplayedItem.getHttpService()
+        try:
+            if getattr(self._extender, '_currentlyDisplayedItem', None) is None:
+                return None
+            return self._extender._currentlyDisplayedItem.getHttpService()
+        except Exception:
+            return None
 
     def getRequest(self):
-        return self._extender._currentlyDisplayedItem.getRequest()
+        try:
+            if getattr(self._extender, '_currentlyDisplayedItem', None) is None:
+                return self._extender._helpers.stringToBytes("") if hasattr(self._extender, '_helpers') else "".encode('utf-8')
+            return self._extender._currentlyDisplayedItem.getRequest()
+        except Exception:
+            try:
+                return self._extender._helpers.stringToBytes("") if hasattr(self._extender, '_helpers') else "".encode('utf-8')
+            except Exception:
+                return ""
 
     def getResponse(self):
-        return self._extender._currentlyDisplayedItem.getResponse()
+        try:
+            if getattr(self._extender, '_currentlyDisplayedItem', None) is None:
+                return self._extender._helpers.stringToBytes("") if hasattr(self._extender, '_helpers') else "".encode('utf-8')
+            return self._extender._currentlyDisplayedItem.getResponse()
+        except Exception:
+            try:
+                return self._extender._helpers.stringToBytes("") if hasattr(self._extender, '_helpers') else "".encode('utf-8')
+            except Exception:
+                return ""
 
 class Mouseclick(MouseAdapter):
     def __init__(self, extender):
         self._extender = extender
 
     def mouseReleased(self, evt):
-        if evt.getComponent().getSelectedIndex() == 2:
-            if self._extender.expanded_requests == 0:
-                expand(self._extender, evt.getComponent())
-            else:
-                collapse(self._extender, evt.getComponent())
+        comp = evt.getComponent()
+        try:
+            idx = comp.getSelectedIndex()
+            comp.putClientProperty("autorize-last-index", idx)
+        except Exception:
+            pass
+        try:
+            if comp.getSelectedIndex() == comp.getTabCount() - 1:
+                if self._extender.expanded_requests == 0:
+                    expand(self._extender, comp)
+                else:
+                    collapse(self._extender, comp)
+        except Exception:
+            try:
+                if comp.getSelectedIndex() == 2:
+                    if self._extender.expanded_requests == 0:
+                        expand(self._extender, comp)
+                    else:
+                        collapse(self._extender, comp)
+            except Exception:
+                pass
+        try:
+            if evt.getButton() == 3 or getattr(evt, 'button', None) == 3:
+                self._extender.menu.show(comp, evt.getX(), evt.getY())
+        except Exception:
+            pass
+
+class AutorizePopupContextListener(PopupMenuListener):
+    def __init__(self, extender):
+        self._extender = extender
+
+    def popupMenuWillBecomeVisible(self, e):
+        try:
+            menu = e.getSource()
+            invoker = menu.getInvoker()
+            ctx_rr = None
+            try:
+                pane = SwingUtilities.getAncestorOfClass(JTabbedPane, invoker)
+            except Exception:
+                pane = None
+            if pane is not None:
+                try:
+                    tab_rr_map = pane.getClientProperty("autorize-tab-rr-map")
+                    if isinstance(tab_rr_map, list) and len(tab_rr_map) > 0:
+                        idx_found = -1
+                        
+                        try:
+                            if invoker is pane:
+                                last_idx = pane.getClientProperty("autorize-last-index")
+                                if isinstance(last_idx, int) and 0 <= last_idx < (pane.getTabCount() - 1):
+                                    idx_found = last_idx
+                                else:
+                                    sel = pane.getSelectedIndex()
+                                    if isinstance(sel, int) and 0 <= sel < (pane.getTabCount() - 1):
+                                        idx_found = sel
+                            else:
+                                for i in range(0, pane.getTabCount()-1):
+                                    try:
+                                        comp_i = pane.getComponentAt(i)
+                                        if SwingUtilities.isDescendingFrom(invoker, comp_i):
+                                            idx_found = i
+                                            break
+                                    except Exception:
+                                        pass
+                        except Exception:
+                            pass
+                        if idx_found >= 0 and idx_found < len(tab_rr_map):
+                            ctx_rr = tab_rr_map[idx_found]
+                            try:
+                                pane.putClientProperty("autorize-last-index", idx_found)
+                            except Exception:
+                                pass
+                except Exception:
+                    pass
+                
+                if ctx_rr is None:
+                    try:
+                        current = getattr(self._extender, '_currentlyDisplayedItem', None)
+                        if current is not None:
+                            if pane is self._extender.original_requests_tabs:
+                                ctx_rr = current._originalrequestResponse
+                            elif pane is self._extender.unauthenticated_requests_tabs:
+                                ctx_rr = current._unauthorizedRequestResponse
+                    except Exception:
+                        pass
+            if ctx_rr is None:
+                try:
+                    ctx_rr = invoker.getClientProperty("autorize-rr")
+                except Exception:
+                    ctx_rr = None
+            try:
+                self._extender._contextRequestResponse = ctx_rr
+            except Exception:
+                pass
+        except Exception:
+            pass
+
+    def popupMenuWillBecomeInvisible(self, e):
+        pass
+
+    def popupMenuCanceled(self, e):
+        pass
 
 class SendRequestToRepeaterAction(AbstractAction):
     def __init__(self, extender, callbacks):
@@ -281,15 +425,16 @@ class SendRequestToRepeaterAction(AbstractAction):
         self._callbacks = callbacks
 
     def actionPerformed(self, e):
-        # Get the selected row of the JTable
         row = self._extender.logTable.getSelectedRow()
-
-        # Get the LogEntry object for the selected row
         rowModelIndex = self._extender.logTable.convertRowIndexToModel(row)
-        entry = self._extender.tableModel.getValueAt(rowModelIndex, 0)
-
-        # Get the modified request
-        request = self._extender._currentlyDisplayedItem._requestResponse
+        
+        try:
+            _ = self._extender.tableModel.getValueAt(rowModelIndex, 0)
+        except Exception:
+            pass
+        
+        ctx = getattr(self._extender, '_contextRequestResponse', None)
+        request = ctx if ctx is not None else self._extender._currentlyDisplayedItem._requestResponse
         host = request.getHttpService().getHost()
         port = request.getHttpService().getPort()
         proto = request.getHttpService().getProtocol()
@@ -303,7 +448,8 @@ class CopySelectedURLToClipBoard(AbstractAction):
         self._callbacks = callbacks
 
     def actionPerformed(self, e):
-        stringSelection = StringSelection(str(self._extender._helpers.analyzeRequest(
-            self._extender._currentlyDisplayedItem._requestResponse).getUrl()))
+        ctx = getattr(self._extender, '_contextRequestResponse', None)
+        rr = ctx if ctx is not None else self._extender._currentlyDisplayedItem._requestResponse
+        stringSelection = StringSelection(str(self._extender._helpers.analyzeRequest(rr).getUrl()))
         clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard()
         clpbrd.setContents(stringSelection, None)

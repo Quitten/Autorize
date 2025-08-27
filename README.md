@@ -48,8 +48,17 @@ For example, if there is a request enforcement status that is detected as "Autho
 The interception filter allows you configure what domains you want to be intercepted by Autorize plugin, you can determine by blacklist/whitelist/regex or items in Burp's scope in order to avoid unnecessary domains to be intercepted by Autorize and work more organized.
 
 Example of interception filters (Note that there is default filter to avoid scripts and images):
-![interception-filters](https://raw.githubusercontent.com/Quitten/Autorize/refs/heads/master/interception-filters.png)
+![alt tag](https://raw.githubusercontent.com/Quitten/Autorize/master/interceptionFilters.png)
 
 
 # Authors
 - Barak Tawily, CTO @ [enso.security](https://enso.security/) by day, [Application Security Researcher](https://quitten.github.io/) by night, former Application Security Consultant @ [AppSec Labs](https://appsec-labs.com/)
+
+## What's New
+
+Major changes
+- Multi-rule Modified execution with dynamic M1..N tabs and aggregated status/coloring in a single row.
+
+Added features
+- Per‑rule enable toggles and autosave of header/query text; Clear List resets viewers, tabs, and selection.
+- Query‑params mode per rule (multi‑line key=value) with clean separation from headers; “H”/“QP” badges in UI.
