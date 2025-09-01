@@ -53,3 +53,12 @@ Example of interception filters (Note that there is default filter to avoid scri
 
 # Authors
 - Barak Tawily, CTO @ [enso.security](https://enso.security/) by day, [Application Security Researcher](https://quitten.github.io/) by night, former Application Security Consultant @ [AppSec Labs](https://appsec-labs.com/)
+
+## What's New
+
+Major changes
+- Multi-rule Modified execution with dynamic M1..N tabs and aggregated status/coloring in a single row.
+
+Added features
+- Per‑rule enable toggles and autosave of header/query text; Clear List resets viewers, tabs, and selection.
+- Query‑params mode per rule (multi‑line key=value) with clean separation from headers; “H”/“QP” badges in UI.

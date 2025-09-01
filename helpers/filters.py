@@ -26,8 +26,21 @@ def modFilterHelper(listObj, typeObj, textObj):
                 listObj.getModel().remove(index)
 
 def expand(extender, comp):
-        comp.setSelectedIndex(0)
-        comp.setTitleAt(2, "Collapse")
+        try:
+                last_idx = comp.getClientProperty("autorize-last-index")
+        except Exception:
+                last_idx = 0
+        try:
+                if isinstance(last_idx, int) and 0 <= last_idx < (comp.getTabCount() - 1):
+                        comp.setSelectedIndex(last_idx)
+                else:
+                        comp.setSelectedIndex(0)
+        except Exception:
+                pass
+        try:
+                comp.setTitleAt(comp.getTabCount()-1, "Collapse")
+        except Exception:
+                pass
         extender.requests_panel.remove(extender.modified_requests_tabs)
         extender.requests_panel.remove(extender.original_requests_tabs)
         extender.requests_panel.remove(extender.unauthenticated_requests_tabs)
@@ -37,8 +50,10 @@ def expand(extender, comp):
         extender.expanded_requests = 1
 
 def collapse(extender, comp):
-        comp.setSelectedIndex(0)
-        comp.setTitleAt(2, "Expand")
+        try:
+                comp.setTitleAt(comp.getTabCount()-1, "Expand")
+        except Exception:
+                pass
         extender.requests_panel.setLayout(GridLayout(3,0))
         extender.requests_panel.add(extender.modified_requests_tabs)
         extender.requests_panel.add(extender.original_requests_tabs)

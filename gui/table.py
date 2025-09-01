@@ -12,12 +12,14 @@ from javax.swing import RowFilter
 from javax.swing import JCheckBox
 from javax.swing import GroupLayout
 from javax.swing import ListSelectionModel
+from javax.swing import JTabbedPane
 from java.awt.event import MouseAdapter
+from java.awt.event import ContainerAdapter
 from java.awt.event import ItemListener
 from javax.swing.table import AbstractTableModel
-from javax.swing.event import ListSelectionListener
 
 from helpers.filters import expand, collapse
+from burp import IMessageEditorController
 
 class TableFilter():
     def __init__(self, extender):
@@ -269,15 +271,6 @@ class TableModel(AbstractTableModel):
             return logEntry._enfocementStatusUnauthorized        
         return ""
 
-class TableSelectionListener(ListSelectionListener):
-    """Class Responsible for the multi-row deletion"""
-    def __init__(self, extender):
-        self._extender = extender
-
-    def valueChanged(self, e):
-        rows = [i for i in self._table.getSelectedRows()]
-        self._extender.tableModel.removeRows(rows)
-
 class Table(JTable):
     def __init__(self, extender):
         self._extender = extender
@@ -286,7 +279,6 @@ class Table(JTable):
         self.addMouseListener(Mouseclick(self._extender))
         self.getColumnModel().getColumn(0).setPreferredWidth(450)
         self.setRowSelectionAllowed(True)
-        # Enables multi-row selection
         self.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
 
     def prepareRenderer(self, renderer, row, col):
@@ -314,10 +306,156 @@ class Table(JTable):
         return comp
     
     def changeSelection(self, row, col, toggle, extend):
-        # show the log entry for the selected row
         logEntry = self._extender._log.get(self._extender.logTable.convertRowIndexToModel(row))
-        self._extender._requestViewer.setMessage(logEntry._requestResponse.getRequest(), True)
-        self._extender._responseViewer.setMessage(logEntry._requestResponse.getResponse(), False)
+        try:
+            self._extender._contextRequestResponse = None
+        except Exception:
+            pass
+
+        try:
+            tabs = self._extender.modified_requests_tabs
+            while tabs.getTabCount() > 0:
+                tabs.removeTabAt(0)
+
+            modified_list = getattr(logEntry, '_modified_list', []) or []
+            impressions = getattr(logEntry, '_modified_impressions', []) or []
+            titles = getattr(logEntry, '_modified_rule_titles', []) or []
+
+            if len(modified_list) > 0:
+                tab_rr_map = []
+                def _attach_popup_deep(comp, rr):
+                    try:
+                        try:
+                            comp.putClientProperty("autorize-rr", rr)
+                        except Exception:
+                            pass
+                        try:
+                            comp.addMouseListener(ShiftEditorPopupListener(self._extender))
+                        except Exception:
+                            pass
+                        try:
+                            if hasattr(comp, 'getComponentCount') and hasattr(comp, 'getComponent'):
+                                try:
+                                    count = comp.getComponentCount()
+                                except Exception:
+                                    count = 0
+                                for ci in range(0, count):
+                                    try:
+                                        child = comp.getComponent(ci)
+                                        _attach_popup_deep(child, rr)
+                                    except Exception:
+                                        pass
+                        except Exception:
+                            pass
+                    except Exception:
+                        pass
+
+                def _attach_container_listener_deep(comp, rr):
+                    try:
+                        class PopupPropagator(ContainerAdapter):
+                            def __init__(self, rr_local):
+                                self._rr_local = rr_local
+                            def componentAdded(self, e):
+                                try:
+                                    child = e.getChild()
+                                except Exception:
+                                    child = None
+                                if child is not None:
+                                    try:
+                                        _attach_popup_deep(child, self._rr_local)
+                                    except Exception:
+                                        pass
+                                    try:
+                                        _attach_container_listener_deep(child, self._rr_local)
+                                    except Exception:
+                                        pass
+                        
+                        if hasattr(comp, 'addContainerListener'):
+                            try:
+                                comp.addContainerListener(PopupPropagator(rr))
+                            except Exception:
+                                pass
+                        
+                        if hasattr(comp, 'getComponentCount') and hasattr(comp, 'getComponent'):
+                            try:
+                                cnt = comp.getComponentCount()
+                            except Exception:
+                                cnt = 0
+                            for ci in range(0, cnt):
+                                try:
+                                    ch = comp.getComponent(ci)
+                                    _attach_container_listener_deep(ch, rr)
+                                except Exception:
+                                    pass
+                    except Exception:
+                        pass
+                for i, rr in enumerate(modified_list):
+                    rule_name = titles[i] if i < len(titles) and titles[i] else "Rule {}".format(i+1)
+                    impression = impressions[i] if i < len(impressions) else ""
+                    
+                    try:
+                        controller = StaticMessageEditorController(rr)
+                    except Exception:
+                        controller = None
+                    req_editor = self._extender._callbacks.createMessageEditor(controller, True)
+                    res_editor = self._extender._callbacks.createMessageEditor(controller, True)
+                    try:
+                        req_editor.setMessage(rr.getRequest(), True)
+                        res_editor.setMessage(rr.getResponse(), False)
+                    except Exception:
+                        pass
+                    
+                    req_comp = req_editor.getComponent()
+                    res_comp = res_editor.getComponent()
+                    _attach_popup_deep(req_comp, rr)
+                    _attach_popup_deep(res_comp, rr)
+                    _attach_container_listener_deep(req_comp, rr)
+                    _attach_container_listener_deep(res_comp, rr)
+                    tabs.addTab("M{} {} Req".format(i+1, rule_name), req_comp)
+                    tabs.setToolTipTextAt(tabs.getTabCount()-1, "Modified {} Request".format(rule_name))
+                    tab_rr_map.append(rr)
+                    
+                    try:
+                        ridx = tabs.getTabCount()-1
+                        if impression == self._extender.BYPASSSED_STR:
+                            tabs.setBackgroundAt(ridx, Color(255, 153, 153))
+                        elif impression == self._extender.IS_ENFORCED_STR:
+                            tabs.setBackgroundAt(ridx, Color(255, 204, 153))
+                        elif impression == self._extender.ENFORCED_STR:
+                            tabs.setBackgroundAt(ridx, Color(204, 255, 153))
+                    except Exception:
+                        pass
+                    tabs.addTab("M{} {} Res".format(i+1, rule_name), res_comp)
+                    tabs.setToolTipTextAt(tabs.getTabCount()-1, "{} [{}]".format(rule_name, impression))
+                    tab_rr_map.append(rr)
+                    
+                    try:
+                        idx = tabs.getTabCount()-1
+                        if impression == self._extender.BYPASSSED_STR:
+                            tabs.setBackgroundAt(idx, Color(255, 153, 153))
+                        elif impression == self._extender.IS_ENFORCED_STR:
+                            tabs.setBackgroundAt(idx, Color(255, 204, 153))
+                        elif impression == self._extender.ENFORCED_STR:
+                            tabs.setBackgroundAt(idx, Color(204, 255, 153))
+                    except Exception:
+                        pass
+                try:
+                    tabs.putClientProperty("autorize-tab-rr-map", tab_rr_map)
+                    tabs.putClientProperty("autorize-last-index", 0)
+                except Exception:
+                    pass
+            else:
+                self._extender._requestViewer.setMessage(logEntry._requestResponse.getRequest(), True)
+                self._extender._responseViewer.setMessage(logEntry._requestResponse.getResponse(), False)
+                tabs.addTab("Modified Request", self._extender._requestViewer.getComponent())
+                tabs.addTab("Modified Response", self._extender._responseViewer.getComponent())
+
+            tabs.addTab("Expand", None)
+            tabs.setSelectedIndex(0)
+        except Exception:
+            self._extender._requestViewer.setMessage(logEntry._requestResponse.getRequest(), True)
+            self._extender._responseViewer.setMessage(logEntry._requestResponse.getResponse(), False)
+
         self._extender._originalrequestViewer.setMessage(logEntry._originalrequestResponse.getRequest(), True)
         self._extender._originalresponseViewer.setMessage(logEntry._originalrequestResponse.getResponse(), False)
 
@@ -350,6 +488,28 @@ class Table(JTable):
         JTable.changeSelection(self, row, col, toggle, extend)
         return
 
+class StaticMessageEditorController(IMessageEditorController):
+    def __init__(self, rr):
+        self._rr = rr
+
+    def getHttpService(self):
+        try:
+            return self._rr.getHttpService()
+        except Exception:
+            return None
+
+    def getRequest(self):
+        try:
+            return self._rr.getRequest()
+        except Exception:
+            return None
+
+    def getResponse(self):
+        try:
+            return self._rr.getResponse()
+        except Exception:
+            return None
+
 class LogEntry:
     def __init__(self, id, requestResponse, method, url, originalrequestResponse, enforcementStatus, unauthorizedRequestResponse, enforcementStatusUnauthorized):
         self._id = id
@@ -360,6 +520,9 @@ class LogEntry:
         self._enfocementStatus =  enforcementStatus
         self._unauthorizedRequestResponse = unauthorizedRequestResponse
         self._enfocementStatusUnauthorized =  enforcementStatusUnauthorized
+        self._modified_list = []
+        self._modified_impressions = []
+        self._modified_rule_titles = []
         return
 
 class Mouseclick(MouseAdapter):
@@ -369,6 +532,27 @@ class Mouseclick(MouseAdapter):
     def mouseReleased(self, evt):
         if evt.button == 3:
             self._extender.menu.show(evt.getComponent(), evt.getX(), evt.getY())
+
+class ShiftEditorPopupListener(MouseAdapter):
+    def __init__(self, extender):
+        self._extender = extender
+    def _maybe_show(self, evt):
+        try:
+            if not evt.isShiftDown():
+                return
+        except Exception:
+            return
+        try:
+            comp = evt.getComponent()
+            self._extender.menu.show(comp, evt.getX(), evt.getY())
+        except Exception:
+            pass
+    def mousePressed(self, evt):
+        if getattr(evt, 'button', None) == 3:
+            self._maybe_show(evt)
+    def mouseReleased(self, evt):
+        if hasattr(evt, 'isPopupTrigger') and evt.isPopupTrigger():
+            self._maybe_show(evt)
 
 class TableRowFilter(RowFilter):
     def __init__(self, extender):
@@ -400,12 +584,16 @@ class UpdateTableEDT(Runnable):
         self._lastRow=lastRow
 
     def run(self):
-        if self._action == "insert":
-            self._extender.tableModel.fireTableRowsInserted(self._firstRow, self._lastRow)
-        elif self._action == "update":
-            self._extender.tableModel.fireTableRowsUpdated(self._firstRow, self._lastRow)
-        elif self._action == "delete":
-            self._extender.tableModel.fireTableRowsDeleted(self._firstRow, self._lastRow)
-        else:
-            print("Invalid action in UpdateTableEDT")
+        try:
+            if self._action == "insert":
+                self._extender.tableModel.fireTableRowsInserted(self._firstRow, self._lastRow)
+            elif self._action == "update":
+                self._extender.tableModel.fireTableRowsUpdated(self._firstRow, self._lastRow)
+            elif self._action == "delete":
+                self._extender.tableModel.fireTableRowsDeleted(self._firstRow, self._lastRow)
+            else:
+                pass
+        except Exception as ex:
+            print("Table EDT error:", ex)
+
 
