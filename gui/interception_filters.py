@@ -4,7 +4,6 @@
 import sys
 sys.path.append("..")
 
-from java.awt import Color
 from javax.swing import JList
 from javax.swing import JLabel
 from javax.swing import JPanel
@@ -55,11 +54,12 @@ class InterceptionFilters():
        
         self._extender.IFModel = DefaultListModel()
         self._extender.IFList = JList(self._extender.IFModel)
+        self._extender.IFList.setPrototypeCellValue("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
         scrollIFList = JScrollPane(self._extender.IFList)
         scrollIFList.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
+        scrollIFList.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED)
         scrollIFList.setBounds(80, 175, 300, 110)
-        scrollIFList.setBorder(LineBorder(Color.BLACK))
 
         # Adding some default interception filters
         # self.IFModel.addElement("Scope items only: (Content is not required)") # commented for better first impression.
@@ -225,7 +225,7 @@ class InterceptionFilters():
                 )
             )
         )
-        
+    
 
 
 
