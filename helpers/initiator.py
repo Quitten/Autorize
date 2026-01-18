@@ -9,6 +9,7 @@ from gui.tabs import Tabs, ITabImpl
 from gui.table import TableFilter
 from gui.export import Export
 from gui.menu import MenuImpl
+from gui.user_tab import UserTab
 
 from java.util import ArrayList
 from threading import Lock
@@ -18,7 +19,7 @@ class Initiator():
         self._extender = extender
     
     def init_constants(self):
-        self.contributors = ["Federico Dotta", "mgeeky", "Marcin Woloszyn", "jpginc", "Eric Harris", "Joao Teles"]
+        self.contributors = ["Federico Dotta", "mgeeky", "Marcin Woloszyn", "jpginc", "Eric Harris", "Joao Teles", "Roy Oswaldha"]
         self._extender.version = 1.8
         self._extender._log = ArrayList()
         self._extender._lock = Lock()
@@ -53,6 +54,11 @@ class Initiator():
 
         cfg_tab = ConfigurationTab(self._extender)
         cfg_tab.draw()
+
+        user_tab = UserTab(self._extender)
+        user_tab.draw()
+
+        self._extender.userTab = user_tab
 
         tabs = Tabs(self._extender)
         tabs.draw()
