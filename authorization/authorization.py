@@ -15,8 +15,17 @@ from gui.table import LogEntry, UpdateTableEDT
 from javax.swing import SwingUtilities
 from java.net import URL
 import re
+from java.lang import Runnable
 
-from thread import start_new_thread
+class HandleMessageRunnable(Runnable):
+    def __init__(self, extender, toolFlag, messageIsRequest, messageInfo):
+        self.extender = extender
+        self.toolFlag = toolFlag
+        self.messageIsRequest = messageIsRequest
+        self.messageInfo = messageInfo
+
+    def run(self):
+        handle_message(self.extender, self.toolFlag, self.messageIsRequest, self.messageInfo)
 
 def tool_needs_to_be_ignored(self, toolFlag):
     for i in range(0, self.IFList.getModel().getSize()):
@@ -511,4 +520,4 @@ def retestAllRequests(self):
     self.logTable.setAutoCreateRowSorter(True)
     for i in range(self.tableModel.getRowCount()):
         logEntry = self._log.get(self.logTable.convertRowIndexToModel(i))
-        start_new_thread(handle_message, (self, "AUTORIZE", False, logEntry._originalrequestResponse))
+        self.executor.submit(HandleMessageRunnable(self, "AUTORIZE", False, logEntry._originalrequestResponse))

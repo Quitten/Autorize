@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
 
-from burp import IBurpExtender, IHttpListener, IProxyListener
+from burp import IBurpExtender, IHttpListener, IProxyListener, IExtensionStateListener
 from authorization.authorization import handle_message
 from helpers.initiator import Initiator
 from helpers.filters import handle_proxy_message
+from java.util.concurrent import Executors
 
-class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
+class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IExtensionStateListener):
 
     def registerExtenderCallbacks(self, callbacks):
         self._callbacks = callbacks
@@ -14,6 +15,9 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
         
         callbacks.setExtensionName("Autorize")
         
+        self.executor = Executors.newFixedThreadPool(10)
+        callbacks.registerExtensionStateListener(self)
+
         initiator = Initiator(self)
 
         initiator.init_constants()
@@ -39,4 +43,10 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener):
     #
     def processProxyMessage(self, messageIsRequest, message):
         handle_proxy_message(self,message)
-        
+
+    #
+    # implement IExtensionStateListener
+    #
+    def extensionUnloaded(self):
+        self.executor.shutdown()
+        print "Autorize extension unloaded."
