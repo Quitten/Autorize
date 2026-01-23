@@ -42,7 +42,7 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
             # line
             removeHeaders = [header for header in removeHeaders.split() if header.endswith(':')]
 
-            for header in headers[:]:
+            for header in headers[1:]:
                 for removeHeader in removeHeaders:
                     if header.lower().startswith(removeHeader.lower()):
                         headers.remove(header)
@@ -51,9 +51,11 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
             # simple string replace
             for k, v in self.badProgrammerMRModel.items():
                 if(v["type"] == "Headers (simple string):"):
-                    headers = map(lambda h: h.replace(v["match"], v["replace"]), headers)
-                if(v["type"] == "Headers (regex):") :
-                    headers = map(lambda h: re.sub(v["regexMatch"], v["replace"], h), headers)
+                    modifiedHeaders = map(lambda h: h.replace(v["match"], v["replace"]), headers[1:])
+                    headers = [headers[0]] + modifiedHeaders
+                if(v["type"] == "Headers (regex):"):
+                    modifiedHeaders = map(lambda h: re.sub(v["regexMatch"], v["replace"], h), headers[1:])
+                    headers = [headers[0]] + modifiedHeaders
 
             if not queryFlag:
                 # fix missing carriage return on *NIX systems
@@ -71,6 +73,19 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
         msgBody = self._helpers.bytesToString(msgBody)
         # simple string replace
         for k, v in self.badProgrammerMRModel.items():
+            uriPath = headers[0].split(" ")[1]
+            if(v["type"] == "Path (simple string):"):
+                matchUri = re.search(v["match"], uriPath, re.MULTILINE)
+                if matchUri:
+                    currentPath = matchUri.group()
+                    replacedPath = currentPath.replace(v["match"], v["replace"])
+                    headers[0] = headers[0].replace(currentPath, replacedPath)
+            if(v["type"] == "Path (regex):"):
+                matchUri = v["regexMatch"].search(uriPath, re.MULTILINE)
+                if matchUri:
+                    currentPath = matchUri.group()
+                    replacedPath = v["regexMatch"].sub(v["replace"], currentPath)
+                    headers[0] = headers[0].replace(currentPath, replacedPath)
             if(v["type"] == "Body (simple string):") :
                 msgBody = msgBody.replace(v["match"], v["replace"])
             if(v["type"] == "Body (regex):") :

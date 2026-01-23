@@ -52,16 +52,8 @@ class Tabs():
         """
 
         self._extender.logTable = Table(self._extender)
-
-        tableWidth = self._extender.logTable.getPreferredSize().width
-        self._extender.logTable.getColumn("ID").setPreferredWidth(Math.round(tableWidth / 50 * 2))
-        self._extender.logTable.getColumn("Method").setPreferredWidth(Math.round(tableWidth / 50 * 3))
-        self._extender.logTable.getColumn("URL").setPreferredWidth(Math.round(tableWidth / 50 * 25))
-        self._extender.logTable.getColumn("Orig. Len").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self._extender.logTable.getColumn("Modif. Len").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self._extender.logTable.getColumn("Unauth. Len").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self._extender.logTable.getColumn("Authz. Status").setPreferredWidth(Math.round(tableWidth / 50 * 4))
-        self._extender.logTable.getColumn("Unauth. Status").setPreferredWidth(Math.round(tableWidth / 50 * 4))
+        
+        self.setupDynamicColumns()
 
         self._extender.tableSorter = TableRowSorter(self._extender.tableModel)
         rowFilter = TableRowFilter(self._extender)
@@ -81,8 +73,8 @@ class Tabs():
         sendRequestMenu = JMenuItem("Send Original Request to Repeater")
         sendRequestMenu.addActionListener(SendRequestRepeater(self._extender, self._extender._callbacks, True))
 
-        sendRequestMenu2 = JMenuItem("Send Modified Request to Repeater")
-        sendRequestMenu2.addActionListener(SendRequestRepeater(self._extender, self._extender._callbacks, False))
+        self._extender.sendRequestMenu2 = JMenuItem("Send Modified Request to Repeater")
+        self._extender.sendRequestMenu2.addActionListener(SendRequestRepeater(self._extender, self._extender._callbacks, False))
 
         # Define the key combination for the shortcut
         try:
@@ -109,8 +101,8 @@ class Tabs():
         actionMap.put("copyToClipBoard",
                       CopySelectedURLToClipBoard(self._extender, self._extender._callbacks))
 
-        sendResponseMenu = JMenuItem("Send Responses to Comparer")
-        sendResponseMenu.addActionListener(SendResponseComparer(self._extender, self._extender._callbacks))
+        self._extender.sendResponseMenu = JMenuItem("Send Responses to Comparer")
+        self._extender.sendResponseMenu.addActionListener(SendResponseComparer(self._extender, self._extender._callbacks))
 
         retestSelecteditem = JMenuItem("Retest selected request")
         retestSelecteditem.addActionListener(RetestSelectedRequest(self._extender))
@@ -123,8 +115,8 @@ class Tabs():
 
         self._extender.menu = JPopupMenu("Popup")
         self._extender.menu.add(sendRequestMenu)
-        self._extender.menu.add(sendRequestMenu2)
-        self._extender.menu.add(sendResponseMenu)
+        self._extender.menu.add(self._extender.sendRequestMenu2)
+        self._extender.menu.add(self._extender.sendResponseMenu)
         self._extender.menu.add(copyURLitem)
         self._extender.menu.add(retestSelecteditem)
         self._extender.menu.add(retestAllitem)
@@ -132,6 +124,7 @@ class Tabs():
         message_editor = MessageEditor(self._extender)
 
         self._extender.tabs = JTabbedPane()
+        
         self._extender._requestViewer = self._extender._callbacks.createMessageEditor(message_editor, False)
         self._extender._responseViewer = self._extender._callbacks.createMessageEditor(message_editor, False)
 
@@ -147,7 +140,7 @@ class Tabs():
         self._extender.original_requests_tabs.addTab("Original Response", self._extender._originalresponseViewer.getComponent())
         self._extender.original_requests_tabs.addTab("Expand", None)
         self._extender.original_requests_tabs.setSelectedIndex(0)
-
+        
         self._extender.unauthenticated_requests_tabs = JTabbedPane()
         self._extender.unauthenticated_requests_tabs.addMouseListener(Mouseclick(self._extender))
         self._extender.unauthenticated_requests_tabs.addTab("Unauthenticated Request", self._extender._unauthorizedrequestViewer.getComponent())
@@ -174,6 +167,18 @@ class Tabs():
         self._extender.tabs.setMinimumSize(Dimension(1,1))
         self._extender._splitpane.setRightComponent(self._extender.tabs)
 
+        self._extender.tabs.addTab("User", self._extender.userPanel)
+
+    def setupDynamicColumns(self):
+        if hasattr(self._extender, 'tableModel'):
+            self._extender.tableModel.fireTableStructureChanged()
+        if hasattr(self._extender, 'logTable'):
+            self._extender.logTable.updateColumnWidths()
+
+    def refreshTable(self):
+        if hasattr(self._extender, 'tableModel'):
+            self._extender.tableModel.fireTableStructureChanged()
+            self.setupDynamicColumns()
 
 class SendRequestRepeater(ActionListener):
     def __init__(self, extender, callbacks, original):
@@ -199,13 +204,36 @@ class SendResponseComparer(ActionListener):
         self._callbacks = callbacks
 
     def actionPerformed(self, e):
+        if not hasattr(self._extender, '_currentlyDisplayedItem') or not self._extender._currentlyDisplayedItem:
+            return
+            
         originalResponse = self._extender._currentlyDisplayedItem._originalrequestResponse
-        modifiedResponse = self._extender._currentlyDisplayedItem._requestResponse
         unauthorizedResponse = self._extender._currentlyDisplayedItem._unauthorizedRequestResponse
         
+        selected_col = self._extender.logTable.getSelectedColumn()
+        
+        if selected_col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
+            user_index = (selected_col - 6) >> 1
+            user_ids = sorted(self._extender.userTab.user_tabs.keys())
+            if user_index < len(user_ids):
+                user_id = user_ids[user_index]
+                user_data = self._extender._currentlyDisplayedItem.get_user_enforcement(user_id)
+                if user_data and user_data['requestResponse']:
+                    modifiedResponse = user_data['requestResponse']
+                else:
+                    modifiedResponse = originalResponse
+            else:
+                modifiedResponse = originalResponse
+        elif selected_col == 4 or selected_col == 5:
+            modifiedResponse = unauthorizedResponse or originalResponse
+        else:
+            modifiedResponse = originalResponse
+        
         self._callbacks.sendToComparer(originalResponse.getResponse())
-        self._callbacks.sendToComparer(modifiedResponse.getResponse())
-        self._callbacks.sendToComparer(unauthorizedResponse.getResponse())
+        if modifiedResponse:
+            self._callbacks.sendToComparer(modifiedResponse.getResponse())
+        if unauthorizedResponse:
+            self._callbacks.sendToComparer(unauthorizedResponse.getResponse())
 
 
 class RetestSelectedRequest(ActionListener):
@@ -228,7 +256,6 @@ class DeleteSelectedRequest(AbstractAction):
         self._extender = extender
 
     def actionPerformed(self, e):
-        # Its ready to delete multiple rows at a time once we can figure out how to select multiple row.
         rows = self._extender.logTable.getSelectedRows()
         if len(rows) != 0:
             rows = [self._extender.logTable.convertRowIndexToModel(row) for row in rows]
@@ -239,9 +266,10 @@ class CopySelectedURL(ActionListener):
         self._extender = extender
 
     def actionPerformed(self, e):
-        stringSelection = StringSelection(str(self._extender._helpers.analyzeRequest(self._extender._currentlyDisplayedItem._requestResponse).getUrl()))
-        clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard()
-        clpbrd.setContents(stringSelection, None)
+        if hasattr(self._extender, '_currentlyDisplayedItem') and self._extender._currentlyDisplayedItem:
+            stringSelection = StringSelection(str(self._extender._helpers.analyzeRequest(self._extender._currentlyDisplayedItem._originalrequestResponse).getUrl()))
+            clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard()
+            clpbrd.setContents(stringSelection, None)
 
 class AutoScrollListener(AdjustmentListener):
     def __init__(self, extender):
@@ -256,13 +284,21 @@ class MessageEditor(IMessageEditorController):
         self._extender = extender
 
     def getHttpService(self):
-        return self._extender._currentlyDisplayedItem.getHttpService()
+        return self._extender._currentlyDisplayedItem._originalrequestResponse.getHttpService()
 
     def getRequest(self):
-        return self._extender._currentlyDisplayedItem.getRequest()
+        if hasattr(self._extender, '_currentUserSelection'):
+            user_data = self._extender._currentlyDisplayedItem.get_user_enforcement(self._extender._currentUserSelection)
+            if user_data and user_data['requestResponse']:
+                return user_data['requestResponse'].getRequest()
+        return self._extender._currentlyDisplayedItem._originalrequestResponse.getRequest()
 
     def getResponse(self):
-        return self._extender._currentlyDisplayedItem.getResponse()
+        if hasattr(self._extender, '_currentUserSelection'):
+            user_data = self._extender._currentlyDisplayedItem.get_user_enforcement(self._extender._currentUserSelection)
+            if user_data and user_data['requestResponse']:
+                return user_data['requestResponse'].getResponse()
+        return self._extender._currentlyDisplayedItem._originalrequestResponse.getResponse()
 
 class Mouseclick(MouseAdapter):
     def __init__(self, extender):
@@ -275,21 +311,75 @@ class Mouseclick(MouseAdapter):
             else:
                 collapse(self._extender, evt.getComponent())
 
+class SendRequestRepeater(ActionListener):
+    def __init__(self, extender, callbacks, original):
+        self._extender = extender
+        self._callbacks = callbacks
+        self.original = original
+
+    def actionPerformed(self, e):
+        if not hasattr(self._extender, '_currentlyDisplayedItem') or not self._extender._currentlyDisplayedItem:
+            return
+            
+        if self.original:
+            request = self._extender._currentlyDisplayedItem._originalrequestResponse
+        else:
+            selected_row = self._extender.logTable.getSelectedRow()
+            selected_col = self._extender.logTable.getSelectedColumn()
+            
+            if selected_col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
+                user_index = (selected_col - 6) >> 1
+                user_ids = sorted(self._extender.userTab.user_tabs.keys())
+                if user_index < len(user_ids):
+                    user_id = user_ids[user_index]
+                    user_data = self._extender._currentlyDisplayedItem.get_user_enforcement(user_id)
+                    if user_data and user_data['requestResponse']:
+                        request = user_data['requestResponse']
+                    else:
+                        request = self._extender._currentlyDisplayedItem._originalrequestResponse
+                else:
+                    request = self._extender._currentlyDisplayedItem._originalrequestResponse
+            elif selected_col == 4 or selected_col == 5:
+                request = self._extender._currentlyDisplayedItem._unauthorizedRequestResponse or self._extender._currentlyDisplayedItem._originalrequestResponse
+            else:
+                request = self._extender._currentlyDisplayedItem._originalrequestResponse
+                
+        host = request.getHttpService().getHost()
+        port = request.getHttpService().getPort()
+        proto = request.getHttpService().getProtocol()
+        secure = True if proto == "https" else False
+
+        self._callbacks.sendToRepeater(host, port, secure, request.getRequest(), "Autorize")
+
 class SendRequestToRepeaterAction(AbstractAction):
     def __init__(self, extender, callbacks):
         self._extender = extender
         self._callbacks = callbacks
 
     def actionPerformed(self, e):
-        # Get the selected row of the JTable
-        row = self._extender.logTable.getSelectedRow()
+        if not hasattr(self._extender, '_currentlyDisplayedItem') or not self._extender._currentlyDisplayedItem:
+            return
+            
+        selected_col = self._extender.logTable.getSelectedColumn()
+        
+        if selected_col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
+            user_index = (selected_col - 6) >> 1
+            user_ids = sorted(self._extender.userTab.user_tabs.keys())
+            if user_index < len(user_ids):
+                user_id = user_ids[user_index]
+                user_data = self._extender._currentlyDisplayedItem.get_user_enforcement(user_id)
+                if user_data and user_data['requestResponse']:
+                    request = user_data['requestResponse']
+                else:
+                    request = self._extender._currentlyDisplayedItem._originalrequestResponse
+            else:
+                request = self._extender._currentlyDisplayedItem._originalrequestResponse
+        elif selected_col == 4 or selected_col == 5:
+            # Unauthenticated column
+            request = self._extender._currentlyDisplayedItem._unauthorizedRequestResponse or self._extender._currentlyDisplayedItem._originalrequestResponse
+        else:
+            request = self._extender._currentlyDisplayedItem._originalrequestResponse
 
-        # Get the LogEntry object for the selected row
-        rowModelIndex = self._extender.logTable.convertRowIndexToModel(row)
-        entry = self._extender.tableModel.getValueAt(rowModelIndex, 0)
-
-        # Get the modified request
-        request = self._extender._currentlyDisplayedItem._requestResponse
         host = request.getHttpService().getHost()
         port = request.getHttpService().getPort()
         proto = request.getHttpService().getProtocol()
@@ -303,7 +393,7 @@ class CopySelectedURLToClipBoard(AbstractAction):
         self._callbacks = callbacks
 
     def actionPerformed(self, e):
-        stringSelection = StringSelection(str(self._extender._helpers.analyzeRequest(
-            self._extender._currentlyDisplayedItem._requestResponse).getUrl()))
-        clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard()
-        clpbrd.setContents(stringSelection, None)
+        if hasattr(self._extender, '_currentlyDisplayedItem') and self._extender._currentlyDisplayedItem:
+            stringSelection = StringSelection(str(self._extender._helpers.analyzeRequest(self._extender._currentlyDisplayedItem._originalrequestResponse).getUrl()))
+            clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard()
+            clpbrd.setContents(stringSelection, None)

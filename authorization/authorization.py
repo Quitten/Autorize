@@ -15,6 +15,17 @@ from gui.table import LogEntry, UpdateTableEDT
 from javax.swing import SwingUtilities
 from java.net import URL
 import re
+from java.lang import Runnable
+
+class HandleMessageRunnable(Runnable):
+    def __init__(self, extender, toolFlag, messageIsRequest, messageInfo):
+        self.extender = extender
+        self.toolFlag = toolFlag
+        self.messageIsRequest = messageIsRequest
+        self.messageInfo = messageInfo
+
+    def run(self):
+        handle_message(self.extender, self.toolFlag, self.messageIsRequest, self.messageInfo)
 
 def tool_needs_to_be_ignored(self, toolFlag):
     for i in range(0, self.IFList.getModel().getSize()):
@@ -40,7 +51,6 @@ def capture_last_authorization_header(self, messageInfo):
     if authorization:
         self.lastAuthorizationHeader = authorization
         self.fetchAuthorizationHeaderButton.setEnabled(True)
-
 
 def valid_tool(self, toolFlag):
     return (toolFlag == self._callbacks.TOOL_PROXY or
@@ -79,99 +89,123 @@ def message_passed_interception_filters(self, messageInfo):
     resBodyBytes = messageInfo.getResponse()[resInfo.getBodyOffset():]
     resStr = self._helpers.bytesToString(resBodyBytes)
 
-    message_passed_filters = True
     for i in range(0, self.IFList.getModel().getSize()):
         interceptionFilter = self.IFList.getModel().getElementAt(i)
-        interceptionFilterTitle = interceptionFilter.split(":")[0]
+        try:
+            interceptionFilterTitle, interceptionFilterContent = interceptionFilter.split(":", 1)
+            interceptionFilterContent = interceptionFilterContent[1:]
+        except Exception as e:
+            print(interceptionFilter)
+            print(e)
+            continue
+
         if interceptionFilterTitle == "Scope items only":
             currentURL = URL(urlString)
             if not self._callbacks.isInScope(currentURL):
-                message_passed_filters = False
+                return False
 
         if interceptionFilterTitle == "URL Contains (simple string)":
-            if interceptionFilter[30:] not in urlString:
-                message_passed_filters = False
+            if interceptionFilterContent not in urlString:
+                return False
 
         if interceptionFilterTitle == "URL Contains (regex)":
-            regex_string = interceptionFilter[22:]
+            regex_string = interceptionFilterContent
             if re.search(regex_string, urlString, re.IGNORECASE) is None:
-                message_passed_filters = False
+                return False
 
         if interceptionFilterTitle == "URL Not Contains (simple string)":
-            if interceptionFilter[34:] in urlString:
-                message_passed_filters = False
+            if interceptionFilterContent in urlString:
+                return False
 
         if interceptionFilterTitle == "URL Not Contains (regex)":
-            regex_string = interceptionFilter[26:]
+            regex_string = interceptionFilterContent
             if not re.search(regex_string, urlString, re.IGNORECASE) is None:
-                message_passed_filters = False
+                return False
 
         if interceptionFilterTitle == "Request Body contains (simple string)":
-            if interceptionFilter[40:] not in bodyStr:
-                message_passed_filters = False
+            if interceptionFilterContent not in bodyStr:
+                return False
 
         if interceptionFilterTitle == "Request Body contains (regex)":
-            regex_string = interceptionFilter[32:]
+            regex_string = interceptionFilterContent
             if re.search(regex_string, bodyStr, re.IGNORECASE) is None:
-                message_passed_filters = False
+                return False
 
         if interceptionFilterTitle == "Request Body NOT contains (simple string)":
-            if interceptionFilter[44:] in bodyStr:
-                message_passed_filters = False
+            if interceptionFilterContent in bodyStr:
+                return False
 
         if interceptionFilterTitle == "Request Body Not contains (regex)":
-            regex_string = interceptionFilter[36:]
+            regex_string = interceptionFilterContent
             if not re.search(regex_string, bodyStr, re.IGNORECASE) is None:
-                message_passed_filters = False
+                return False
 
         if interceptionFilterTitle == "Response Body contains (simple string)":
-            if interceptionFilter[41:] not in resStr:
-                message_passed_filters = False
+            if interceptionFilterContent not in resStr:
+                return False
 
         if interceptionFilterTitle == "Response Body contains (regex)":
-            regex_string = interceptionFilter[33:]
+            regex_string = interceptionFilterContent
             if re.search(regex_string, resStr, re.IGNORECASE) is None:
-                message_passed_filters = False
+                return False
 
         if interceptionFilterTitle == "Response Body NOT contains (simple string)":
-            if interceptionFilter[45:] in resStr:
-                message_passed_filters = False
+            if interceptionFilterContent in resStr:
+                return False
 
         if interceptionFilterTitle == "Response Body Not contains (regex)":
-            regex_string = interceptionFilter[37:]
+            regex_string = interceptionFilterContent
             if not re.search(regex_string, resStr, re.IGNORECASE) is None:
-                message_passed_filters = False
+                return False
 
-        if interceptionFilterTitle == "Header contains":
-            for header in list(resInfo.getHeaders()):
-                if interceptionFilter[17:] in header:
-                    message_passed_filters = False
+        if interceptionFilterTitle == "Request headers contain":
+            if not any([
+                interceptionFilterContent in h 
+                for h in reqInfo.getHeaders()
+            ]):
+                return False
 
-        if interceptionFilterTitle == "Header doesn't contain":
-            for header in list(resInfo.getHeaders()):
-                if not interceptionFilter[17:] in header:
-                    message_passed_filters = False
+        if interceptionFilterTitle == "Request headers don't contain":
+            if any([
+                interceptionFilterContent in h 
+                for h in reqInfo.getHeaders()
+            ]):
+                return False
+        
+        if interceptionFilterTitle == "Response headers contain":
+            if not any([
+                interceptionFilterContent in h 
+                for h in resInfo.getHeaders()
+            ]):
+                return False
+
+        if interceptionFilterTitle == "Response headers don't contain":
+            if any([
+                interceptionFilterContent in h 
+                for h in resInfo.getHeaders()
+            ]):
+                return False
 
         if interceptionFilterTitle == "Only HTTP methods (newline separated)":
-            filterMethods = interceptionFilter[39:].split("\n")
+            filterMethods = interceptionFilterContent.split("\n")
             filterMethods = [x.lower() for x in filterMethods]
             reqMethod = str(self._helpers.analyzeRequest(messageInfo).getMethod())
             if reqMethod.lower() not in filterMethods:
-                message_passed_filters = False
+                return False
 
         if interceptionFilterTitle == "Ignore HTTP methods (newline separated)":
-            filterMethods = interceptionFilter[41:].split("\n")
+            filterMethods = interceptionFilterContent.split("\n")
             filterMethods = [x.lower() for x in filterMethods]
             reqMethod = str(self._helpers.analyzeRequest(messageInfo).getMethod())
             if reqMethod.lower() in filterMethods:
-                message_passed_filters = False
+                return False
 
         if interceptionFilterTitle == "Ignore OPTIONS requests":
             reqMethod = str(self._helpers.analyzeRequest(messageInfo).getMethod())
             if reqMethod == "OPTIONS":
-                message_passed_filters = False
+                return False
 
-    return message_passed_filters
+    return True
 
 def handle_message(self, toolFlag, messageIsRequest, messageInfo):
     if tool_needs_to_be_ignored(self, toolFlag):
@@ -190,25 +224,179 @@ def handle_message(self, toolFlag, messageIsRequest, messageInfo):
                         return
 
                 if no_filters_defined(self):
-                    checkAuthorization(self, messageInfo,
-                    self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),
-                                            self.doUnauthorizedRequest.isSelected())
+                    # checkAuthorization(self, messageInfo,
+                    # self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),
+                    #                         self.doUnauthorizedRequest.isSelected())
+                    checkAuthorizationAllUsers(self, messageInfo, self.doUnauthorizedRequest.isSelected())
                 else:
                     if message_passed_interception_filters(self, messageInfo):
-                        checkAuthorization(self, messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
+                        # checkAuthorization(self, messageInfo,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
+                        checkAuthorizationAllUsers(self, messageInfo, self.doUnauthorizedRequest.isSelected())
+
+def checkAuthorizationAllUsers(self, messageInfo, checkUnauthorized=True):    
+    originalHeaders = self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders()
+    
+    requestResponseUnauthorized = None
+    impressionUnauthorized = "Disabled"
+    
+    if checkUnauthorized:
+        messageUnauthorized = makeMessage(self, messageInfo, True, False)
+        requestResponseUnauthorized = makeRequest(self, messageInfo, messageUnauthorized)
+        if requestResponseUnauthorized and requestResponseUnauthorized.getResponse():
+            unauthorizedResponse = requestResponseUnauthorized.getResponse()
+            analyzedResponseUnauthorized = self._helpers.analyzeResponse(unauthorizedResponse)
+            statusCodeUnauthorized = analyzedResponseUnauthorized.getHeaders()[0]
+            contentUnauthorized = getResponseBody(self, requestResponseUnauthorized)
+
+            message = makeMessage(self, messageInfo, True, True)
+            requestResponse = makeRequest(self, messageInfo, message)
+            newResponse = requestResponse.getResponse()
+            analyzedResponse = self._helpers.analyzeResponse(newResponse)
+
+            oldStatusCode = originalHeaders[0]
+            newStatusCode = analyzedResponse.getHeaders()[0]
+            oldContent = getResponseBody(self, messageInfo)
+            newContent = getResponseBody(self, requestResponse)
+
+            EDFiltersUnauth = self.EDModelUnauth.toArray()
+            impressionUnauthorized = checkBypass(self, oldStatusCode, statusCodeUnauthorized,
+                                                oldContent, contentUnauthorized,
+                                                EDFiltersUnauth, requestResponseUnauthorized,
+                                                self.AndOrTypeUnauth.getSelectedItem())
+            
+    self._lock.acquire()
+    
+    row = self._log.size()
+    method = self._helpers.analyzeRequest(messageInfo.getRequest()).getMethod()
+    original_url = self._helpers.analyzeRequest(messageInfo).getUrl()
+    
+    logEntry = LogEntry(self.currentRequestNumber, 
+                       method, 
+                       original_url,
+                       messageInfo, 
+                       requestResponseUnauthorized if checkUnauthorized else None, 
+                       impressionUnauthorized)
+    
+    for user_id, user_data in self.userTab.user_tabs.items():
+        user_name = user_data['user_name']
+        ed_instance = user_data['ed_instance']
+        mr_instance = user_data['mr_instance']
+        
+        message = makeUserMessage(self, messageInfo, True, True, mr_instance)
+        requestResponse = makeRequest(self, messageInfo, message)
+        
+        if requestResponse and requestResponse.getResponse():
+            newResponse = requestResponse.getResponse()
+            analyzedResponse = self._helpers.analyzeResponse(newResponse)
+            newStatusCode = analyzedResponse.getHeaders()[0]
+            oldContent = getResponseBody(self, messageInfo)
+            newContent = getResponseBody(self, requestResponse)
+            
+            EDFilters = ed_instance.EDModel.toArray()
+            impression = checkBypass(self, originalHeaders[0], newStatusCode, oldContent, newContent, 
+                                   EDFilters, requestResponse, ed_instance.AndOrType.getSelectedItem())
+            
+            savedRequestResponse = self._callbacks.saveBuffersToTempFiles(requestResponse)
+            logEntry.add_user_enforcement(user_id, savedRequestResponse, impression)
+    
+    self._log.add(logEntry)
+    SwingUtilities.invokeLater(UpdateTableEDT(self,"insert",row,row))
+    self.currentRequestNumber = self.currentRequestNumber + 1
+    self._lock.release()
+
+def makeUserMessage(self, messageInfo, removeOrNot, authorizeOrNot, mr_instance):
+    requestInfo = self._helpers.analyzeRequest(messageInfo)
+    headers = list(requestInfo.getHeaders())
+    
+    if removeOrNot:
+        if hasattr(self, 'replaceString') and self.replaceString.getText():
+            removeHeaders = self.replaceString.getText().split('\n')
+            removeHeaders = [header.split(':')[0].strip() + ':' for header in removeHeaders if ':' in header]
+            
+            headers_to_remove = []
+            for header in headers[1:]:
+                for removeHeader in removeHeaders:
+                    if header.lower().startswith(removeHeader.lower()):
+                        headers_to_remove.append(header)
+            
+            for header in headers_to_remove:
+                if header in headers:
+                    headers.remove(header)
+
+        if authorizeOrNot:
+            for i in range(mr_instance.MRModel.getSize()):
+                rule_key = mr_instance.MRModel.getElementAt(i)
+                rule_data = mr_instance.badProgrammerMRModel.get(rule_key)
+                
+                if rule_data:
+                    rule_type = rule_data['type']
+                    match_pattern = rule_data['match']
+                    replace_pattern = rule_data['replace']
+                    regex_match = rule_data.get('regexMatch')
+                    
+                    if rule_type == "Headers (simple string):":
+                        modifiedHeaders = [h.replace(match_pattern, replace_pattern) for h in headers[1:]]
+                        headers = [headers[0]] + modifiedHeaders
+                    elif rule_type == "Headers (regex):":
+                        if regex_match:
+                            modifiedHeaders = [regex_match.sub(replace_pattern, h) for h in headers[1:]]
+                            headers = [headers[0]] + modifiedHeaders
+
+            if hasattr(self, 'replaceString') and self.replaceString.getText():
+                replaceStringLines = self.replaceString.getText().split("\n")
+                for h in replaceStringLines:
+                    if h.strip() and ':' in h:
+                        headers.append(h.strip())
+
+    msgBody = messageInfo.getRequest()[requestInfo.getBodyOffset():]
+
+    if authorizeOrNot and msgBody is not None:
+        msgBody_str = self._helpers.bytesToString(msgBody)
+        
+        for i in range(mr_instance.MRModel.getSize()):
+            rule_key = mr_instance.MRModel.getElementAt(i)
+            rule_data = mr_instance.badProgrammerMRModel.get(rule_key)
+            
+            if rule_data:
+                rule_type = rule_data['type']
+                match_pattern = rule_data['match']
+                replace_pattern = rule_data['replace']
+                regex_match = rule_data.get('regexMatch')
+                
+                if rule_type == "Path (simple string):":
+                    uriPath = headers[0].split(" ")[1]
+                    if match_pattern in uriPath:
+                        headers[0] = headers[0].replace(match_pattern, replace_pattern)
+                elif rule_type == "Path (regex):":
+                    if regex_match:
+                        uriPath = headers[0].split(" ")[1]
+                        if regex_match.search(uriPath):
+                            headers[0] = regex_match.sub(replace_pattern, headers[0])
+                
+                elif rule_type == "Body (simple string):":
+                    msgBody_str = msgBody_str.replace(match_pattern, replace_pattern)
+                elif rule_type == "Body (regex):":
+                    if regex_match:
+                        msgBody_str = regex_match.sub(replace_pattern, msgBody_str)
+        
+        msgBody = self._helpers.stringToBytes(msgBody_str)
+    
+    return self._helpers.buildHttpMessage(headers, msgBody)
 
 def send_request_to_autorize(self, messageInfo):
     if messageInfo.getResponse() is None:
         message = makeMessage(self, messageInfo,False,False)
         requestResponse = makeRequest(self, messageInfo, message)
-        checkAuthorization(self, requestResponse,self._helpers.analyzeResponse(requestResponse.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
+        # checkAuthorization(self, requestResponse,self._helpers.analyzeResponse(requestResponse.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
+        checkAuthorizationAllUsers(self, requestResponse, self.doUnauthorizedRequest.isSelected())
     else:
         request = messageInfo.getRequest()
         response = messageInfo.getResponse()
         httpService = messageInfo.getHttpService()
         newHttpRequestResponse = IHttpRequestResponseImplementation(httpService,request,response)
         newHttpRequestResponsePersisted = self._callbacks.saveBuffersToTempFiles(newHttpRequestResponse)
-        checkAuthorization(self, newHttpRequestResponsePersisted,self._helpers.analyzeResponse(messageInfo.getResponse()).getHeaders(),self.doUnauthorizedRequest.isSelected())
+        
+        checkAuthorizationAllUsers(self, newHttpRequestResponsePersisted, self.doUnauthorizedRequest.isSelected())
 
 def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andOrEnforcement):
     response = requestResponse.getResponse()
@@ -223,41 +411,41 @@ def auth_enforced_via_enforcement_detectors(self, filters, requestResponse, andO
 
     for filter in filters:
         filter = self._helpers.bytesToString(bytes(filter))
-        filter_kv = filter.split(":", 1)
-        inverse = "NOT" in filter_kv[0]
-        filter_kv[0] = filter_kv[0].replace(" NOT", "")
-        filter = ":".join(filter_kv)
-
-        if filter.startswith("Status code equals: "):
-            statusCode = filter[20:]
+        inverse = "NOT" in filter
+        filter = filter.replace(" NOT", "")
+        filter_name, filter_content = filter.split(':', 1)
+        filter_content = filter_content[1:]  # remove the ' '
+        
+        if filter_name == "Status code equals":
+            statusCode = filter_content
             filterMatched = inverse ^ isStatusCodesReturned(self, requestResponse, statusCode)
 
-        elif filter.startswith("Headers (simple string): "):
-            filterMatched = inverse ^ (filter[25:] in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]))
+        elif filter_name == "Headers (simple string)":
+            filterMatched = inverse ^ (filter_content in self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()]))
 
-        elif filter.startswith("Headers (regex): "):
-            regex_string = filter[17:]
+        elif filter_name == "Headers (regex)":
+            regex_string = filter_content
             p = re.compile(regex_string, re.IGNORECASE)
             filterMatched = inverse ^ bool(p.search(self._helpers.bytesToString(requestResponse.getResponse()[0:analyzedResponse.getBodyOffset()])))
 
-        elif filter.startswith("Body (simple string): "):
-            filterMatched = inverse ^ (filter[22:] in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]))
+        elif filter_name == "Body (simple string)":
+            filterMatched = inverse ^ (filter_content in self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():]))
 
-        elif filter.startswith("Body (regex): "):
-            regex_string = filter[14:]
+        elif filter_name == "Body (regex)":
+            regex_string = filter_content
             p = re.compile(regex_string, re.IGNORECASE)
             filterMatched = inverse ^ bool(p.search(self._helpers.bytesToString(requestResponse.getResponse()[analyzedResponse.getBodyOffset():])))
 
-        elif filter.startswith("Full response (simple string): "):
-            filterMatched = inverse ^ (filter[31:] in self._helpers.bytesToString(requestResponse.getResponse()))
+        elif filter_name == "Full response (simple string)":
+            filterMatched = inverse ^ (filter_content in self._helpers.bytesToString(requestResponse.getResponse()))
 
-        elif filter.startswith("Full response (regex): "):
-            regex_string = filter[23:]
+        elif filter_name == "Full response (regex)":
+            regex_string = filter_content
             p = re.compile(regex_string, re.IGNORECASE)
             filterMatched = inverse ^ bool(p.search(self._helpers.bytesToString(requestResponse.getResponse())))
 
-        elif filter.startswith("Full response length: "):
-            filterMatched = inverse ^ (str(len(response)) == filter[22:].strip())
+        elif filter_name == "Full response length":
+            filterMatched = inverse ^ (str(len(response)) == filter_content.strip())
 
         if andEnforcementCheck:
             if auth_enforced and not filterMatched:
@@ -332,4 +520,4 @@ def retestAllRequests(self):
     self.logTable.setAutoCreateRowSorter(True)
     for i in range(self.tableModel.getRowCount()):
         logEntry = self._log.get(self.logTable.convertRowIndexToModel(i))
-        handle_message(self, "AUTORIZE", False, logEntry._originalrequestResponse)
+        self.executor.submit(HandleMessageRunnable(self, "AUTORIZE", False, logEntry._originalrequestResponse))
