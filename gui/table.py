@@ -288,9 +288,22 @@ class Table(JTable):
     def changeSelection(self, row, col, toggle, extend):
         logEntry = self._extender._log.get(self._extender.logTable.convertRowIndexToModel(row))
         
-        current_user_name = "Original"
+        current_user_name = "User 1"
         current_request_response = logEntry._originalrequestResponse
         
+        # Default to first user's data
+        if hasattr(self._extender, 'userTab') and self._extender.userTab:
+            user_ids = sorted(self._extender.userTab.user_tabs.keys())
+            if user_ids:
+                first_user_id = user_ids[0]
+                first_user_name = self._extender.userTab.user_tabs[first_user_id]['user_name']
+                first_user_data = logEntry.get_user_enforcement(first_user_id)
+                if first_user_data and first_user_data['requestResponse']:
+                    current_user_name = first_user_name
+                    current_request_response = first_user_data['requestResponse']
+                else:
+                    current_user_name = first_user_name
+
         if col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
             user_index = (col - 6) >> 1
             user_ids = sorted(self._extender.userTab.user_tabs.keys())
@@ -301,10 +314,11 @@ class Table(JTable):
                 if user_data and user_data['requestResponse']:
                     current_user_name = user_name
                     current_request_response = user_data['requestResponse']
+                else:
+                    current_user_name = user_name
         
         if col >= 4 and col < 6:  # Unauthenticated columns
             current_request_response = logEntry._unauthorizedRequestResponse
-   
             current_user_name = "Unauthenticated"
 
         self._extender._requestViewer.setMessage(current_request_response.getRequest(), True)
@@ -364,8 +378,8 @@ class Table(JTable):
 
     def updateTabTitles(self, user_name):
         if hasattr(self._extender, 'modified_requests_tabs'):
-            self._extender.modified_requests_tabs.setTitleAt(0, "{} Modified Request".format(user_name))
-            self._extender.modified_requests_tabs.setTitleAt(1, "{} Modified Response".format(user_name))
+            self._extender.modified_requests_tabs.setTitleAt(0, "{} Request".format(user_name))
+            self._extender.modified_requests_tabs.setTitleAt(1, "{} Response".format(user_name))
 
 class TableExtension:
     def prepareRenderer(self, renderer, row, col):

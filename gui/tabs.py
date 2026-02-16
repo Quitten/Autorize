@@ -148,10 +148,16 @@ class Tabs():
         self._extender.unauthenticated_requests_tabs.addTab("Expand", None)
         self._extender.unauthenticated_requests_tabs.setSelectedIndex(0)
 
+        first_user_name = "User 1"
+        if hasattr(self._extender, 'userTab') and self._extender.userTab:
+            user_ids = sorted(self._extender.userTab.user_tabs.keys())
+            if user_ids:
+                first_user_name = self._extender.userTab.user_tabs[user_ids[0]]['user_name']
+
         self._extender.modified_requests_tabs = JTabbedPane()
         self._extender.modified_requests_tabs.addMouseListener(Mouseclick(self._extender))
-        self._extender.modified_requests_tabs.addTab("Modified Request", self._extender._requestViewer.getComponent())
-        self._extender.modified_requests_tabs.addTab("Modified Response", self._extender._responseViewer.getComponent())
+        self._extender.modified_requests_tabs.addTab("{} Request".format(first_user_name), self._extender._requestViewer.getComponent())
+        self._extender.modified_requests_tabs.addTab("{} Response".format(first_user_name), self._extender._responseViewer.getComponent())
         self._extender.modified_requests_tabs.addTab("Expand", None)
         self._extender.modified_requests_tabs.setSelectedIndex(0)
 
