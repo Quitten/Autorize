@@ -167,7 +167,7 @@ class Tabs():
         self._extender.tabs.setMinimumSize(Dimension(1,1))
         self._extender._splitpane.setRightComponent(self._extender.tabs)
 
-        self._extender.tabs.addTab("User", self._extender.userPanel)
+        self._extender.tabs.addTab("Users", self._extender.userPanel)
 
     def setupDynamicColumns(self):
         if hasattr(self._extender, 'tableModel'):

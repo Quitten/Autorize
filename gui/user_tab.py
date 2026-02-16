@@ -6,6 +6,9 @@ from javax.swing import JLabel
 from javax.swing import JButton
 from javax.swing import JTabbedPane
 from javax.swing import JOptionPane
+from javax.swing import JTextArea
+from javax.swing import JScrollPane
+from javax.swing import GroupLayout
 from java.awt import BorderLayout
 from java.awt import FlowLayout
 from java.awt import Font
@@ -13,6 +16,68 @@ from java.awt.event import ActionListener
 
 from gui.enforcement_detector import EnforcementDetectors
 from gui.match_replace import MatchReplace
+
+class UserHeaders():
+    DEFUALT_REPLACE_TEXT = "Cookie: Insert=injected; cookie=or;\nHeader: here"
+
+    def __init__(self, user_id, extender):
+        self.user_id = user_id
+        self._extender = extender
+
+    def draw(self):
+        self.headersPnl = JPanel()
+        layout = GroupLayout(self.headersPnl)
+        self.headersPnl.setLayout(layout)
+        layout.setAutoCreateGaps(True)
+        layout.setAutoCreateContainerGaps(True)
+
+        self.replaceString = JTextArea(self.DEFUALT_REPLACE_TEXT, 5, 30)
+        self.replaceString.setWrapStyleWord(True)
+        self.replaceString.setLineWrap(True)
+
+        self.scrollReplaceString = JScrollPane(self.replaceString)
+        self.scrollReplaceString.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
+
+        self.fromLastRequestLabel = JLabel("From last request:")
+
+        self.fetchCookiesHeaderButton = JButton("Fetch Cookies header",
+                                actionPerformed=self.fetchCookiesHeader)
+        self.fetchCookiesHeaderButton.setEnabled(False)
+
+        self.fetchAuthorizationHeaderButton = JButton("Fetch Authorization header",
+                                actionPerformed=self.fetchAuthorizationHeader)
+        self.fetchAuthorizationHeaderButton.setEnabled(False)
+
+        layout.setHorizontalGroup(
+            layout.createParallelGroup()
+                .addComponent(self.scrollReplaceString,
+                    GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, 2147483647)
+                .addComponent(self.fromLastRequestLabel)
+                .addGroup(layout.createSequentialGroup()
+                    .addComponent(self.fetchCookiesHeaderButton)
+                    .addComponent(self.fetchAuthorizationHeaderButton)
+                )
+        )
+
+        layout.setVerticalGroup(
+            layout.createSequentialGroup()
+                .addComponent(self.scrollReplaceString,
+                    GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
+                .addComponent(self.fromLastRequestLabel)
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(self.fetchCookiesHeaderButton)
+                    .addComponent(self.fetchAuthorizationHeaderButton)
+                )
+        )
+
+    def fetchCookiesHeader(self, event):
+        if self._extender.lastCookiesHeader:
+            self.replaceString.setText(self._extender.lastCookiesHeader)
+
+    def fetchAuthorizationHeader(self, event):
+        if self._extender.lastAuthorizationHeader:
+            self.replaceString.setText(self._extender.lastAuthorizationHeader)
+
 
 class UserTab():
     def __init__(self, extender):
@@ -65,14 +130,22 @@ class UserTab():
         
         userSubTabs = JTabbedPane()
         
+        user_headers = UserHeaders(self.user_count, self._extender)
+        user_headers.draw()
+
+        if self._extender.lastCookiesHeader:
+            user_headers.fetchCookiesHeaderButton.setEnabled(True)
+        if self._extender.lastAuthorizationHeader:
+            user_headers.fetchAuthorizationHeaderButton.setEnabled(True)
+
         user_ed = UserEnforcementDetector(self.user_count)
         user_ed.draw()
         
         user_mr = UserMatchReplace(self.user_count)
         user_mr.draw()
         
+        userSubTabs.addTab("Headers", user_headers.headersPnl)
         userSubTabs.addTab("Enforcement Detector", user_ed.EDPnl)
-        
         userSubTabs.addTab("Match/Replace", user_mr.MRPnl)
         
         userPanel.add(headerPanel, BorderLayout.NORTH)
@@ -83,6 +156,7 @@ class UserTab():
             'user_name': unique_user_name,
             'panel': userPanel,
             'subtabs': userSubTabs,
+            'headers_instance': user_headers,
             'ed_instance': user_ed,
             'mr_instance': user_mr,
             'header_label': headerLabel
@@ -147,6 +221,7 @@ class UserTab():
                 new_user_id = self.user_count
                 new_user_data = self.user_tabs[new_user_id]
 
+                self.copy_headers_settings(source_user_data['headers_instance'], new_user_data['headers_instance'])
                 self.copy_ed_settings(source_user_data['ed_instance'], new_user_data['ed_instance'])
                 self.copy_mr_settings(source_user_data['mr_instance'], new_user_data['mr_instance'])
     
@@ -158,6 +233,9 @@ class UserTab():
         target_ed.EDType.setSelectedIndex(source_ed.EDType.getSelectedIndex())
         target_ed.EDText.setText(source_ed.EDText.getText())
         target_ed.AndOrType.setSelectedIndex(source_ed.AndOrType.getSelectedIndex())
+
+    def copy_headers_settings(self, source_headers, target_headers):
+        target_headers.replaceString.setText(source_headers.replaceString.getText())
 
     def copy_mr_settings(self, source_mr, target_mr):
         target_mr.MRModel.clear()

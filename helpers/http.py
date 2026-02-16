@@ -20,27 +20,33 @@ def makeRequest(self, messageInfo, message):
     requestURL = self._helpers.analyzeRequest(messageInfo).getUrl()
     return self._callbacks.makeHttpRequest(self._helpers.buildHttpService(str(requestURL.getHost()), int(requestURL.getPort()), requestURL.getProtocol() == "https"), message)
 
-def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
+def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot, replaceText=None):
     requestInfo = self._helpers.analyzeRequest(messageInfo)
     headers = requestInfo.getHeaders()
     if removeOrNot:
         headers = list(headers)
-        # flag for query
+
+        if replaceText is None:
+            if hasattr(self, 'userTab') and self.userTab:
+                all_texts = []
+                for uid, udata in self.userTab.user_tabs.items():
+                    all_texts.append(udata['headers_instance'].replaceString.getText())
+                replaceText = "\n".join(all_texts)
+            else:
+                replaceText = ""
+
         queryFlag = self.replaceQueryParam.isSelected()
         if queryFlag:
-            param = self.replaceString.getText().split("=")
-            paramKey = param[0]
-            paramValue = param[1]
-            # ([\?&])test=.*?(?=[\s&])
-            pattern = r"([\?&]){}=.*?(?=[\s&])".format(paramKey)
-            patchedHeader = re.sub(pattern, r"\1{}={}".format(paramKey, paramValue), headers[0], count=1, flags=re.DOTALL)
-            headers[0] = patchedHeader
+            if replaceText:
+                param = replaceText.split("=")
+                if len(param) >= 2:
+                    paramKey = param[0]
+                    paramValue = param[1]
+                    pattern = r"([\?&]){}=.*?(?=[\s&])".format(paramKey)
+                    patchedHeader = re.sub(pattern, r"\1{}={}".format(paramKey, paramValue), headers[0], count=1, flags=re.DOTALL)
+                    headers[0] = patchedHeader
         else:
-            removeHeaders = self.replaceString.getText()
-
-            # Headers must be entered line by line i.e. each header in a new
-            # line
-            removeHeaders = [header for header in removeHeaders.split() if header.endswith(':')]
+            removeHeaders = [header for header in replaceText.split() if header.endswith(':')]
 
             for header in headers[1:]:
                 for removeHeader in removeHeaders:
@@ -48,48 +54,46 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot):
                         headers.remove(header)
 
         if authorizeOrNot:
-            # simple string replace
-            for k, v in self.badProgrammerMRModel.items():
-                if(v["type"] == "Headers (simple string):"):
-                    modifiedHeaders = map(lambda h: h.replace(v["match"], v["replace"]), headers[1:])
-                    headers = [headers[0]] + modifiedHeaders
-                if(v["type"] == "Headers (regex):"):
-                    modifiedHeaders = map(lambda h: re.sub(v["regexMatch"], v["replace"], h), headers[1:])
-                    headers = [headers[0]] + modifiedHeaders
+            if hasattr(self, 'badProgrammerMRModel'):
+                for k, v in self.badProgrammerMRModel.items():
+                    if(v["type"] == "Headers (simple string):"):
+                        modifiedHeaders = map(lambda h: h.replace(v["match"], v["replace"]), headers[1:])
+                        headers = [headers[0]] + modifiedHeaders
+                    if(v["type"] == "Headers (regex):"):
+                        modifiedHeaders = map(lambda h: re.sub(v["regexMatch"], v["replace"], h), headers[1:])
+                        headers = [headers[0]] + modifiedHeaders
 
-            if not queryFlag:
-                # fix missing carriage return on *NIX systems
-                replaceStringLines = self.replaceString.getText().split("\n")
+            if not queryFlag and replaceText:
+                replaceStringLines = replaceText.split("\n")
                 for h in replaceStringLines:
-                    if h == "": # Logic to fix extraneous newline at the end of requests when no temporary headers are added
+                    if h == "":
                         pass
                     else:
                         headers.append(h)
 
     msgBody = messageInfo.getRequest()[requestInfo.getBodyOffset():]
 
-    # apply the match/replace settings to the body of the request
     if authorizeOrNot and msgBody is not None:
         msgBody = self._helpers.bytesToString(msgBody)
-        # simple string replace
-        for k, v in self.badProgrammerMRModel.items():
-            uriPath = headers[0].split(" ")[1]
-            if(v["type"] == "Path (simple string):"):
-                matchUri = re.search(v["match"], uriPath, re.MULTILINE)
-                if matchUri:
-                    currentPath = matchUri.group()
-                    replacedPath = currentPath.replace(v["match"], v["replace"])
-                    headers[0] = headers[0].replace(currentPath, replacedPath)
-            if(v["type"] == "Path (regex):"):
-                matchUri = v["regexMatch"].search(uriPath, re.MULTILINE)
-                if matchUri:
-                    currentPath = matchUri.group()
-                    replacedPath = v["regexMatch"].sub(v["replace"], currentPath)
-                    headers[0] = headers[0].replace(currentPath, replacedPath)
-            if(v["type"] == "Body (simple string):") :
-                msgBody = msgBody.replace(v["match"], v["replace"])
-            if(v["type"] == "Body (regex):") :
-                msgBody = re.sub(v["regexMatch"], v["replace"], msgBody)
+        if hasattr(self, 'badProgrammerMRModel'):
+            for k, v in self.badProgrammerMRModel.items():
+                uriPath = headers[0].split(" ")[1]
+                if(v["type"] == "Path (simple string):"):
+                    matchUri = re.search(v["match"], uriPath, re.MULTILINE)
+                    if matchUri:
+                        currentPath = matchUri.group()
+                        replacedPath = currentPath.replace(v["match"], v["replace"])
+                        headers[0] = headers[0].replace(currentPath, replacedPath)
+                if(v["type"] == "Path (regex):"):
+                    matchUri = v["regexMatch"].search(uriPath, re.MULTILINE)
+                    if matchUri:
+                        currentPath = matchUri.group()
+                        replacedPath = v["regexMatch"].sub(v["replace"], currentPath)
+                        headers[0] = headers[0].replace(currentPath, replacedPath)
+                if(v["type"] == "Body (simple string):") :
+                    msgBody = msgBody.replace(v["match"], v["replace"])
+                if(v["type"] == "Body (regex):") :
+                    msgBody = re.sub(v["regexMatch"], v["replace"], msgBody)
         msgBody = self._helpers.stringToBytes(msgBody)
     return self._helpers.buildHttpMessage(headers, msgBody)
 
