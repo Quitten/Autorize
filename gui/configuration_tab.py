@@ -54,7 +54,7 @@ class ConfigurationTab():
         self._extender.filtersTabs.addTab("Table Filter", self._extender.filterPnl)
         self._extender.filtersTabs.addTab("Save/Restore", self._extender.exportPnl)
 
-        self._extender.filtersTabs.setSelectedIndex(2)
+        self._extender.filtersTabs.setSelectedIndex(1)
         self._extender.filtersTabs.setBounds(0, 350, 2000, 700)
 
         self.config_pnl = JPanel()
