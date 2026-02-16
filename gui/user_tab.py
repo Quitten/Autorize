@@ -9,8 +9,10 @@ from javax.swing import JOptionPane
 from javax.swing import JTextArea
 from javax.swing import JScrollPane
 from javax.swing import GroupLayout
+from javax.swing.border import LineBorder
 from java.awt import BorderLayout
 from java.awt import FlowLayout
+from java.awt import Color
 from java.awt import Font
 from java.awt.event import ActionListener
 
@@ -37,6 +39,7 @@ class UserHeaders():
 
         self.scrollReplaceString = JScrollPane(self.replaceString)
         self.scrollReplaceString.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
+        self.scrollReplaceString.setBorder(LineBorder(Color.BLACK))
 
         self.fromLastRequestLabel = JLabel("From last request:")
 
