@@ -104,34 +104,6 @@ Autorize is especially effective during **authenticated testing**, where traditi
 
 ---
 
-## Multi-User Comparison & Viewer Visibility
-
-Autorize supports **multiple low-privileged users** simultaneously, allowing you to compare authorization behavior across different roles or sessions.
-
-### Per-User Request/Response Viewers
-
-Each configured user gets a **dedicated request/response viewer** on the right side of the table. When you select a row, all visible user viewers update automatically with their respective data. This means you can view User 1 and User 2 responses **side by side** to quickly spot differences in authorization enforcement.
-
-**Clicking on a user's column cells** (e.g., "User 1 Modif. Len" or "User 1 Authz. Status") will **expand that user's viewer** to full size for a focused inspection. Clicking the **URL column** restores all visible viewers for comparison.
-
-### Viewer Visibility Toggle
-
-The **"Request/Response Viewers"** tab includes an **eye icon** button in the tab header. Clicking it opens a popup menu where you can toggle which viewer sections are displayed:
-
-- **Per-user viewers** (e.g., "User 1 Request/Response", "User 2 Request/Response")
-- **Original Request/Response**
-- **Unauthenticated Request/Response**
-
-This allows you to customize the right panel to show only the comparisons you care about. For example:
-
-- Show only **User 1** and **Original** to compare a low-privileged user against the original response
-- Show **User 1** and **User 2** to compare two different roles
-- Hide **Unauthenticated** if you're only testing authorization, not authentication
-
-The visibility selection dynamically adjusts the panel layout, giving more vertical space to the remaining viewers.
-
----
-
 ## Authorization Enforcement Status
 
 Autorize assigns one of the following statuses to each tested endpoint:
@@ -193,6 +165,33 @@ Example configuration:
 
 ---
 
+## Multi-User Comparison & Viewer Visibility
+
+Autorize supports **multiple low-privileged users** simultaneously, allowing you to compare authorization behavior across different roles or sessions.
+
+### Per-User Request/Response Viewers
+
+Each configured user gets a **dedicated request/response viewer** on the right side of the table. When you select a row, all visible user viewers update automatically with their respective data. This means you can view User 1 and User 2 responses **side by side** to quickly spot differences in authorization enforcement.
+
+**Clicking on a user's column cells** (e.g., "User 1 Modif. Len" or "User 1 Authz. Status") will **expand that user's viewer** to full size for a focused inspection. Clicking the **URL column** restores all visible viewers for comparison.
+
+### Viewer Visibility Toggle
+
+The **"Request/Response Viewers"** tab includes an **eye icon** button in the tab header. Clicking it opens a popup menu where you can toggle which viewer sections are displayed:
+
+- **Per-user viewers** (e.g., "User 1 Request/Response", "User 2 Request/Response")
+- **Original Request/Response**
+- **Unauthenticated Request/Response**
+
+This allows you to customize the right panel to show only the comparisons you care about. For example:
+
+- Show only **User 1** and **Original** to compare a low-privileged user against the original response
+- Show **User 1** and **User 2** to compare two different roles
+- Hide **Unauthenticated** if you're only testing authorization, not authentication
+
+The visibility selection dynamically adjusts the panel layout, giving more vertical space to the remaining viewers.
+
+---
 ## Limitations & Notes
 
 - Autorize relies on **response comparison heuristics** and fingerprints—false positives or false negatives are possible.
