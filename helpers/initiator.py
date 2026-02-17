@@ -62,6 +62,7 @@ class Initiator():
 
         tabs = Tabs(self._extender)
         tabs.draw()
+        self._extender.tabs_instance = tabs
     
     def implement_all(self):
         itab = ITabImpl(self._extender)

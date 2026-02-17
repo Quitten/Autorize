@@ -12,10 +12,21 @@ from javax.swing import JScrollPane
 from javax.swing import JPopupMenu
 from javax.swing import JTabbedPane
 from javax.swing import JPanel
+from javax.swing import JButton
+from javax.swing import JLabel
+from javax.swing import JCheckBoxMenuItem
+from javax.swing import ImageIcon
 from java.awt import GridLayout
+from java.awt import FlowLayout
 from java.awt import Toolkit
+from java.awt import Color as AwtColor
+from java.awt import RenderingHints
+from java.awt import BasicStroke
 from java.lang import Math
 from java.awt import Dimension
+from java.awt.image import BufferedImage
+from java.awt.geom import Ellipse2D
+from java.awt.geom import GeneralPath
 
 from burp import ITab
 from burp import IMessageEditorController
@@ -25,7 +36,7 @@ from authorization.authorization import handle_message, retestAllRequests
 from thread import start_new_thread
 
 from table import Table, TableRowFilter
-from helpers.filters import expand, collapse
+from helpers.filters import expand, collapse, rebuildViewerPanel
 from javax.swing import KeyStroke
 from javax.swing import JTable
 from javax.swing import AbstractAction
@@ -120,13 +131,14 @@ class Tabs():
         self._extender.menu.add(copyURLitem)
         self._extender.menu.add(retestSelecteditem)
         self._extender.menu.add(retestAllitem)
-        self._extender.menu.add(deleteSelectedItem) # disabling this feature until bug will be fixed.
-        message_editor = MessageEditor(self._extender)
+        self._extender.menu.add(deleteSelectedItem)
 
         self._extender.tabs = JTabbedPane()
-        
-        self._extender._requestViewer = self._extender._callbacks.createMessageEditor(message_editor, False)
-        self._extender._responseViewer = self._extender._callbacks.createMessageEditor(message_editor, False)
+
+        self._extender.user_viewers = {}
+        self._extender.viewer_visibility = {'original': True, 'unauthenticated': True}
+
+        message_editor = MessageEditor(self._extender)
 
         self._extender._originalrequestViewer = self._extender._callbacks.createMessageEditor(message_editor, False)
         self._extender._originalresponseViewer = self._extender._callbacks.createMessageEditor(message_editor, False)
@@ -148,25 +160,29 @@ class Tabs():
         self._extender.unauthenticated_requests_tabs.addTab("Expand", None)
         self._extender.unauthenticated_requests_tabs.setSelectedIndex(0)
 
-        first_user_name = "User 1"
         if hasattr(self._extender, 'userTab') and self._extender.userTab:
-            user_ids = sorted(self._extender.userTab.user_tabs.keys())
-            if user_ids:
-                first_user_name = self._extender.userTab.user_tabs[user_ids[0]]['user_name']
+            for user_id in sorted(self._extender.userTab.user_tabs.keys()):
+                user_name = self._extender.userTab.user_tabs[user_id]['user_name']
+                self.createUserViewerTabs(user_id, user_name)
 
-        self._extender.modified_requests_tabs = JTabbedPane()
-        self._extender.modified_requests_tabs.addMouseListener(Mouseclick(self._extender))
-        self._extender.modified_requests_tabs.addTab("{} Request".format(first_user_name), self._extender._requestViewer.getComponent())
-        self._extender.modified_requests_tabs.addTab("{} Response".format(first_user_name), self._extender._responseViewer.getComponent())
-        self._extender.modified_requests_tabs.addTab("Expand", None)
-        self._extender.modified_requests_tabs.setSelectedIndex(0)
-
-        self._extender.requests_panel = JPanel(GridLayout(3,0))
-        self._extender.requests_panel.add(self._extender.modified_requests_tabs)
-        self._extender.requests_panel.add(self._extender.original_requests_tabs)
-        self._extender.requests_panel.add(self._extender.unauthenticated_requests_tabs)
+        self._extender.requests_panel = JPanel(GridLayout(0, 1))
+        rebuildViewerPanel(self._extender)
 
         self._extender.tabs.addTab("Request/Response Viewers", self._extender.requests_panel)
+
+        tabIndex = self._extender.tabs.indexOfTab("Request/Response Viewers")
+        tabHeader = JPanel(FlowLayout(FlowLayout.LEFT, 5, 0))
+        tabHeader.setOpaque(False)
+        tabLabel = JLabel("Request/Response Viewers")
+        eyeButton = JButton(createEyeIcon(16))
+        eyeButton.setToolTipText("Toggle viewer visibility")
+        eyeButton.setBorderPainted(False)
+        eyeButton.setContentAreaFilled(False)
+        eyeButton.setFocusPainted(False)
+        eyeButton.addActionListener(ShowVisibilityPopup(self._extender))
+        tabHeader.add(tabLabel)
+        tabHeader.add(eyeButton)
+        self._extender.tabs.setTabComponentAt(tabIndex, tabHeader)
         
         self._extender.tabs.addTab("Configuration", self._extender._cfg_splitpane)
         self._extender.tabs.setSelectedIndex(1)
@@ -174,6 +190,43 @@ class Tabs():
         self._extender._splitpane.setRightComponent(self._extender.tabs)
 
         self._extender.tabs.addTab("Users", self._extender.userPanel)
+
+    def createUserViewerTabs(self, user_id, user_name):
+        user_msg_editor = UserMessageEditor(self._extender, user_id)
+        requestViewer = self._extender._callbacks.createMessageEditor(user_msg_editor, False)
+        responseViewer = self._extender._callbacks.createMessageEditor(user_msg_editor, False)
+
+        tabs = JTabbedPane()
+        tabs.addMouseListener(Mouseclick(self._extender))
+        tabs.addTab("{} Request".format(user_name), requestViewer.getComponent())
+        tabs.addTab("{} Response".format(user_name), responseViewer.getComponent())
+        tabs.addTab("Expand", None)
+        tabs.setSelectedIndex(0)
+
+        self._extender.user_viewers[user_id] = {
+            'requestViewer': requestViewer,
+            'responseViewer': responseViewer,
+            'tabs': tabs,
+            'user_name': user_name
+        }
+
+        key = 'user_{}'.format(user_id)
+        self._extender.viewer_visibility[key] = True
+
+    def removeUserViewerTabs(self, user_id):
+        key = 'user_{}'.format(user_id)
+        if key in self._extender.viewer_visibility:
+            del self._extender.viewer_visibility[key]
+        if user_id in self._extender.user_viewers:
+            del self._extender.user_viewers[user_id]
+        rebuildViewerPanel(self._extender)
+
+    def renameUserViewerTabs(self, user_id, new_name):
+        if user_id in self._extender.user_viewers:
+            viewer = self._extender.user_viewers[user_id]
+            viewer['user_name'] = new_name
+            viewer['tabs'].setTitleAt(0, "{} Request".format(new_name))
+            viewer['tabs'].setTitleAt(1, "{} Response".format(new_name))
 
     def setupDynamicColumns(self):
         if hasattr(self._extender, 'tableModel'):
@@ -293,17 +346,29 @@ class MessageEditor(IMessageEditorController):
         return self._extender._currentlyDisplayedItem._originalrequestResponse.getHttpService()
 
     def getRequest(self):
-        if hasattr(self._extender, '_currentUserSelection'):
-            user_data = self._extender._currentlyDisplayedItem.get_user_enforcement(self._extender._currentUserSelection)
-            if user_data and user_data['requestResponse']:
-                return user_data['requestResponse'].getRequest()
         return self._extender._currentlyDisplayedItem._originalrequestResponse.getRequest()
 
     def getResponse(self):
-        if hasattr(self._extender, '_currentUserSelection'):
-            user_data = self._extender._currentlyDisplayedItem.get_user_enforcement(self._extender._currentUserSelection)
-            if user_data and user_data['requestResponse']:
-                return user_data['requestResponse'].getResponse()
+        return self._extender._currentlyDisplayedItem._originalrequestResponse.getResponse()
+
+class UserMessageEditor(IMessageEditorController):
+    def __init__(self, extender, user_id):
+        self._extender = extender
+        self._user_id = user_id
+
+    def getHttpService(self):
+        return self._extender._currentlyDisplayedItem._originalrequestResponse.getHttpService()
+
+    def getRequest(self):
+        user_data = self._extender._currentlyDisplayedItem.get_user_enforcement(self._user_id)
+        if user_data and user_data['requestResponse']:
+            return user_data['requestResponse'].getRequest()
+        return self._extender._currentlyDisplayedItem._originalrequestResponse.getRequest()
+
+    def getResponse(self):
+        user_data = self._extender._currentlyDisplayedItem.get_user_enforcement(self._user_id)
+        if user_data and user_data['requestResponse']:
+            return user_data['requestResponse'].getResponse()
         return self._extender._currentlyDisplayedItem._originalrequestResponse.getResponse()
 
 class Mouseclick(MouseAdapter):
@@ -316,6 +381,79 @@ class Mouseclick(MouseAdapter):
                 expand(self._extender, evt.getComponent())
             else:
                 collapse(self._extender, evt.getComponent())
+
+def createEyeIcon(size=16):
+    img = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
+    g2 = img.createGraphics()
+    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+    g2.setColor(AwtColor(80, 80, 80))
+    g2.setStroke(BasicStroke(1.5))
+
+    cx = size / 2.0
+    cy = size / 2.0
+    w = size * 0.85
+    h = size * 0.45
+
+    path = GeneralPath()
+    path.moveTo(cx - w / 2, cy)
+    path.quadTo(cx, cy - h, cx + w / 2, cy)
+    path.quadTo(cx, cy + h, cx - w / 2, cy)
+    path.closePath()
+    g2.draw(path)
+
+    r = size * 0.18
+    g2.fill(Ellipse2D.Double(cx - r, cy - r, r * 2, r * 2))
+
+    g2.dispose()
+    return ImageIcon(img)
+
+class ShowVisibilityPopup(ActionListener):
+    def __init__(self, extender):
+        self._extender = extender
+
+    def actionPerformed(self, e):
+        popup = JPopupMenu()
+
+        if hasattr(self._extender, 'user_viewers'):
+            for user_id in sorted(self._extender.user_viewers.keys()):
+                viewer = self._extender.user_viewers[user_id]
+                key = 'user_{}'.format(user_id)
+                item = JCheckBoxMenuItem(
+                    "{} Request/Response".format(viewer['user_name']),
+                    self._extender.viewer_visibility.get(key, True)
+                )
+                item.addActionListener(ViewerVisibilityAction(self._extender, key))
+                popup.add(item)
+
+        if popup.getComponentCount() > 0:
+            popup.addSeparator()
+
+        orig_item = JCheckBoxMenuItem(
+            "Original Request/Response",
+            self._extender.viewer_visibility.get('original', True)
+        )
+        orig_item.addActionListener(ViewerVisibilityAction(self._extender, 'original'))
+        popup.add(orig_item)
+
+        unauth_item = JCheckBoxMenuItem(
+            "Unauthenticated Request/Response",
+            self._extender.viewer_visibility.get('unauthenticated', True)
+        )
+        unauth_item.addActionListener(ViewerVisibilityAction(self._extender, 'unauthenticated'))
+        popup.add(unauth_item)
+
+        btn = e.getSource()
+        popup.show(btn, 0, btn.getHeight())
+
+class ViewerVisibilityAction(ActionListener):
+    def __init__(self, extender, key):
+        self._extender = extender
+        self._key = key
+
+    def actionPerformed(self, e):
+        source = e.getSource()
+        self._extender.viewer_visibility[self._key] = source.isSelected()
+        rebuildViewerPanel(self._extender)
 
 class SendRequestRepeater(ActionListener):
     def __init__(self, extender, callbacks, original):

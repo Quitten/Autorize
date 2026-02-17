@@ -16,7 +16,7 @@ from java.awt import FlowLayout
 from javax.swing.table import AbstractTableModel
 from javax.swing.event import ListSelectionListener
 
-from helpers.filters import expand, collapse
+from helpers.filters import expand, collapse, rebuildViewerPanel
 
 class TableFilter():
     def __init__(self, extender):
@@ -287,42 +287,17 @@ class Table(JTable):
 
     def changeSelection(self, row, col, toggle, extend):
         logEntry = self._extender._log.get(self._extender.logTable.convertRowIndexToModel(row))
-        
-        current_user_name = "User 1"
-        current_request_response = logEntry._originalrequestResponse
-        
-        # Default to first user's data
-        if hasattr(self._extender, 'userTab') and self._extender.userTab:
-            user_ids = sorted(self._extender.userTab.user_tabs.keys())
-            if user_ids:
-                first_user_id = user_ids[0]
-                first_user_name = self._extender.userTab.user_tabs[first_user_id]['user_name']
-                first_user_data = logEntry.get_user_enforcement(first_user_id)
-                if first_user_data and first_user_data['requestResponse']:
-                    current_user_name = first_user_name
-                    current_request_response = first_user_data['requestResponse']
-                else:
-                    current_user_name = first_user_name
 
-        if col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
-            user_index = (col - 6) >> 1
-            user_ids = sorted(self._extender.userTab.user_tabs.keys())
-            if user_index < len(user_ids):
-                user_id = user_ids[user_index]
-                user_name = self._extender.userTab.user_tabs[user_id]['user_name']
+        if hasattr(self._extender, 'user_viewers'):
+            for user_id, viewer in self._extender.user_viewers.items():
                 user_data = logEntry.get_user_enforcement(user_id)
                 if user_data and user_data['requestResponse']:
-                    current_user_name = user_name
-                    current_request_response = user_data['requestResponse']
+                    viewer['requestViewer'].setMessage(user_data['requestResponse'].getRequest(), True)
+                    viewer['responseViewer'].setMessage(user_data['requestResponse'].getResponse(), False)
                 else:
-                    current_user_name = user_name
-        
-        if col >= 4 and col < 6:  # Unauthenticated columns
-            current_request_response = logEntry._unauthorizedRequestResponse
-            current_user_name = "Unauthenticated"
+                    viewer['requestViewer'].setMessage("No data for this user", True)
+                    viewer['responseViewer'].setMessage("No data for this user", False)
 
-        self._extender._requestViewer.setMessage(current_request_response.getRequest(), True)
-        self._extender._responseViewer.setMessage(current_request_response.getResponse(), False)
         self._extender._originalrequestViewer.setMessage(logEntry._originalrequestResponse.getRequest(), True)
         self._extender._originalresponseViewer.setMessage(logEntry._originalrequestResponse.getResponse(), False)
 
@@ -335,21 +310,23 @@ class Table(JTable):
 
         self._extender._currentlyDisplayedItem = logEntry
 
-        self.updateTabTitles(current_user_name)
+        if col == 2:
+            rebuildViewerPanel(self._extender)
+        elif col == 3:
+            if self._extender.viewer_visibility.get('original', True):
+                expand(self._extender, self._extender.original_requests_tabs)
+        elif col == 4 or col == 5:
+            if self._extender.viewer_visibility.get('unauthenticated', True):
+                expand(self._extender, self._extender.unauthenticated_requests_tabs)
+        elif col >= 6:
+            user_ids = sorted(self._extender.userTab.user_tabs.keys()) if hasattr(self._extender, 'userTab') and self._extender.userTab else []
+            user_index = (col - 6) >> 1
+            if user_index < len(user_ids):
+                user_id = user_ids[user_index]
+                key = 'user_{}'.format(user_id)
+                if self._extender.viewer_visibility.get(key, True) and user_id in self._extender.user_viewers:
+                    expand(self._extender, self._extender.user_viewers[user_id]['tabs'])
 
-        if col == 2:  # URL column
-            collapse(self._extender, self._extender.modified_requests_tabs)
-            collapse(self._extender, self._extender.unauthenticated_requests_tabs)
-            expand(self._extender, self._extender.original_requests_tabs)
-        elif col >= 6:  # User columns
-            collapse(self._extender, self._extender.original_requests_tabs)
-            collapse(self._extender, self._extender.unauthenticated_requests_tabs)
-            expand(self._extender, self._extender.modified_requests_tabs)
-        elif col == 4 or col == 5:  # Unauth Status
-            collapse(self._extender, self._extender.original_requests_tabs)
-            collapse(self._extender, self._extender.modified_requests_tabs)
-            expand(self._extender, self._extender.unauthenticated_requests_tabs)
-        
         self.updateContextMenuText(col)
 
         JTable.changeSelection(self, row, col, toggle, extend)

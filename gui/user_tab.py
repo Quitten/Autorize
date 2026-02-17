@@ -169,6 +169,11 @@ class UserTab():
         
         self.userTabs.setSelectedIndex(self.userTabs.getTabCount() - 1)
 
+        if hasattr(self._extender, 'tabs_instance') and self._extender.tabs_instance:
+            self._extender.tabs_instance.createUserViewerTabs(self.user_count, unique_user_name)
+            from helpers.filters import rebuildViewerPanel
+            rebuildViewerPanel(self._extender)
+
         self.refreshTableStructure()
 
     def remove_user(self):
@@ -198,6 +203,9 @@ class UserTab():
 
                 self.userTabs.removeTabAt(selected_index)
 
+                if hasattr(self._extender, 'tabs_instance') and self._extender.tabs_instance:
+                    self._extender.tabs_instance.removeUserViewerTabs(user_id_to_remove)
+
                 self.refreshTableStructure()
 
     def reset_user(self):
@@ -205,6 +213,13 @@ class UserTab():
         self.user_tabs.clear()
         del self.user_names[:]
         self.user_count = 0
+
+        if hasattr(self._extender, 'user_viewers'):
+            self._extender.user_viewers.clear()
+            keys_to_remove = [k for k in self._extender.viewer_visibility if k.startswith('user_')]
+            for k in keys_to_remove:
+                del self._extender.viewer_visibility[k]
+
         self.add_user()
         
     def duplicate_user(self):
@@ -280,6 +295,8 @@ class UserTab():
                     if user_data['panel'] == selected_panel:
                         user_data['header_label'].setText(unique_name)
                         user_data['user_name'] = unique_name
+                        if hasattr(self._extender, 'tabs_instance') and self._extender.tabs_instance:
+                            self._extender.tabs_instance.renameUserViewerTabs(user_id, unique_name)
                         break
 
                 self.refreshTableStructure()
