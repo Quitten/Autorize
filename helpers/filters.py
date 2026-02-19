@@ -28,22 +28,54 @@ def modFilterHelper(listObj, typeObj, textObj):
 def expand(extender, comp):
         comp.setSelectedIndex(0)
         comp.setTitleAt(2, "Collapse")
-        extender.requests_panel.remove(extender.modified_requests_tabs)
-        extender.requests_panel.remove(extender.original_requests_tabs)
-        extender.requests_panel.remove(extender.unauthenticated_requests_tabs)
+        extender.requests_panel.removeAll()
         extender.requests_panel.add(comp)
         extender.requests_panel.setLayout(GridLayout(1,0))
         extender.requests_panel.revalidate()
+        extender.requests_panel.repaint()
         extender.expanded_requests = 1
 
 def collapse(extender, comp):
         comp.setSelectedIndex(0)
         comp.setTitleAt(2, "Expand")
-        extender.requests_panel.setLayout(GridLayout(3,0))
-        extender.requests_panel.add(extender.modified_requests_tabs)
-        extender.requests_panel.add(extender.original_requests_tabs)
-        extender.requests_panel.add(extender.unauthenticated_requests_tabs)
+        rebuildViewerPanel(extender)
+
+def rebuildViewerPanel(extender):
+        all_viewer_tabs = []
+        if hasattr(extender, 'original_requests_tabs'):
+                all_viewer_tabs.append(extender.original_requests_tabs)
+        if hasattr(extender, 'unauthenticated_requests_tabs'):
+                all_viewer_tabs.append(extender.unauthenticated_requests_tabs)
+        if hasattr(extender, 'user_viewers'):
+                all_viewer_tabs.extend([v['tabs'] for v in extender.user_viewers.values()])
+        for tabs in all_viewer_tabs:
+                if tabs.getTabCount() > 2:
+                        tabs.setTitleAt(2, "Expand")
+                        tabs.setSelectedIndex(0)
+
+        extender.requests_panel.removeAll()
+        visible_count = 0
+
+        if hasattr(extender, 'user_viewers'):
+                for user_id in sorted(extender.user_viewers.keys()):
+                        key = 'user_{}'.format(user_id)
+                        if extender.viewer_visibility.get(key, True):
+                                extender.requests_panel.add(extender.user_viewers[user_id]['tabs'])
+                                visible_count += 1
+
+        if extender.viewer_visibility.get('original', True):
+                extender.requests_panel.add(extender.original_requests_tabs)
+                visible_count += 1
+
+        if extender.viewer_visibility.get('unauthenticated', True):
+                extender.requests_panel.add(extender.unauthenticated_requests_tabs)
+                visible_count += 1
+
+        if visible_count > 0:
+                extender.requests_panel.setLayout(GridLayout(visible_count, 0))
+
         extender.requests_panel.revalidate()
+        extender.requests_panel.repaint()
         extender.expanded_requests = 0
 
 def handle_proxy_message(self,message):

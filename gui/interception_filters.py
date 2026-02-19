@@ -14,6 +14,7 @@ from javax.swing import JScrollPane
 from javax.swing import GroupLayout
 from javax.swing import DefaultListModel
 from javax.swing.border import LineBorder
+from java.awt import Color
 from helpers.filters import addFilterHelper, delFilterHelper, modFilterHelper
 
 
@@ -24,7 +25,6 @@ class InterceptionFilters():
     def draw(self):
         """  init interception filters tab
         """
-        self._extender.savedHeaders = [{"title": "Temporary headers", "headers": "Cookie: Insert=injected; cookie=or;\nHeader: here"}]
         # IFStrings has to contains : character
         IFStrings = ["Scope items only: (Content is not required)", 
                      "URL Contains (simple string): ",
@@ -62,6 +62,7 @@ class InterceptionFilters():
         scrollIFList.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         scrollIFList.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED)
         scrollIFList.setBounds(80, 175, 300, 110)
+        scrollIFList.setBorder(LineBorder(Color.BLACK))
 
         # Adding some default interception filters
         # self.IFModel.addElement("Scope items only: (Content is not required)") # commented for better first impression.
@@ -73,6 +74,7 @@ class InterceptionFilters():
         scrollIFText = JScrollPane(self._extender.IFText)
         scrollIFText.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         scrollIFText.setBounds(80, 50, 300, 110)
+        scrollIFText.setBorder(LineBorder(Color.BLACK))
 
         IFLType = JLabel("Type:")
         IFLType.setBounds(10, 10, 140, 30)

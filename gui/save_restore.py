@@ -49,15 +49,13 @@ class SaveRestore():
                 csvwriter = csv.writer(csvfile, delimiter='\t', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
                 # Configuration
-                tempRow = ["ReplaceString", base64.b64encode(self._extender.replaceString.getText())]
-                csvwriter.writerow(tempRow)
-                
                 user_configs = []
 
                 for user_id, user_data in self._extender.userTab.user_tabs.items():
                     user_config = {
                         'user_id': user_id,
                         'user_name': user_data['user_name'],
+                        'headers_text': user_data['headers_instance'].replaceString.getText(),
                         'ed_filters': list(user_data['ed_instance'].EDModel.toArray()),
                         'ed_type': user_data['ed_instance'].EDType.getSelectedIndex(),
                         'ed_text': user_data['ed_instance'].EDText.getText(),
@@ -161,7 +159,7 @@ class SaveRestore():
                 for row in csvreader:
                     # Configuration
                     if row[0] == "ReplaceString":
-                        self._extender.replaceString.setText(base64.b64decode(row[1]))
+                        # Legacy: global ReplaceString no longer used (now per-user)
                         continue
 
                     if row[0] == "UserConfigs":
@@ -178,6 +176,9 @@ class SaveRestore():
                                     self._extender.userTab.add_user()
                                     user_data = list(self._extender.userTab.user_tabs.values())[-1]
                                 
+                                if 'headers_text' in config:
+                                    user_data['headers_instance'].replaceString.setText(config['headers_text'])
+
                                 user_data['ed_instance'].EDModel.clear()
                                 for filter in config['ed_filters']:
                                     user_data['ed_instance'].EDModel.addElement(filter)

@@ -44,13 +44,17 @@ def capture_last_cookie_header(self, messageInfo):
     cookies = get_cookie_header_from_message(self, messageInfo)
     if cookies:
         self.lastCookiesHeader = cookies
-        self.fetchCookiesHeaderButton.setEnabled(True)
+        if hasattr(self, 'userTab') and self.userTab:
+            for user_id, user_data in self.userTab.user_tabs.items():
+                user_data['headers_instance'].fetchCookiesHeaderButton.setEnabled(True)
 
 def capture_last_authorization_header(self, messageInfo):
     authorization = get_authorization_header_from_message(self, messageInfo)
     if authorization:
         self.lastAuthorizationHeader = authorization
-        self.fetchAuthorizationHeaderButton.setEnabled(True)
+        if hasattr(self, 'userTab') and self.userTab:
+            for user_id, user_data in self.userTab.user_tabs.items():
+                user_data['headers_instance'].fetchAuthorizationHeaderButton.setEnabled(True)
 
 def valid_tool(self, toolFlag):
     return (toolFlag == self._callbacks.TOOL_PROXY or
@@ -74,7 +78,13 @@ def handle_304_status_code_prevention(self, messageIsRequest, messageInfo):
             messageInfo.setRequest(self._helpers.buildHttpMessage(newHeaders, bodyStr))
 
 def message_not_from_autorize(self, messageInfo):
-    return not self.replaceString.getText() in self._helpers.analyzeRequest(messageInfo).getHeaders()
+    headers = self._helpers.analyzeRequest(messageInfo).getHeaders()
+    if hasattr(self, 'userTab') and self.userTab:
+        for user_id, user_data in self.userTab.user_tabs.items():
+            headers_text = user_data['headers_instance'].replaceString.getText()
+            if headers_text in headers:
+                return False
+    return True
 
 def no_filters_defined(self):
     return self.IFList.getModel().getSize() == 0
@@ -238,9 +248,15 @@ def checkAuthorizationAllUsers(self, messageInfo, checkUnauthorized=True):
     
     requestResponseUnauthorized = None
     impressionUnauthorized = "Disabled"
+
+    all_headers_texts = []
+    if hasattr(self, 'userTab') and self.userTab:
+        for uid, udata in self.userTab.user_tabs.items():
+            all_headers_texts.append(udata['headers_instance'].replaceString.getText())
+    combined_headers_text = "\n".join(all_headers_texts) if all_headers_texts else ""
     
     if checkUnauthorized:
-        messageUnauthorized = makeMessage(self, messageInfo, True, False)
+        messageUnauthorized = makeMessage(self, messageInfo, True, False, combined_headers_text)
         requestResponseUnauthorized = makeRequest(self, messageInfo, messageUnauthorized)
         if requestResponseUnauthorized and requestResponseUnauthorized.getResponse():
             unauthorizedResponse = requestResponseUnauthorized.getResponse()
@@ -248,15 +264,8 @@ def checkAuthorizationAllUsers(self, messageInfo, checkUnauthorized=True):
             statusCodeUnauthorized = analyzedResponseUnauthorized.getHeaders()[0]
             contentUnauthorized = getResponseBody(self, requestResponseUnauthorized)
 
-            message = makeMessage(self, messageInfo, True, True)
-            requestResponse = makeRequest(self, messageInfo, message)
-            newResponse = requestResponse.getResponse()
-            analyzedResponse = self._helpers.analyzeResponse(newResponse)
-
             oldStatusCode = originalHeaders[0]
-            newStatusCode = analyzedResponse.getHeaders()[0]
             oldContent = getResponseBody(self, messageInfo)
-            newContent = getResponseBody(self, requestResponse)
 
             EDFiltersUnauth = self.EDModelUnauth.toArray()
             impressionUnauthorized = checkBypass(self, oldStatusCode, statusCodeUnauthorized,
@@ -281,8 +290,10 @@ def checkAuthorizationAllUsers(self, messageInfo, checkUnauthorized=True):
         user_name = user_data['user_name']
         ed_instance = user_data['ed_instance']
         mr_instance = user_data['mr_instance']
+        headers_instance = user_data['headers_instance']
+        user_headers_text = headers_instance.replaceString.getText()
         
-        message = makeUserMessage(self, messageInfo, True, True, mr_instance)
+        message = makeUserMessage(self, messageInfo, True, True, mr_instance, user_headers_text)
         requestResponse = makeRequest(self, messageInfo, message)
         
         if requestResponse and requestResponse.getResponse():
@@ -304,24 +315,36 @@ def checkAuthorizationAllUsers(self, messageInfo, checkUnauthorized=True):
     self.currentRequestNumber = self.currentRequestNumber + 1
     self._lock.release()
 
-def makeUserMessage(self, messageInfo, removeOrNot, authorizeOrNot, mr_instance):
+def makeUserMessage(self, messageInfo, removeOrNot, authorizeOrNot, mr_instance, user_headers_text=""):
     requestInfo = self._helpers.analyzeRequest(messageInfo)
     headers = list(requestInfo.getHeaders())
     
     if removeOrNot:
-        if hasattr(self, 'replaceString') and self.replaceString.getText():
-            removeHeaders = self.replaceString.getText().split('\n')
-            removeHeaders = [header.split(':')[0].strip() + ':' for header in removeHeaders if ':' in header]
-            
-            headers_to_remove = []
-            for header in headers[1:]:
-                for removeHeader in removeHeaders:
-                    if header.lower().startswith(removeHeader.lower()):
-                        headers_to_remove.append(header)
-            
-            for header in headers_to_remove:
-                if header in headers:
-                    headers.remove(header)
+        queryFlag = self.replaceQueryParam.isSelected()
+
+        if queryFlag:
+            if user_headers_text:
+                param = user_headers_text.split("=")
+                if len(param) >= 2:
+                    paramKey = param[0]
+                    paramValue = param[1]
+                    pattern = r"([\?&]){}=.*?(?=[\s&])".format(paramKey)
+                    patchedHeader = re.sub(pattern, r"\1{}={}".format(paramKey, paramValue), headers[0], count=1, flags=re.DOTALL)
+                    headers[0] = patchedHeader
+        else:
+            if user_headers_text:
+                removeHeadersList = user_headers_text.split('\n')
+                removeHeaderNames = [header.split(':')[0].strip() + ':' for header in removeHeadersList if ':' in header]
+                
+                headers_to_remove = []
+                for header in headers[1:]:
+                    for removeHeader in removeHeaderNames:
+                        if header.lower().startswith(removeHeader.lower()):
+                            headers_to_remove.append(header)
+                
+                for header in headers_to_remove:
+                    if header in headers:
+                        headers.remove(header)
 
         if authorizeOrNot:
             for i in range(mr_instance.MRModel.getSize()):
@@ -342,8 +365,8 @@ def makeUserMessage(self, messageInfo, removeOrNot, authorizeOrNot, mr_instance)
                             modifiedHeaders = [regex_match.sub(replace_pattern, h) for h in headers[1:]]
                             headers = [headers[0]] + modifiedHeaders
 
-            if hasattr(self, 'replaceString') and self.replaceString.getText():
-                replaceStringLines = self.replaceString.getText().split("\n")
+            if not queryFlag and user_headers_text:
+                replaceStringLines = user_headers_text.split("\n")
                 for h in replaceStringLines:
                     if h.strip() and ':' in h:
                         headers.append(h.strip())

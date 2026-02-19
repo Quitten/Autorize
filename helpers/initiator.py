@@ -20,7 +20,7 @@ class Initiator():
     
     def init_constants(self):
         self.contributors = ["Federico Dotta", "mgeeky", "Marcin Woloszyn", "jpginc", "Eric Harris", "Joao Teles", "Roy Oswaldha"]
-        self._extender.version = 1.9
+        self._extender.version = 1.9.1
         self._extender._log = ArrayList()
         self._extender._lock = Lock()
 
@@ -62,6 +62,7 @@ class Initiator():
 
         tabs = Tabs(self._extender)
         tabs.draw()
+        self._extender.tabs_instance = tabs
     
     def implement_all(self):
         itab = ITabImpl(self._extender)
