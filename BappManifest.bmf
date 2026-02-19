@@ -3,8 +3,8 @@ ExtensionType: 2
 Name: Autorize
 RepoName: autorize
 ScreenVersion: 1.9.1
-SerialVersion: 31
-MinPlatformVersion: 0
+SerialVersion: 32
+MinPlatformVersion: 2
 ProOnly: False
 Author:  Barak Tawily, AppSec Labs
 ShortDescription: Automatically detects authorization enforcement.
