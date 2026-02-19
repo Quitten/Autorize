@@ -65,11 +65,13 @@ class MatchReplace():
         scrollMText = JScrollPane(self._extender.MText)
         scrollMText.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         scrollMText.setBounds(column2X, row2Y, editWidth, editHeight)
+        scrollMText.setBorder(LineBorder(Color.BLACK))
 
         self._extender.RText = JTextArea("", 5, 30)
         scrollRText = JScrollPane(self._extender.RText)
         scrollRText.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED)
         scrollRText.setBounds(column2X, row3Y, editWidth, editHeight)
+        scrollRText.setBorder(LineBorder(Color.BLACK))
 
         # i couldn't figure out how to have a model that contained anythin other than a string
         # so i'll use 2 models, one with the data and one for the JList
