@@ -270,9 +270,9 @@ class SendResponseComparer(ActionListener):
         unauthorizedResponse = self._extender._currentlyDisplayedItem._unauthorizedRequestResponse
         
         selected_col = self._extender.logTable.getSelectedColumn()
-        
-        if selected_col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
-            user_index = (selected_col - 6) >> 1
+        data_col = self._extender.tableModel.getDataColumnIndex(selected_col) if hasattr(self._extender, 'tableModel') else selected_col
+        if data_col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
+            user_index = (data_col - 6) >> 1
             user_ids = sorted(self._extender.userTab.user_tabs.keys())
             if user_index < len(user_ids):
                 user_id = user_ids[user_index]
@@ -283,7 +283,7 @@ class SendResponseComparer(ActionListener):
                     modifiedResponse = originalResponse
             else:
                 modifiedResponse = originalResponse
-        elif selected_col == 4 or selected_col == 5:
+        elif data_col == 4 or data_col == 5:
             modifiedResponse = unauthorizedResponse or originalResponse
         else:
             modifiedResponse = originalResponse
@@ -454,6 +454,8 @@ class ViewerVisibilityAction(ActionListener):
         source = e.getSource()
         self._extender.viewer_visibility[self._key] = source.isSelected()
         rebuildViewerPanel(self._extender)
+        if hasattr(self._extender, 'tabs_instance') and self._extender.tabs_instance:
+            self._extender.tabs_instance.setupDynamicColumns()
 
 class SendRequestRepeater(ActionListener):
     def __init__(self, extender, callbacks, original):
@@ -468,11 +470,10 @@ class SendRequestRepeater(ActionListener):
         if self.original:
             request = self._extender._currentlyDisplayedItem._originalrequestResponse
         else:
-            selected_row = self._extender.logTable.getSelectedRow()
             selected_col = self._extender.logTable.getSelectedColumn()
-            
-            if selected_col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
-                user_index = (selected_col - 6) >> 1
+            data_col = self._extender.tableModel.getDataColumnIndex(selected_col) if hasattr(self._extender, 'tableModel') else selected_col
+            if data_col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
+                user_index = (data_col - 6) >> 1
                 user_ids = sorted(self._extender.userTab.user_tabs.keys())
                 if user_index < len(user_ids):
                     user_id = user_ids[user_index]
@@ -483,7 +484,7 @@ class SendRequestRepeater(ActionListener):
                         request = self._extender._currentlyDisplayedItem._originalrequestResponse
                 else:
                     request = self._extender._currentlyDisplayedItem._originalrequestResponse
-            elif selected_col == 4 or selected_col == 5:
+            elif data_col == 4 or data_col == 5:
                 request = self._extender._currentlyDisplayedItem._unauthorizedRequestResponse or self._extender._currentlyDisplayedItem._originalrequestResponse
             else:
                 request = self._extender._currentlyDisplayedItem._originalrequestResponse
@@ -505,9 +506,9 @@ class SendRequestToRepeaterAction(AbstractAction):
             return
             
         selected_col = self._extender.logTable.getSelectedColumn()
-        
-        if selected_col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
-            user_index = (selected_col - 6) >> 1
+        data_col = self._extender.tableModel.getDataColumnIndex(selected_col) if hasattr(self._extender, 'tableModel') else selected_col
+        if data_col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
+            user_index = (data_col - 6) >> 1
             user_ids = sorted(self._extender.userTab.user_tabs.keys())
             if user_index < len(user_ids):
                 user_id = user_ids[user_index]
@@ -518,8 +519,7 @@ class SendRequestToRepeaterAction(AbstractAction):
                     request = self._extender._currentlyDisplayedItem._originalrequestResponse
             else:
                 request = self._extender._currentlyDisplayedItem._originalrequestResponse
-        elif selected_col == 4 or selected_col == 5:
-            # Unauthenticated column
+        elif data_col == 4 or data_col == 5:
             request = self._extender._currentlyDisplayedItem._unauthorizedRequestResponse or self._extender._currentlyDisplayedItem._originalrequestResponse
         else:
             request = self._extender._currentlyDisplayedItem._originalrequestResponse

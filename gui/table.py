@@ -71,96 +71,114 @@ class TableModel(AbstractTableModel):
         except:
             return 0
 
+    def _get_visible_columns(self):
+        """Return list of data column indices that are visible (based on viewer_visibility)."""
+        visible = []
+        visibility = getattr(self._extender, 'viewer_visibility', {})
+        if visibility.get('original', True):
+            visible.append(3)  # Orig. Len
+        if visibility.get('unauthenticated', True):
+            visible.extend([4, 5])  # Unauth.len, Unauth. Status
+        if hasattr(self._extender, 'userTab') and self._extender.userTab:
+            for i, user_id in enumerate(sorted(self._extender.userTab.user_tabs.keys())):
+                key = 'user_{}'.format(user_id)
+                if visibility.get(key, True):
+                    visible.extend([6 + i * 2, 6 + i * 2 + 1])  # User Len, User Status
+        return [0, 1, 2] + visible  # ID, Method, URL always visible
+
+    def getDataColumnIndex(self, viewColumnIndex):
+        """Map view column index to data column index."""
+        visible = self._get_visible_columns()
+        if 0 <= viewColumnIndex < len(visible):
+            return visible[viewColumnIndex]
+        return -1
+
+    def getViewColumnIndex(self, dataColumnIndex):
+        """Map data column index to view column index, or -1 if hidden."""
+        visible = self._get_visible_columns()
+        if dataColumnIndex in visible:
+            return visible.index(dataColumnIndex)
+        return -1
+
     def getColumnCount(self):
-        base_columns = 6
-        user_count = len(self._extender.userTab.user_tabs) if hasattr(self._extender, 'userTab') and self._extender.userTab else 0
-        return base_columns + (user_count * 2)
+        return len(self._get_visible_columns())
 
     def getColumnName(self, columnIndex):
+        dataCol = self.getDataColumnIndex(columnIndex)
+        if dataCol < 0:
+            return ""
         base_columns = ['ID', 'Method', 'URL', 'Orig. Len', 'Unauth.len', 'Unauth. Status']
-
-        if columnIndex < len(base_columns):
-            return base_columns[columnIndex]
-        
+        if dataCol < len(base_columns):
+            return base_columns[dataCol]
         try:
             if hasattr(self._extender, 'userTab') and self._extender.userTab:
-                user_index = (columnIndex - len(base_columns)) // 2
-                col_type = (columnIndex - len(base_columns)) % 2
-
+                user_index = (dataCol - len(base_columns)) // 2
+                col_type = (dataCol - len(base_columns)) % 2
                 user_ids = sorted(self._extender.userTab.user_tabs.keys())
-
                 if user_index < len(user_ids):
                     user_id = user_ids[user_index]
                     user_name = self._extender.userTab.user_tabs[user_id]['user_name']
-                    
                     col_names = [
-                        "{} Modif. Len".format(user_name), 
+                        "{} Modif. Len".format(user_name),
                         "{} Authz. Status".format(user_name)
                     ]
-
                     return col_names[col_type]
-
             return ""
-        
         except (IndexError, KeyError):
             return ""
 
     def getColumnClass(self, columnIndex):
-        base_classes = [Integer, String, String, Integer, Integer, String]
-        
-        if columnIndex < len(base_classes):
-            return base_classes[columnIndex]
-        
-        try:
-            col_type = (columnIndex - len(base_classes)) % 2
-            user_col_classes = [Integer, String]
-            return user_col_classes[col_type]
-        
-        except IndexError:
+        dataCol = self.getDataColumnIndex(columnIndex)
+        if dataCol < 0:
             return ""
+        base_classes = [Integer, String, String, Integer, Integer, String]
+        if dataCol < len(base_classes):
+            return base_classes[dataCol]
+        col_type = (dataCol - len(base_classes)) % 2
+        user_col_classes = [Integer, String]
+        return user_col_classes[col_type]
 
-    def getValueAt(self, rowIndex, columnIndex):
+    def _getValueAtDataColumn(self, rowIndex, dataCol):
+        """Get value at (rowIndex, dataCol) using data column index."""
         logEntry = self._extender._log.get(rowIndex)
-        
-        if columnIndex == 0: # ID
+        if dataCol == 0:
             return logEntry._id
-        if columnIndex == 1: # METHOD
+        if dataCol == 1:
             return logEntry._method
-        if columnIndex == 2: # URL
+        if dataCol == 2:
             return logEntry._url.toString()
-        if columnIndex == 3: # Original Request Length
+        if dataCol == 3:
             response = logEntry._originalrequestResponse.getResponse()
             return len(logEntry._originalrequestResponse.getResponse()) - self._extender._helpers.analyzeResponse(response).getBodyOffset()
-        if columnIndex == 4: # Unauthorized Request Length
+        if dataCol == 4:
             if logEntry._unauthorizedRequestResponse is not None:
                 response = logEntry._unauthorizedRequestResponse.getResponse()
                 return len(logEntry._unauthorizedRequestResponse.getResponse()) - self._extender._helpers.analyzeResponse(response).getBodyOffset()
-            else:
-                return 0
-        if columnIndex == 5:
+            return 0
+        if dataCol == 5:
             return logEntry._enfocementStatusUnauthorized
-
-        # User columns
-        if hasattr(self._extender, 'userTab') and self._extender.userTab and columnIndex >= 6:
-            user_index = (columnIndex - 6) // 2
-            col_type = (columnIndex - 6) % 2
-
+        if hasattr(self._extender, 'userTab') and self._extender.userTab and dataCol >= 6:
+            user_index = (dataCol - 6) // 2
+            col_type = (dataCol - 6) % 2
             user_ids = sorted(self._extender.userTab.user_tabs.keys())
             if user_index < len(user_ids):
                 user_id = user_ids[user_index]
-                user_name = self._extender.userTab.user_tabs[user_id]['user_name']
-                
                 user_data = logEntry.get_user_enforcement(user_id)
                 if user_data:
-                    if col_type == 0:  # Modified Length
+                    if col_type == 0:
                         if user_data['requestResponse'] and user_data['requestResponse'].getResponse():
                             response = user_data['requestResponse'].getResponse()
                             return len(response) - self._extender._helpers.analyzeResponse(response).getBodyOffset()
                         return 0
-                    elif col_type == 1:  # Authorization Status
+                    elif col_type == 1:
                         return user_data['enforcementStatus']
-                        
         return ""
+
+    def getValueAt(self, rowIndex, columnIndex):
+        dataCol = self.getDataColumnIndex(columnIndex)
+        if dataCol < 0:
+            return ""
+        return self._getValueAtDataColumn(rowIndex, dataCol)
     
 class ColorConstants:
     BLACK = Color.BLACK
@@ -193,59 +211,53 @@ class Table(JTable):
         self.updateColumnWidths()
 
     def updateColumnWidths(self):
-         if self.getColumnCount() > 0:
+        if self.getColumnCount() > 0:
             column_model = self.getColumnModel()
-
-            widths = [50, 80, 300, 80, 80, 120]
-            for i, width in enumerate(widths):
-                column_model.getColumn(i).setPreferredWidth(width)
-            
-            if hasattr(self._extender, 'userTab') and self._extender.userTab:
-                user_count = len(self._extender.userTab.user_tabs)
-                for i in range(6, 6 + (user_count << 1)):  # Bit shift for multiply by 2
-                    column_model.getColumn(i).setPreferredWidth(100)
+            widths_by_data_col = [50, 80, 300, 80, 80, 120]
+            for view_idx in range(self.getColumnCount()):
+                data_col = self._extender.tableModel.getDataColumnIndex(view_idx)
+                width = widths_by_data_col[data_col] if data_col < len(widths_by_data_col) else 100
+                column_model.getColumn(view_idx).setPreferredWidth(width)
 
     def prepareRenderer(self, renderer, row, col):
         comp = JTable.prepareRenderer(self, renderer, row, col)
-        
-        if col < 4:
+        data_col = self._extender.tableModel.getDataColumnIndex(col)
+        model_row = self._extender.logTable.convertRowIndexToModel(row)
+
+        if data_col < 4:
             comp.setForeground(ColorConstants.BLACK)
             comp.setBackground(ColorConstants.WHITE)
-
             selected_rows = self._extender.logTable.getSelectedRows()
             if row in selected_rows:
                 comp.setBackground(ColorConstants.SELECTED_BG)
-            
             return comp
-    
-        model_row = self._extender.logTable.convertRowIndexToModel(row)
-        value = self._extender.tableModel.getValueAt(model_row, col)
 
+        value = self._extender.tableModel.getValueAt(model_row, col)
         comp.setForeground(Color.BLACK)
         comp.setBackground(Color.WHITE)
-
         should_mask = False
-        
-        if col == 4:  # Unauthenticated length
-            status_value = self._extender.tableModel.getValueAt(model_row, 5)
+
+        if data_col == 4:
+            status_view_col = self._extender.tableModel.getViewColumnIndex(5)
+            status_value = self._extender.tableModel.getValueAt(model_row, status_view_col) if status_view_col >= 0 else ""
             should_mask = not self.shouldShowStatus(status_value)
-        elif col == 5:  # Unauthenticated status
+        elif data_col == 5:
             should_mask = not self.shouldShowStatus(value)
-        elif col >= 6:  # User columns
-            if col & 1:
+        elif data_col >= 6:
+            if data_col & 1:
                 should_mask = not self.shouldShowStatus(value)
             else:
-                status_col = col + 1
-                if status_col < self._extender.tableModel.getColumnCount():
-                    status_value = self._extender.tableModel.getValueAt(model_row, status_col)
+                status_view_col = self._extender.tableModel.getViewColumnIndex(data_col + 1)
+                if status_view_col >= 0:
+                    status_value = self._extender.tableModel.getValueAt(model_row, status_view_col)
                     should_mask = not self.shouldShowStatus(status_value)
 
         if should_mask:
             comp.setText("")
             comp.setBackground(Color.WHITE)
             comp.setForeground(Color.WHITE)
-        elif col >= 4:
-            if col == 5 or (col >= 6 and col & 1):
+        elif data_col >= 4:
+            if data_col == 5 or (data_col >= 6 and data_col & 1):
                 if value == self._extender.BYPASSSED_STR:
                     comp.setBackground(ColorConstants.BYPASSED_BG)
                 elif value == self._extender.IS_ENFORCED_STR:
@@ -254,11 +266,9 @@ class Table(JTable):
                     comp.setBackground(ColorConstants.ENFORCED_BG)
                 elif value == "Disabled":
                     comp.setBackground(ColorConstants.DISABLED_BG)
-                
                 comp.setForeground(ColorConstants.BLACK)
 
         selected_rows = self._extender.logTable.getSelectedRows()
-
         if row in selected_rows and not should_mask:
             comp.setBackground(ColorConstants.SELECTED_BG)
             comp.setForeground(ColorConstants.BLACK)
@@ -287,6 +297,7 @@ class Table(JTable):
 
     def changeSelection(self, row, col, toggle, extend):
         logEntry = self._extender._log.get(self._extender.logTable.convertRowIndexToModel(row))
+        data_col = self._extender.tableModel.getDataColumnIndex(col)
 
         if hasattr(self._extender, 'user_viewers'):
             for user_id, viewer in self._extender.user_viewers.items():
@@ -310,17 +321,17 @@ class Table(JTable):
 
         self._extender._currentlyDisplayedItem = logEntry
 
-        if col == 2:
+        if data_col == 2:
             rebuildViewerPanel(self._extender)
-        elif col == 3:
+        elif data_col == 3:
             if self._extender.viewer_visibility.get('original', True):
                 expand(self._extender, self._extender.original_requests_tabs)
-        elif col == 4 or col == 5:
+        elif data_col == 4 or data_col == 5:
             if self._extender.viewer_visibility.get('unauthenticated', True):
                 expand(self._extender, self._extender.unauthenticated_requests_tabs)
-        elif col >= 6:
-            user_ids = sorted(self._extender.userTab.user_tabs.keys()) if hasattr(self._extender, 'userTab') and self._extender.userTab else []
-            user_index = (col - 6) >> 1
+        elif data_col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
+            user_ids = sorted(self._extender.userTab.user_tabs.keys())
+            user_index = (data_col - 6) >> 1
             if user_index < len(user_ids):
                 user_id = user_ids[user_index]
                 key = 'user_{}'.format(user_id)
@@ -333,21 +344,20 @@ class Table(JTable):
         return
 
     def updateContextMenuText(self, col):
+        data_col = self._extender.tableModel.getDataColumnIndex(col)
         modified_text = "Send Modified Request to Repeater"
         comparer_text = "Send Responses to Comparer"
-        
-        if col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
-            user_index = (col - 6) // 2
+        if data_col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
+            user_index = (data_col - 6) // 2
             user_ids = sorted(self._extender.userTab.user_tabs.keys())
             if user_index < len(user_ids):
                 user_id = user_ids[user_index]
                 user_name = self._extender.userTab.user_tabs[user_id]['user_name']
                 modified_text = "Send {} Request to Repeater".format(user_name)
                 comparer_text = "Send {} Responses to Comparer".format(user_name)
-        elif col == 4 or col == 5:
+        elif data_col == 4 or data_col == 5:
             modified_text = "Send Unauthenticated Request to Repeater"
             comparer_text = "Send Unauthenticated Responses to Comparer"
-        
         if hasattr(self._extender, 'sendRequestMenu2'):
             self._extender.sendRequestMenu2.setText(modified_text)
         if hasattr(self._extender, 'sendResponseMenu'):
@@ -361,8 +371,10 @@ class Table(JTable):
 class TableExtension:
     def prepareRenderer(self, renderer, row, col):
         comp = JTable.prepareRenderer(self, renderer, row, col)
+        data_col = self._extender.tableModel.getDataColumnIndex(col)
+        model_row = self._extender.logTable.convertRowIndexToModel(row)
 
-        if col < 5:
+        if data_col < 5:
             comp.setForeground(ColorConstants.BLACK)
             comp.setBackground(ColorConstants.WHITE)
             
@@ -373,22 +385,21 @@ class TableExtension:
             
             return comp
 
-        model_row = self._extender.logTable.convertRowIndexToModel(row)
         value = self._extender.tableModel.getValueAt(model_row, col)
 
         comp.setForeground(ColorConstants.BLACK)
         comp.setBackground(ColorConstants.WHITE)
         should_mask = False
         
-        if col == 5:
+        if data_col == 5:
             should_mask = not self.shouldShowStatus(value)
-        elif col >= 6:
-            if col & 1:  # Odd columns are status
+        elif data_col >= 6:
+            if data_col & 1:
                 should_mask = not self.shouldShowStatus(value)
-            else:  # Even columns are length
-                status_col = col + 1
-                if status_col < self._extender.tableModel.getColumnCount():
-                    status_value = self._extender.tableModel.getValueAt(model_row, status_col)
+            else:
+                status_view_col = self._extender.tableModel.getViewColumnIndex(data_col + 1)
+                if status_view_col >= 0:
+                    status_value = self._extender.tableModel.getValueAt(model_row, status_view_col)
                     should_mask = not self.shouldShowStatus(status_value)
 
         if should_mask:
@@ -396,7 +407,7 @@ class TableExtension:
             comp.setBackground(ColorConstants.WHITE)
             comp.setForeground(ColorConstants.WHITE)
         else:
-            if col & 1 or col == 5:  # Status columns
+            if data_col & 1 or data_col == 5:
                 if value == self._extender.BYPASSSED_STR:
                     comp.setBackground(ColorConstants.BYPASSED_BG)
                 elif value == self._extender.IS_ENFORCED_STR:
@@ -409,12 +420,12 @@ class TableExtension:
                 comp.setForeground(ColorConstants.BLACK)
 
         selected_rows = self._extender.logTable.getSelectedRows()
-        if row in selected_rows and (not should_mask or col < 5):
+        if row in selected_rows and (not should_mask or data_col < 5):
             comp.setBackground(ColorConstants.SELECTED_BG)
             comp.setForeground(ColorConstants.BLACK)
 
         return comp
-    
+
     def shouldShowStatus(self, status):
         if not hasattr(self._extender, 'showBypassed'):
             return True
@@ -479,23 +490,15 @@ class TableRowFilter(RowFilter):
             self._extender.showIsEnforced.isSelected() and
             self._extender.showEnforced.isSelected()):
             return True
-       
-        unauth_status = entry.getValue(5) if entry.getValueCount() > 5 else ""
-        
-        if self.statusMatchesFilter(unauth_status):
+        tableModel = getattr(self._extender, 'tableModel', None)
+        if not tableModel:
             return True
-        
-        if hasattr(self._extender, 'userTab') and self._extender.userTab:
-            user_count = len(self._extender.userTab.user_tabs)
-            
-            for i in range(user_count):
-                status_col = 7 + (i << 1)
-                
-                if status_col < entry.getValueCount():
-                    user_status = entry.getValue(status_col)
-                    if self.statusMatchesFilter(user_status):
-                        return True
-        
+        for view_col in range(entry.getValueCount()):
+            data_col = tableModel.getDataColumnIndex(view_col)
+            if data_col == 5 or (data_col >= 6 and data_col % 2 == 1):
+                status = entry.getValue(view_col)
+                if self.statusMatchesFilter(status):
+                    return True
         return False
     
     def statusMatchesFilter(self, status):
