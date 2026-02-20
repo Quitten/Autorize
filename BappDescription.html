@@ -1,25 +1,40 @@
-<p>Autorize is an extension aimed at helping the penetration tester to detect
-authorization vulnerabilities, one of the more time-consuming tasks in a web
-application penetration test.</p>
+<p>
+    Autorize is an automatic authorization and authentication enforcement detection extension that identifies access
+    control vulnerabilities in web applications. It monitors traffic from a high-privileged user, automatically replays
+    those requests with low-privileged or unauthenticated credentials, and analyzes responses to detect authorization
+    bypasses and authentication weaknesses.
+</p>
 
-<p>It is sufficient to give to the extension the cookies of a low privileged
-user and navigate the website with a high privileged user. The extension
-automatically repeats every request with the session of the low privileged
-user and detects authorization vulnerabilities.</p>
+<h2>Features</h2>
+<ul>
+    <li>Automatic detection of authorization and authentication enforcement issues by replaying requests with different
+        privilege levels</li>
+    <li>Support for multiple low-privileged users with independent enforcement detection and match/replace rules</li>
+    <li>Configurable enforcement detection using status codes, response headers, body content, regex patterns, and
+        response length</li>
+    <li>Flexible interception filters based on scope, URL patterns, HTTP methods, request/response headers and body
+        content</li>
+    <li>Visual status indicators showing whether authorization is bypassed, enforced, or requires manual configuration
+    </li>
+    <li>HTML and CSV export for reporting</li>
+</ul>
 
-<p>It is also possible to repeat every request without any
-cookies in order to detect authentication vulnerabilities in
-addition to authorization ones.</p>
-
-<p>The plugin works without any configuration, but is also highly
-customizable, allowing configuration of the granularity of the authorization
-enforcement conditions and also which requests the plugin must test and
-which not. It is possible to save the state of the plugin and to export a
-report of the authorization tests in HTML or in CSV.</p>
-
-<p>The reported enforcement statuses are the following:</p>
+<h2>Usage</h2>
 <ol>
-    <li>Bypassed! - Red color</li>
-    <li>Enforced! - Green color</li>
-    <li>Is enforced??? (please configure enforcement detector) - Yellow color</li>
+    <li>Navigate to the Autorize tab and open the Configuration section</li>
+    <li>Add low-privileged user credentials by specifying authorization headers or cookies that will be injected into
+        replayed requests</li>
+    <li>Optionally configure enforcement detectors to define custom rules for identifying when authorization is properly
+        enforced</li>
+    <li>Set up interception filters to control which requests should be tested (e.g., scope-only, URL patterns, HTTP
+        methods)</li>
+    <li>Browse the application as a high-privileged user. The extension
+        automatically repeats every request with the session of the low privileged user and detects authorization
+        vulnerabilities.</li>
+    <li>Review the results table where each request shows enforcement status: Bypassed (red), Enforced (green), or
+        uncertain (yellow)</li>
+    <li>Select any entry to compare the original response with the modified low-privileged and unauthenticated responses
+    </li>
+    <li>For uncertain results, configure enforcement detectors with specific patterns that indicate proper authorization
+        enforcement</li>
 </ol>
