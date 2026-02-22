@@ -46,12 +46,15 @@ def makeMessage(self, messageInfo, removeOrNot, authorizeOrNot, replaceText=None
                     patchedHeader = re.sub(pattern, r"\1{}={}".format(paramKey, paramValue), headers[0], count=1, flags=re.DOTALL)
                     headers[0] = patchedHeader
         else:
-            removeHeaders = [header for header in replaceText.split() if header.endswith(':')]
+            # Deduplicate so multiple users with same header name don't cause double-remove
+            removeHeaders = list(set(header for header in replaceText.split() if header.endswith(':')))
 
+            # Build list of headers to keep (don't modify list while iterating / removing)
+            kept = [headers[0]]
             for header in headers[1:]:
-                for removeHeader in removeHeaders:
-                    if header.lower().startswith(removeHeader.lower()):
-                        headers.remove(header)
+                if not any(header.lower().startswith(rh.lower()) for rh in removeHeaders):
+                    kept.append(header)
+            headers = kept
 
         if authorizeOrNot:
             if hasattr(self, 'badProgrammerMRModel'):
