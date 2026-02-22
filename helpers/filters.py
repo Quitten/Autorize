@@ -26,7 +26,6 @@ def modFilterHelper(listObj, typeObj, textObj):
                 listObj.getModel().remove(index)
 
 def expand(extender, comp):
-        comp.setSelectedIndex(0)
         comp.setTitleAt(2, "Collapse")
         extender.requests_panel.removeAll()
         extender.requests_panel.add(comp)
@@ -36,7 +35,6 @@ def expand(extender, comp):
         extender.expanded_requests = 1
 
 def collapse(extender, comp):
-        comp.setSelectedIndex(0)
         comp.setTitleAt(2, "Expand")
         rebuildViewerPanel(extender)
 
@@ -51,7 +49,6 @@ def rebuildViewerPanel(extender):
         for tabs in all_viewer_tabs:
                 if tabs.getTabCount() > 2:
                         tabs.setTitleAt(2, "Expand")
-                        tabs.setSelectedIndex(0)
 
         extender.requests_panel.removeAll()
         visible_count = 0

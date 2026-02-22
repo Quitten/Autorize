@@ -40,6 +40,7 @@ from helpers.filters import expand, collapse, rebuildViewerPanel
 from javax.swing import KeyStroke
 from javax.swing import JTable
 from javax.swing import AbstractAction
+from javax.swing.event import ChangeListener, ChangeEvent
 from java.awt.event import KeyEvent
 from java.awt.event import InputEvent
 from javax.swing import SwingUtilities
@@ -137,6 +138,7 @@ class Tabs():
 
         self._extender.user_viewers = {}
         self._extender.viewer_visibility = {'original': True, 'unauthenticated': True}
+        self._extender._viewer_last_content_tab = {}
 
         message_editor = MessageEditor(self._extender)
 
@@ -148,17 +150,21 @@ class Tabs():
 
         self._extender.original_requests_tabs = JTabbedPane()
         self._extender.original_requests_tabs.addMouseListener(Mouseclick(self._extender))
+        self._extender.original_requests_tabs.addChangeListener(ViewerTabChangeListener(self._extender))
         self._extender.original_requests_tabs.addTab("Original Request", self._extender._originalrequestViewer.getComponent())
         self._extender.original_requests_tabs.addTab("Original Response", self._extender._originalresponseViewer.getComponent())
         self._extender.original_requests_tabs.addTab("Expand", None)
         self._extender.original_requests_tabs.setSelectedIndex(0)
-        
+        self._extender._viewer_last_content_tab[id(self._extender.original_requests_tabs)] = 0
+
         self._extender.unauthenticated_requests_tabs = JTabbedPane()
         self._extender.unauthenticated_requests_tabs.addMouseListener(Mouseclick(self._extender))
+        self._extender.unauthenticated_requests_tabs.addChangeListener(ViewerTabChangeListener(self._extender))
         self._extender.unauthenticated_requests_tabs.addTab("Unauthenticated Request", self._extender._unauthorizedrequestViewer.getComponent())
         self._extender.unauthenticated_requests_tabs.addTab("Unauthenticated Response", self._extender._unauthorizedresponseViewer.getComponent())
         self._extender.unauthenticated_requests_tabs.addTab("Expand", None)
         self._extender.unauthenticated_requests_tabs.setSelectedIndex(0)
+        self._extender._viewer_last_content_tab[id(self._extender.unauthenticated_requests_tabs)] = 0
 
         if hasattr(self._extender, 'userTab') and self._extender.userTab:
             for user_id in sorted(self._extender.userTab.user_tabs.keys()):
@@ -198,10 +204,12 @@ class Tabs():
 
         tabs = JTabbedPane()
         tabs.addMouseListener(Mouseclick(self._extender))
+        tabs.addChangeListener(ViewerTabChangeListener(self._extender))
         tabs.addTab("{} Request".format(user_name), requestViewer.getComponent())
         tabs.addTab("{} Response".format(user_name), responseViewer.getComponent())
         tabs.addTab("Expand", None)
         tabs.setSelectedIndex(0)
+        self._extender._viewer_last_content_tab[id(tabs)] = 0
 
         self._extender.user_viewers[user_id] = {
             'requestViewer': requestViewer,
@@ -371,16 +379,29 @@ class UserMessageEditor(IMessageEditorController):
             return user_data['requestResponse'].getResponse()
         return self._extender._currentlyDisplayedItem._originalrequestResponse.getResponse()
 
+class ViewerTabChangeListener(ChangeListener):
+    def __init__(self, extender):
+        self._extender = extender
+
+    def stateChanged(self, evt):
+        comp = evt.getSource()
+        idx = comp.getSelectedIndex()
+        if idx in (0, 1):
+            self._extender._viewer_last_content_tab[id(comp)] = idx
+
 class Mouseclick(MouseAdapter):
     def __init__(self, extender):
         self._extender = extender
 
     def mouseReleased(self, evt):
-        if evt.getComponent().getSelectedIndex() == 2:
+        comp = evt.getComponent()
+        if comp.getSelectedIndex() == 2:
+            last_content = self._extender._viewer_last_content_tab.get(id(comp), 0)
             if self._extender.expanded_requests == 0:
-                expand(self._extender, evt.getComponent())
+                expand(self._extender, comp)
             else:
-                collapse(self._extender, evt.getComponent())
+                collapse(self._extender, comp)
+            comp.setSelectedIndex(last_content)
 
 def createEyeIcon(size=16):
     img = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
