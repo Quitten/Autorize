@@ -284,7 +284,7 @@ def checkAuthorizationAllUsers(self, messageInfo, checkUnauthorized=True):
     method = self._helpers.analyzeRequest(messageInfo.getRequest()).getMethod()
     original_url = self._helpers.analyzeRequest(messageInfo).getUrl()
 
-    logEntry = LogEntry(self.currentRequestNumber,
+    logEntry = LogEntry(None,  # ID assigned inside lock to avoid duplicates when concurrent
                         method,
                         original_url,
                         messageInfo,
@@ -329,10 +329,11 @@ def checkAuthorizationAllUsers(self, messageInfo, checkUnauthorized=True):
 
     self._lock.acquire()
     try:
+        logEntry._id = self.currentRequestNumber
         row = self._log.size()
         self._log.add(logEntry)
         SwingUtilities.invokeLater(UpdateTableEDT(self,"insert",row,row))
-        self.currentRequestNumber = self.currentRequestNumber + 1
+        self.currentRequestNumber += 1
     except Exception as e:
         raise
     finally:
@@ -577,7 +578,7 @@ def checkAuthorization(self, messageInfo, originalHeaders, checkUnauthorized):
             self._log.add(LogEntry(self.currentRequestNumber,self._callbacks.saveBuffersToTempFiles(requestResponse), method, self._helpers.analyzeRequest(requestResponse).getUrl(),messageInfo,impression,None,"Disabled")) # same requests not include again.
 
         SwingUtilities.invokeLater(UpdateTableEDT(self,"insert",row,row))
-        self.currentRequestNumber = self.currentRequestNumber + 1
+        self.currentRequestNumber += 1
     except Exception as e:
         raise
     finally:
