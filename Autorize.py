@@ -42,7 +42,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IExtensionState
     # implement IProxyListener
     #
     def processProxyMessage(self, messageIsRequest, message):
-        handle_proxy_message(self,message)
+        handle_proxy_message(self, message)
 
     #
     # implement IExtensionStateListener
