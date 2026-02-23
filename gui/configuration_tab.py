@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*- 
 
 from java.awt.event import ActionListener
+from java.lang import Runnable
 from javax.swing import SwingUtilities
 from javax.swing import JToggleButton
 from javax.swing import JTabbedPane
@@ -13,6 +14,22 @@ from javax.swing import JPanel
 from java.awt import Dimension
 
 from table import UpdateTableEDT
+
+
+class ClearTableRunnable(Runnable):
+    """Runs on executor so EDT never blocks on _lock."""
+    def __init__(self, extender):
+        self._extender = extender
+
+    def run(self):
+        self._extender._lock.acquire()
+        try:
+            oldSize = self._extender._log.size()
+            self._extender._log.clear()
+            if oldSize > 0:
+                SwingUtilities.invokeLater(UpdateTableEDT(self._extender, "delete", 0, oldSize - 1))
+        finally:
+            self._extender._lock.release()
 
 class ConfigurationTab():
     def __init__(self, extender):
@@ -199,11 +216,8 @@ class ConfigurationTab():
             self._extender.intercept = 0
     
     def clearTable(self, event):
-        self._extender._lock.acquire()
-        oldSize = self._extender._log.size()
-        self._extender._log.clear()
-        SwingUtilities.invokeLater(UpdateTableEDT(self._extender,"delete",0, oldSize - 1))
-        self._extender._lock.release()
+        # Run on executor so the EDT never blocks on _lock (avoids UI freeze)
+        self._extender.executor.submit(ClearTableRunnable(self._extender))
     
     def replaceQueryHanlder(self, event):
         default_text = "Cookie: Insert=injected; cookie=or;\nHeader: here"
