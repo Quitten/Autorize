@@ -318,10 +318,15 @@ class UserTab():
                 return "{} Copy {}".format(name, counter)
     
     def refreshTableStructure(self):
-        if hasattr(self._extender, 'tableModel'):
-            self._extender.tableModel.fireTableStructureChanged()
+        if hasattr(self._extender, 'tabs_instance') and self._extender.tabs_instance:
+            self._extender.tabs_instance.setupDynamicColumns()
+        else:
+            if hasattr(self._extender, 'tableModel'):
+                self._extender.tableModel.fireTableStructureChanged()
+            if hasattr(self._extender, 'logTable'):
+                self._extender.logTable.updateColumnWidths()
         if hasattr(self._extender, 'logTable'):
-            self._extender.logTable.updateColumnWidths()
+            self._extender.logTable.refresh_context_menu_labels()
             
 class UserEnforcementDetector(EnforcementDetectors):
 

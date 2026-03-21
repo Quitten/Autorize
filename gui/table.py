@@ -18,6 +18,39 @@ from javax.swing.event import ListSelectionListener
 
 from helpers.filters import expand, collapse, rebuildViewerPanel
 
+
+def resolve_modified_repeater_target(extender, data_col):
+    """Pick request/response and label name for the non-original Send-to-Repeater action."""
+    item = getattr(extender, "_currentlyDisplayedItem", None)
+    if not item:
+        return None, None
+    if data_col >= 6 and hasattr(extender, "userTab") and extender.userTab:
+        user_index = (data_col - 6) >> 1
+        user_ids = sorted(extender.userTab.user_tabs.keys())
+        if user_index < len(user_ids):
+            user_id = user_ids[user_index]
+            user_name = extender.userTab.user_tabs[user_id]["user_name"]
+            user_data = item.get_user_enforcement(user_id)
+            if user_data and user_data["requestResponse"]:
+                return user_data["requestResponse"], user_name
+            return item._originalrequestResponse, user_name
+    elif data_col == 4 or data_col == 5:
+        return (
+            item._unauthorizedRequestResponse or item._originalrequestResponse,
+            "Unauthenticated",
+        )
+    if hasattr(extender, "userTab") and extender.userTab:
+        user_ids = sorted(extender.userTab.user_tabs.keys())
+        if user_ids:
+            user_id = user_ids[0]
+            user_name = extender.userTab.user_tabs[user_id]["user_name"]
+            user_data = item.get_user_enforcement(user_id)
+            if user_data and user_data["requestResponse"]:
+                return user_data["requestResponse"], user_name
+            return item._originalrequestResponse, user_name
+    return item._originalrequestResponse, None
+
+
 class TableFilter():
     def __init__(self, extender):
         self._extender = extender
@@ -345,23 +378,16 @@ class Table(JTable):
 
     def updateContextMenuText(self, col):
         data_col = self._extender.tableModel.getDataColumnIndex(col)
-        modified_text = "Send Modified Request to Repeater"
-        comparer_text = "Send Responses to Comparer"
-        if data_col >= 6 and hasattr(self._extender, 'userTab') and self._extender.userTab:
-            user_index = (data_col - 6) // 2
-            user_ids = sorted(self._extender.userTab.user_tabs.keys())
-            if user_index < len(user_ids):
-                user_id = user_ids[user_index]
-                user_name = self._extender.userTab.user_tabs[user_id]['user_name']
-                modified_text = "Send {} Request to Repeater".format(user_name)
-                comparer_text = "Send {} Responses to Comparer".format(user_name)
-        elif data_col == 4 or data_col == 5:
-            modified_text = "Send Unauthenticated Request to Repeater"
-            comparer_text = "Send Unauthenticated Responses to Comparer"
-        if hasattr(self._extender, 'sendRequestMenu2'):
-            self._extender.sendRequestMenu2.setText(modified_text)
-        if hasattr(self._extender, 'sendResponseMenu'):
-            self._extender.sendResponseMenu.setText(comparer_text)
+        self._extender._repeaterContextDataCol = data_col
+        self._extender._repeaterContextViewCol = col
+
+    def refresh_context_menu_labels(self):
+        if self.getSelectedRow() < 0:
+            return
+        vcol = self.getSelectedColumn()
+        if vcol < 0:
+            vcol = getattr(self._extender, "_repeaterContextViewCol", 0)
+        self.updateContextMenuText(vcol)
 
     def updateTabTitles(self, user_name):
         if hasattr(self._extender, 'modified_requests_tabs'):
