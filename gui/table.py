@@ -223,10 +223,16 @@ class ColorConstants:
     ENFORCED_BG = Color(204, 255, 153)    # Light green
     DISABLED_BG = Color(211, 211, 211)    # Light gray
     SELECTED_BG = Color(201, 215, 255) 
-    GROUP_RED = Color(255, 235, 235)
-    GROUP_YELLOW = Color(255, 249, 219)
-    GROUP_GREEN = Color(235, 255, 235)
-    GROUP_BLUE = Color(235, 242, 255)
+    GROUP_RED = Color(255, 186, 186)
+    GROUP_ORANGE = Color(255, 208, 158)
+    GROUP_YELLOW = Color(255, 238, 153)
+    GROUP_LIME = Color(222, 255, 143)
+    GROUP_GREEN = Color(184, 245, 184)
+    GROUP_TEAL = Color(165, 235, 220)
+    GROUP_CYAN = Color(166, 234, 255)
+    GROUP_BLUE = Color(181, 210, 255)
+    GROUP_PURPLE = Color(215, 190, 255)
+    GROUP_PINK = Color(255, 176, 219)
 
 class TableSelectionListener(ListSelectionListener):
     """Class Responsible for the multi-row deletion"""
@@ -339,14 +345,20 @@ class Table(JTable):
             return ColorConstants.WHITE
         entry = self._extender._log.get(model_row)
         group_tag = entry.get_group_tag()
-        if group_tag == "Red":
-            return ColorConstants.GROUP_RED
-        if group_tag == "Yellow":
-            return ColorConstants.GROUP_YELLOW
-        if group_tag == "Green":
-            return ColorConstants.GROUP_GREEN
-        if group_tag == "Blue":
-            return ColorConstants.GROUP_BLUE
+        group_colors = {
+            "Red": ColorConstants.GROUP_RED,
+            "Orange": ColorConstants.GROUP_ORANGE,
+            "Yellow": ColorConstants.GROUP_YELLOW,
+            "Lime": ColorConstants.GROUP_LIME,
+            "Green": ColorConstants.GROUP_GREEN,
+            "Teal": ColorConstants.GROUP_TEAL,
+            "Cyan": ColorConstants.GROUP_CYAN,
+            "Blue": ColorConstants.GROUP_BLUE,
+            "Purple": ColorConstants.GROUP_PURPLE,
+            "Pink": ColorConstants.GROUP_PINK,
+        }
+        if group_tag in group_colors:
+            return group_colors[group_tag]
         return ColorConstants.WHITE
 
     def changeSelection(self, row, col, toggle, extend):

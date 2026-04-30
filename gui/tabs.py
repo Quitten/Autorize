@@ -117,7 +117,19 @@ class Tabs():
         retestAllitem.addActionListener(RetestAllRequests(self._extender))
         
         setGroupMenu = JMenu("Set Group")
-        for group_name in ["Red", "Yellow", "Green", "Blue", "Clear"]:
+        for group_name in [
+            "Red",
+            "Orange",
+            "Yellow",
+            "Lime",
+            "Green",
+            "Teal",
+            "Cyan",
+            "Blue",
+            "Purple",
+            "Pink",
+            "Clear",
+        ]:
             group_item = JMenuItem(group_name)
             group_item.addActionListener(SetGroupTagAction(self._extender, group_name))
             setGroupMenu.add(group_item)

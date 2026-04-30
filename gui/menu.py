@@ -25,12 +25,15 @@ class MenuImpl(IContextMenuFactory):
         self._extender = extender
         self._hotkey_dispatcher = None
         self._hotkey_post_processor = None
+        self._hotkey_handler = None
 
     def register_global_hotkey(self):
         if self._hotkey_dispatcher is not None or self._hotkey_post_processor is not None:
             return
-        self._hotkey_dispatcher = GlobalSendToAutorizeDispatcher(self._extender)
-        self._hotkey_post_processor = GlobalSendToAutorizeDispatcher(self._extender)
+        # Use one shared handler for both hooks to avoid duplicate processing paths.
+        self._hotkey_handler = GlobalSendToAutorizeDispatcher(self._extender)
+        self._hotkey_dispatcher = self._hotkey_handler
+        self._hotkey_post_processor = self._hotkey_handler
         manager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
         manager.addKeyEventDispatcher(self._hotkey_dispatcher)
         manager.addKeyEventPostProcessor(self._hotkey_post_processor)
@@ -45,6 +48,7 @@ class MenuImpl(IContextMenuFactory):
             manager.removeKeyEventPostProcessor(self._hotkey_post_processor)
         self._hotkey_dispatcher = None
         self._hotkey_post_processor = None
+        self._hotkey_handler = None
 
     def createMenuItems(self, invocation):
         responses = invocation.getSelectedMessages()
@@ -115,6 +119,7 @@ class HandleMenuItems(ActionListener):
 class GlobalSendToAutorizeDispatcher(KeyEventDispatcher, KeyEventPostProcessor):
     def __init__(self, extender):
         self._extender = extender
+        self._last_hotkey_fingerprint = None
 
     def dispatchKeyEvent(self, event):
         return self._handle_hotkey(event)
@@ -136,6 +141,13 @@ class GlobalSendToAutorizeDispatcher(KeyEventDispatcher, KeyEventPostProcessor):
             has_ctrl_or_cmd = ((modifiers & InputEvent.CTRL_DOWN_MASK) != 0) or ((modifiers & InputEvent.META_DOWN_MASK) != 0)
             if not has_shift or not has_ctrl_or_cmd:
                 return False
+
+            # Same physical key event can pass through both dispatcher and post-processor.
+            # Deduplicate by event fingerprint.
+            fingerprint = "{}:{}:{}".format(event.getWhen(), key_code, modifiers)
+            if fingerprint == self._last_hotkey_fingerprint:
+                return False
+            self._last_hotkey_fingerprint = fingerprint
 
             messages = self._extract_selected_messages(event.getComponent())
             if not messages:
@@ -474,19 +486,8 @@ class GlobalSendToAutorizeDispatcher(KeyEventDispatcher, KeyEventPostProcessor):
                 try:
                     value = getattr(table, method_name)()
                     found.extend(self._coerce_messages(value))
-                    #region agent log
-                    _debug_log("pre-fix", "H8", "gui/menu.py:_extract_messages_via_known_methods", "table no-arg extraction attempt", {
-                        "method": method_name,
-                        "extracted": len(self._coerce_messages(value))
-                    })
-                    #endregion
-                except Exception as exc:
-                    #region agent log
-                    _debug_log("pre-fix", "H8", "gui/menu.py:_extract_messages_via_known_methods", "table no-arg extraction error", {
-                        "method": method_name,
-                        "error": str(exc)
-                    })
-                    #endregion
+                except:
+                    pass
         # Methods with row index.
         for view_row in selected_rows:
             try:
