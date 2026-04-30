@@ -48,5 +48,7 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IExtensionState
     # implement IExtensionStateListener
     #
     def extensionUnloaded(self):
+        if hasattr(self, "menuImpl") and self.menuImpl:
+            self.menuImpl.unregister_global_hotkey()
         self.executor.shutdown()
         print "Autorize extension unloaded."
