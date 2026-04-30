@@ -67,6 +67,8 @@ class Initiator():
     def implement_all(self):
         itab = ITabImpl(self._extender)
         menu = MenuImpl(self._extender)
+        menu.register_global_hotkey()
+        self._extender.menuImpl = menu
 
         self._extender._callbacks.registerContextMenuFactory(menu)
         self._extender._callbacks.addSuiteTab(itab)

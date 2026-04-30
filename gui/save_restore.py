@@ -128,7 +128,8 @@ class SaveRestore():
                         tempUnauthorizedRequestResponseHost, tempUnauthorizedRequestResponsePort, tempUnauthorizedRequestResponseProtocol,
                         tempUnauthorizedRequestResponseRequest, tempUnauthorizedRequestResponseResponse,
                         tempEnforcementStatusUnauthorized,
-                        base64.b64encode(json.dumps(user_data_json))
+                        base64.b64encode(json.dumps(user_data_json)),
+                        logEntry.get_group_tag() if hasattr(logEntry, "get_group_tag") else ""
                     ]
 
                     csvwriter.writerow(tempRow)
@@ -267,6 +268,9 @@ class SaveRestore():
                                     userHttpService, base64.b64decode(user_data['request']), base64.b64decode(user_data['response']))
                                 savedUserRequestResponse = self._extender._callbacks.saveBuffersToTempFiles(userRequestResponse)
                                 logEntry.add_user_enforcement(user_id, savedUserRequestResponse, user_data['status'])
+
+                        if len(row) > 12:
+                            logEntry.set_group_tag(row[12])
 
                         self._extender._log.add(logEntry)
                         self._extender.currentRequestNumber = self._extender.currentRequestNumber + 1

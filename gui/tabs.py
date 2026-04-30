@@ -116,6 +116,12 @@ class Tabs():
         retestAllitem = JMenuItem("Retest all requests")
         retestAllitem.addActionListener(RetestAllRequests(self._extender))
         
+        setGroupMenu = JMenu("Set Group")
+        for group_name in ["Red", "Yellow", "Green", "Blue", "Clear"]:
+            group_item = JMenuItem(group_name)
+            group_item.addActionListener(SetGroupTagAction(self._extender, group_name))
+            setGroupMenu.add(group_item)
+
         deleteSelectedItem = JMenuItem("Delete")
         deleteSelectedItem.addActionListener(DeleteSelectedRequest(self._extender))
 
@@ -127,6 +133,7 @@ class Tabs():
         self._extender.menu.add(copyURLitem)
         self._extender.menu.add(retestSelecteditem)
         self._extender.menu.add(retestAllitem)
+        self._extender.menu.add(setGroupMenu)
         self._extender.menu.add(deleteSelectedItem)
 
         self._extender.tabs = JTabbedPane()
@@ -422,6 +429,21 @@ class DeleteSelectedRequest(AbstractAction):
         if len(rows) != 0:
             rows = [self._extender.logTable.convertRowIndexToModel(row) for row in rows]
             SwingUtilities.invokeLater(lambda: self._extender.tableModel.removeRows(rows))
+
+class SetGroupTagAction(ActionListener):
+    def __init__(self, extender, group_tag):
+        self._extender = extender
+        self._group_tag = "" if group_tag == "Clear" else group_tag
+
+    def actionPerformed(self, e):
+        rows = self._extender.logTable.getSelectedRows()
+        if len(rows) == 0:
+            return
+        model_rows = [self._extender.logTable.convertRowIndexToModel(row) for row in rows]
+        for model_row in model_rows:
+            if model_row >= 0 and model_row < self._extender._log.size():
+                self._extender._log.get(model_row).set_group_tag(self._group_tag)
+        self._extender.tableModel.fireTableRowsUpdated(min(model_rows), max(model_rows))
 
 class CopySelectedURL(ActionListener):
     def __init__(self, extender):
