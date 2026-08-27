@@ -22,6 +22,15 @@ while decrement:
         maxInt = int(maxInt/10)
         decrement = True
 
+class _PathFile():
+    """Minimal shim so restore_state_from_path can reuse the file-chooser body."""
+    def __init__(self, path):
+        self._path = path
+
+    def getAbsolutePath(self):
+        return self._path
+
+
 class SaveRestore():
     def __init__(self, extender):
         self._extender = extender
@@ -45,7 +54,10 @@ class SaveRestore():
 
         if userSelection == JFileChooser.APPROVE_OPTION:
             exportFile = fileChooser.getSelectedFile()
-            with open(exportFile.getAbsolutePath(), 'wb') as csvfile:
+            self.save_state_to_path(exportFile.getAbsolutePath())
+
+    def save_state_to_path(self, path):
+            with open(path, 'wb') as csvfile:
                 csvwriter = csv.writer(csvfile, delimiter='\t', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
                 # Configuration
@@ -82,6 +94,15 @@ class SaveRestore():
 
                 tempRow = ["CheckBoxes", json.dumps(d)]
                 csvwriter.writerow(tempRow)
+
+                # MCP server config (enabled flag + port only; the bearer token is
+                # in-memory only and is deliberately never persisted/exported).
+                if hasattr(self._extender, 'mcpEnabled') and hasattr(self._extender, 'mcpPortField'):
+                    mcp_cfg = {
+                        "enabled": self._extender.mcpEnabled.isSelected(),
+                        "port": self._extender.mcpPortField.getText(),
+                    }
+                    csvwriter.writerow(["MCPConfig", json.dumps(mcp_cfg)])
 
                 # Request/response list
                 for i in range(0, self._extender._log.size()):
@@ -141,7 +162,12 @@ class SaveRestore():
 
         if userSelection == JFileChooser.APPROVE_OPTION:
             importFile = fileChooser.getSelectedFile()
-            
+            self.restore_state_from_path(importFile.getAbsolutePath())
+
+    def restore_state_from_path(self, path):
+        if True:
+            importFile = _PathFile(path)
+
             self._extender._log.clear()
             self._extender.tableModel.fireTableDataChanged()
             
@@ -208,6 +234,29 @@ class SaveRestore():
                         d = json.loads(row[1])
                         for k in d:
                             getattr(self._extender, k).setSelected(d[k])
+                        continue
+
+                    if row[0] == "MCPConfig":
+                        try:
+                            mcp_cfg = json.loads(row[1])
+                            if hasattr(self._extender, 'mcpPortField') and mcp_cfg.get("port"):
+                                self._extender.mcpPortField.setText(str(mcp_cfg["port"]))
+                            mcp = getattr(self._extender, 'mcp', None)
+                            want_enabled = bool(mcp_cfg.get("enabled"))
+                            if hasattr(self._extender, 'mcpEnabled'):
+                                self._extender.mcpEnabled.setSelected(want_enabled)
+                            if mcp is not None:
+                                if want_enabled:
+                                    try:
+                                        port = int(self._extender.mcpPortField.getText().strip())
+                                    except (ValueError, AttributeError):
+                                        port = None
+                                    if port is not None:
+                                        mcp.start(port)
+                                else:
+                                    mcp.stop()
+                        except Exception:
+                            pass
                         continue
 
                     if row[0] == "RemoveDuplicates":

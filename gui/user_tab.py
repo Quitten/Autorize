@@ -176,37 +176,68 @@ class UserTab():
 
         self.refreshTableStructure()
 
-    def remove_user(self):
+    def remove_user(self, user_id=None):
         if self.userTabs.getTabCount() <= 1:
             JOptionPane.showMessageDialog(None, "Cannot remove the last user!", "Warning", JOptionPane.WARNING_MESSAGE)
             return
-        
-        selected_index = self.userTabs.getSelectedIndex()
 
-        if selected_index >= 0:
+        # When no explicit user_id is given (GUI button), operate on the selected tab.
+        if user_id is None:
+            selected_index = self.userTabs.getSelectedIndex()
+            if selected_index < 0:
+                return
             selected_panel = self.userTabs.getComponentAt(selected_index)
-
-            user_id_to_remove = None
-            user_name_to_remove = None
-
-            for user_id, user_data in self.user_tabs.items():
+            for uid, user_data in self.user_tabs.items():
                 if user_data['panel'] == selected_panel:
-                    user_id_to_remove = user_id
-                    user_name_to_remove = user_data['user_name']
+                    user_id = uid
                     break
 
-            if user_id_to_remove and user_name_to_remove:
-                if user_name_to_remove in self.user_names:
-                    self.user_names.remove(user_name_to_remove)
+        if user_id is None or user_id not in self.user_tabs:
+            return
 
-                del self.user_tabs[user_id_to_remove]
+        user_data = self.user_tabs[user_id]
+        user_name_to_remove = user_data['user_name']
+        tab_index = self.userTabs.indexOfComponent(user_data['panel'])
 
-                self.userTabs.removeTabAt(selected_index)
+        if user_name_to_remove in self.user_names:
+            self.user_names.remove(user_name_to_remove)
 
-                if hasattr(self._extender, 'tabs_instance') and self._extender.tabs_instance:
-                    self._extender.tabs_instance.removeUserViewerTabs(user_id_to_remove)
+        del self.user_tabs[user_id]
 
-                self.refreshTableStructure()
+        if tab_index >= 0:
+            self.userTabs.removeTabAt(tab_index)
+
+        if hasattr(self._extender, 'tabs_instance') and self._extender.tabs_instance:
+            self._extender.tabs_instance.removeUserViewerTabs(user_id)
+
+        self.refreshTableStructure()
+
+    def set_user_name(self, user_id, new_name):
+        """Programmatically rename a user (used by the MCP tools). Returns the
+        unique name actually assigned, or None if the rename was rejected."""
+        if user_id not in self.user_tabs or not new_name or not new_name.strip():
+            return None
+
+        user_data = self.user_tabs[user_id]
+        old_name = user_data['user_name']
+        if old_name in self.user_names:
+            self.user_names.remove(old_name)
+
+        unique_name = self.get_unique_name(new_name.strip())
+        self.user_names.append(unique_name)
+
+        tab_index = self.userTabs.indexOfComponent(user_data['panel'])
+        if tab_index >= 0:
+            self.userTabs.setTitleAt(tab_index, unique_name)
+
+        user_data['header_label'].setText(unique_name)
+        user_data['user_name'] = unique_name
+
+        if hasattr(self._extender, 'tabs_instance') and self._extender.tabs_instance:
+            self._extender.tabs_instance.renameUserViewerTabs(user_id, unique_name)
+
+        self.refreshTableStructure()
+        return unique_name
 
     def reset_user(self):
         self.userTabs.removeAll()

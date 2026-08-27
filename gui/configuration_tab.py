@@ -16,6 +16,18 @@ from java.awt import Dimension
 from table import UpdateTableEDT
 
 
+def set_running(extender, running):
+    """Turn Autorize scanning on/off. Shared by the GUI toggle and MCP tools."""
+    if running:
+        extender.startButton.setText("Autorize is on")
+        extender.startButton.setSelected(True)
+        extender.intercept = 1
+    else:
+        extender.startButton.setText("Autorize is off")
+        extender.startButton.setSelected(False)
+        extender.intercept = 0
+
+
 class ClearTableRunnable(Runnable):
     """Runs on executor so EDT never blocks on _lock."""
     def __init__(self, extender):
@@ -206,14 +218,7 @@ class ConfigurationTab():
         self._extender._cfg_splitpane.setLeftComponent(self.config_pnl)
 
     def startOrStop(self, event):
-        if self._extender.startButton.getText() == "Autorize is off":
-            self._extender.startButton.setText("Autorize is on")
-            self._extender.startButton.setSelected(True)
-            self._extender.intercept = 1
-        else:
-            self._extender.startButton.setText("Autorize is off")
-            self._extender.startButton.setSelected(False)
-            self._extender.intercept = 0
+        set_running(self._extender, self._extender.startButton.getText() == "Autorize is off")
     
     def clearTable(self, event):
         # Run on executor so the EDT never blocks on _lock (avoids UI freeze)

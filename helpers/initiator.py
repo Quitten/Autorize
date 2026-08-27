@@ -4,6 +4,7 @@
 from gui.enforcement_detector import EnforcementDetectors
 from gui.interception_filters import InterceptionFilters
 from gui.configuration_tab import ConfigurationTab
+from gui.mcp_tab import MCPServerTab
 from gui.match_replace import MatchReplace
 from gui.tabs import Tabs, ITabImpl
 from gui.table import TableFilter
@@ -45,6 +46,7 @@ class Initiator():
     
         export = Export(self._extender)
         export.draw()
+        self._extender.save_restore_instance = export.save_restore
 
         match_replace = MatchReplace(self._extender)
         match_replace.draw()
@@ -54,6 +56,11 @@ class Initiator():
 
         cfg_tab = ConfigurationTab(self._extender)
         cfg_tab.draw()
+        self._extender.configuration_tab_instance = cfg_tab
+
+        mcp_tab = MCPServerTab(self._extender)
+        mcp_tab.draw()
+        self._extender.filtersTabs.addTab("MCP Server", self._extender.mcpPnl)
 
         user_tab = UserTab(self._extender)
         user_tab.draw()
@@ -80,6 +87,18 @@ class Initiator():
         self._extender._callbacks.customizeUiComponent(self._extender.scrollPane)
         self._extender._callbacks.customizeUiComponent(self._extender.tabs)
         self._extender._callbacks.customizeUiComponent(self._extender.filtersTabs)
+
+    def init_mcp(self):
+        try:
+            # Eagerly import the request-handling modules so any load-time error
+            # surfaces now (at extension load) rather than on the first request.
+            from mcp import protocol as _protocol  # noqa: F401 (imports tools + edt)
+            from mcp.server import McpServer
+            self._extender.mcp = McpServer(self._extender)
+            self._extender.mcp.load_settings_and_maybe_autostart()
+        except Exception as e:
+            self._extender.mcp = None
+            print("[Autorize MCP] failed to initialize: %s" % e)
 
     def print_welcome_message(self):
         print("""Thank you for installing Autorize v{} extension
