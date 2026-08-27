@@ -25,6 +25,7 @@ The extension is written in Jython by **Barak Tawily**, an application security 
   - Burp Repeater
 - Flexible interception filtering (scope, whitelist, blacklist, regex)
 - Visual enforcement status indicators for rapid triage
+- **Built-in MCP server** for AI-agent integration (see below)
 
 ---
 
@@ -190,6 +191,42 @@ This allows you to customize the right panel to show only the comparisons you ca
 - Hide **Unauthenticated** if you're only testing authorization, not authentication
 
 The visibility selection dynamically adjusts the panel layout, giving more vertical space to the remaining viewers.
+
+---
+## MCP Server (AI agent integration)
+
+Autorize can expose its findings and configuration to an AI agent (e.g. Claude) through a built-in **MCP (Model Context Protocol) server**, in the same spirit as PortSwigger's own Burp MCP server. This lets an agent list and triage authorization findings, inspect a specific result's request/response variants, stand up low-privileged users, drive scanning, and pivot a finding into Repeater — without clicking through the UI.
+
+### Enabling it
+
+1. Open the **Configuration → MCP Server** tab (a sub-tab alongside Interception Filters / Table Filter / Save/Restore).
+2. Set a **Port** (default `9877`) and tick **Enable MCP Server**.
+3. A per-session **bearer token** is generated and shown in the Token field. Use **Copy Token** to grab it, or **Regenerate Token** to roll it.
+
+The server binds to **127.0.0.1 only** and requires the bearer token on **every** request, because the results table can contain live session cookies and `Authorization` headers. The token lives in memory only — it is never written to disk and is deliberately **excluded** from Save/Restore state files (only the enabled flag and port are persisted).
+
+> The server is implemented on `java.net.ServerSocket` (part of `java.base`), so it works on Burp's bundled/trimmed JRE with no extra modules required.
+
+### Connecting
+
+The endpoint speaks MCP over JSON-RPC 2.0 (Streamable HTTP, non-streaming) at `POST http://127.0.0.1:<port>/mcp`. Point any MCP client at it and send the token as `Authorization: Bearer <token>`. Quick check with `curl`:
+
+```bash
+TOKEN=<paste-from-tab>
+curl -s http://127.0.0.1:9877/mcp \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+### Available tools
+
+- **Status / control:** `autorize_status`, `autorize_start`, `autorize_stop`, `autorize_clear_results`
+- **Findings:** `autorize_list_results`, `autorize_list_results_regex`, `autorize_get_result`, `autorize_send_to_repeater`
+- **Users:** `autorize_list_users`, `autorize_add_user` (one or many at once), `autorize_update_user`, `autorize_remove_user`, `autorize_get_last_headers` (the source behind the *Fetch Cookies/Authorization header* buttons — `autorize_update_user` can pull from it directly via `fetch_from_last_request`)
+- **Detectors & filters:** `autorize_get_filter_options`, `autorize_get_interception_filters` / `autorize_set_interception_filters`, `autorize_get_unauth_detector` / `autorize_set_unauth_detector` (per-user enforcement detectors and match/replace rules are configured through `autorize_add_user` / `autorize_update_user`, with all filter/rule types supported)
+- **Config & state:** `autorize_get_config`, `autorize_set_config`, `autorize_export` (HTML/CSV), `autorize_save_state`, `autorize_restore_state`
+
+Call `autorize_get_filter_options` first to retrieve the exact type strings accepted by the enforcement-detector, match/replace, and interception-filter tools.
 
 ---
 ## Limitations & Notes

@@ -26,10 +26,12 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IExtensionState
 
         initiator.implement_all()
 
-        initiator.init_ui() 
-        
+        initiator.init_ui()
+
+        initiator.init_mcp()
+
         initiator.print_welcome_message()
-        
+
         return
 
     #
@@ -48,5 +50,8 @@ class BurpExtender(IBurpExtender, IHttpListener, IProxyListener, IExtensionState
     # implement IExtensionStateListener
     #
     def extensionUnloaded(self):
+        mcp = getattr(self, 'mcp', None)
+        if mcp is not None:
+            mcp.stop()
         self.executor.shutdown()
         print "Autorize extension unloaded."

@@ -246,42 +246,7 @@ class Export():
         self.save_restore.restoreState()
 
     def shouldIncludeRow(self, logEntry, enforcementStatusFilter):
-        should_include = False
-        
-        if enforcementStatusFilter == "All Statuses":
-            should_include = True
-        elif enforcementStatusFilter == "As table filter":
-            if hasattr(self._extender, 'showBypassed') and hasattr(self._extender, 'showIsEnforced') and hasattr(self._extender, 'showEnforced'):
-                # Check unauthenticated status
-                unauth_status = logEntry._enfocementStatusUnauthorized
-                if ((self._extender.showBypassed.isSelected() and self.BYPASSSED_STR == unauth_status) or
-                    (self._extender.showIsEnforced.isSelected() and self.IS_ENFORCED_STR == unauth_status) or
-                    (self._extender.showEnforced.isSelected() and self.ENFORCED_STR == unauth_status) or
-                    ("Disabled" == unauth_status)):
-                    should_include = True
-                
-                for user_id in logEntry.get_all_users():
-                    user_data = logEntry.get_user_enforcement(user_id)
-                    if user_data:
-                        user_status = user_data['enforcementStatus']
-                        if ((self._extender.showBypassed.isSelected() and self.BYPASSSED_STR == user_status) or
-                            (self._extender.showIsEnforced.isSelected() and self.IS_ENFORCED_STR == user_status) or
-                            (self._extender.showEnforced.isSelected() and self.ENFORCED_STR == user_status)):
-                            should_include = True
-                            break
-            else:
-                should_include = True
-        else:
-            if enforcementStatusFilter == logEntry._enfocementStatusUnauthorized:
-                should_include = True
-            else:
-                for user_id in logEntry.get_all_users():
-                    user_data = logEntry.get_user_enforcement(user_id)
-                    if user_data and enforcementStatusFilter == user_data['enforcementStatus']:
-                        should_include = True
-                        break
-        
-        return should_include
+        return _should_include_row(self._extender, logEntry, enforcementStatusFilter)
 
     def exportToHTML(self):
         parentFrame = JFrame()
@@ -289,21 +254,92 @@ class Export():
         fileChooser.setSelectedFile(File("AutorizeReport.html"))
         fileChooser.setDialogTitle("Save Autorize Report")
         userSelection = fileChooser.showSaveDialog(parentFrame)
-        if userSelection == JFileChooser.APPROVE_OPTION:
-            fileToSave = fileChooser.getSelectedFile()
+        if userSelection != JFileChooser.APPROVE_OPTION:
+            return
+        fileToSave = fileChooser.getSelectedFile()
 
-        enforcementStatusFilter = self.exportES.getSelectedItem()
+        htmlContent = build_html_report(self._extender,
+                                        self.exportES.getSelectedItem(),
+                                        self.removeDuplicates.isSelected())
+        f = open(fileToSave.getAbsolutePath(), 'w')
+        f.writelines(htmlContent)
+        f.close()
 
-        header_html = "<thead><tr><th width=\"3%\">ID</th><th width=\"5%\">Method</th><th width=\"30%\">URL</th><th width=\"7%\">Original length</th><th width=\"7%\">Unauth length</th><th width=\"10%\">Unauth Status</th>"
-        
-        if hasattr(self._extender, 'userTab') and self._extender.userTab:
-            for user_id in sorted(self._extender.userTab.user_tabs.keys()):
-                user_name = self._extender.userTab.user_tabs[user_id]['user_name']
-                header_html += "<th width=\"7%\">{} Len</th><th width=\"10%\">{} Status</th>".format(user_name, user_name)
-        
-        header_html += "</tr></thead>"
-        
-        htmlContent = """<html><title>Autorize Report by Barak Tawily</title>
+    def exportToCSV(self):
+        parentFrame = JFrame()
+        fileChooser = JFileChooser()
+        fileChooser.setSelectedFile(File("AutorizeReport.csv"))
+        fileChooser.setDialogTitle("Save Autorize Report")
+        userSelection = fileChooser.showSaveDialog(parentFrame)
+        if userSelection != JFileChooser.APPROVE_OPTION:
+            return
+        fileToSave = fileChooser.getSelectedFile()
+
+        csvContent = build_csv_report(self._extender,
+                                      self.exportES.getSelectedItem(),
+                                      self.removeDuplicates.isSelected())
+        f = open(fileToSave.getAbsolutePath(), 'w')
+        f.writelines(csvContent)
+        f.close()
+
+
+def _should_include_row(extender, logEntry, enforcementStatusFilter):
+    BYPASSSED_STR = extender.BYPASSSED_STR
+    ENFORCED_STR = extender.ENFORCED_STR
+    IS_ENFORCED_STR = extender.IS_ENFORCED_STR
+    should_include = False
+
+    if enforcementStatusFilter == "All Statuses":
+        should_include = True
+    elif enforcementStatusFilter == "As table filter":
+        if hasattr(extender, 'showBypassed') and hasattr(extender, 'showIsEnforced') and hasattr(extender, 'showEnforced'):
+            unauth_status = logEntry._enfocementStatusUnauthorized
+            if ((extender.showBypassed.isSelected() and BYPASSSED_STR == unauth_status) or
+                (extender.showIsEnforced.isSelected() and IS_ENFORCED_STR == unauth_status) or
+                (extender.showEnforced.isSelected() and ENFORCED_STR == unauth_status) or
+                ("Disabled" == unauth_status)):
+                should_include = True
+
+            for user_id in logEntry.get_all_users():
+                user_data = logEntry.get_user_enforcement(user_id)
+                if user_data:
+                    user_status = user_data['enforcementStatus']
+                    if ((extender.showBypassed.isSelected() and BYPASSSED_STR == user_status) or
+                        (extender.showIsEnforced.isSelected() and IS_ENFORCED_STR == user_status) or
+                        (extender.showEnforced.isSelected() and ENFORCED_STR == user_status)):
+                        should_include = True
+                        break
+        else:
+            should_include = True
+    else:
+        if enforcementStatusFilter == logEntry._enfocementStatusUnauthorized:
+            should_include = True
+        else:
+            for user_id in logEntry.get_all_users():
+                user_data = logEntry.get_user_enforcement(user_id)
+                if user_data and enforcementStatusFilter == user_data['enforcementStatus']:
+                    should_include = True
+                    break
+
+    return should_include
+
+
+def build_html_report(extender, enforcementStatusFilter, removeDuplicates):
+    BYPASSSED_STR = extender.BYPASSSED_STR
+    ENFORCED_STR = extender.ENFORCED_STR
+    IS_ENFORCED_STR = extender.IS_ENFORCED_STR
+    log = extender._log
+
+    header_html = "<thead><tr><th width=\"3%\">ID</th><th width=\"5%\">Method</th><th width=\"30%\">URL</th><th width=\"7%\">Original length</th><th width=\"7%\">Unauth length</th><th width=\"10%\">Unauth Status</th>"
+
+    if hasattr(extender, 'userTab') and extender.userTab:
+        for user_id in sorted(extender.userTab.user_tabs.keys()):
+            user_name = extender.userTab.user_tabs[user_id]['user_name']
+            header_html += "<th width=\"7%\">{} Len</th><th width=\"10%\">{} Status</th>".format(user_name, user_name)
+
+    header_html += "</tr></thead>"
+
+    htmlContent = """<html><title>Autorize Report by Barak Tawily</title>
         <style>
         .datagrid table { border-collapse: collapse; text-align: left; width: 100%; }
             .datagrid {font: normal 12px/150% Arial, Helvetica, sans-serif; background: #fff; overflow: hidden; border: 1px solid #006699; -webkit-border-radius: 3px; -moz-border-radius: 3px; border-radius: 3px; }
@@ -331,141 +367,128 @@ class Export():
         <h1>Autorize Report<h1>
         <div class="datagrid"><table>""" + header_html + """
         <tbody>"""
-        
-        unique_HTML_lines = set()
-        for i in range(0, self._log.size()):
-            logEntry = self._log.get(i)
-            
-            if self.removeDuplicates.isSelected():
-                user_statuses = []
-                for user_id in sorted(logEntry.get_all_users()):
-                    user_data = logEntry.get_user_enforcement(user_id)
-                    if user_data:
-                        user_statuses.append(user_data['enforcementStatus'])
-                
-                lineData = "\t%s\t%s\t%s\t%s" % (logEntry._method, logEntry._url, 
-                                                logEntry._enfocementStatusUnauthorized, 
-                                                "\t".join(user_statuses))
-                if lineData in unique_HTML_lines:
-                    continue
-                else:
-                    unique_HTML_lines.add(lineData)
 
-            if not self.shouldIncludeRow(logEntry, enforcementStatusFilter):
+    unique_HTML_lines = set()
+    for i in range(0, log.size()):
+        logEntry = log.get(i)
+
+        if removeDuplicates:
+            user_statuses = []
+            for user_id in sorted(logEntry.get_all_users()):
+                user_data = logEntry.get_user_enforcement(user_id)
+                if user_data:
+                    user_statuses.append(user_data['enforcementStatus'])
+
+            lineData = "\t%s\t%s\t%s\t%s" % (logEntry._method, logEntry._url,
+                                            logEntry._enfocementStatusUnauthorized,
+                                            "\t".join(user_statuses))
+            if lineData in unique_HTML_lines:
                 continue
+            else:
+                unique_HTML_lines.add(lineData)
 
-            row_html = "<tr><td>%d</td><td>%s</td><td><a href=\"%s\">%s</a></td>" % (
-                logEntry._id, logEntry._method, logEntry._url, logEntry._url)
+        if not _should_include_row(extender, logEntry, enforcementStatusFilter):
+            continue
 
-            orig_len = len(logEntry._originalrequestResponse.getResponse()) if logEntry._originalrequestResponse else 0
-            row_html += "<td>%d</td>" % orig_len
-            
-            unauth_len = 0
-            if logEntry._unauthorizedRequestResponse:
-                unauth_len = len(logEntry._unauthorizedRequestResponse.getResponse())
-            
-            unauth_color = ""
-            if logEntry._enfocementStatusUnauthorized == self.BYPASSSED_STR:
-                unauth_color = "red"
-            elif logEntry._enfocementStatusUnauthorized == self.IS_ENFORCED_STR:
-                unauth_color = "yellow"
-            elif logEntry._enfocementStatusUnauthorized == self.ENFORCED_STR:
-                unauth_color = "LawnGreen"
-            
-            row_html += "<td>%d</td><td bgcolor=\"%s\">%s</td>" % (unauth_len, unauth_color, logEntry._enfocementStatusUnauthorized)
-            
-            # User data
-            if hasattr(self._extender, 'userTab') and self._extender.userTab:
-                for user_id in sorted(self._extender.userTab.user_tabs.keys()):
-                    user_data = logEntry.get_user_enforcement(user_id)
-                    if user_data and user_data['requestResponse']:
-                        user_len = len(user_data['requestResponse'].getResponse())
-                        user_status = user_data['enforcementStatus']
-                        
-                        user_color = ""
-                        if user_status == self.BYPASSSED_STR:
-                            user_color = "red"
-                        elif user_status == self.IS_ENFORCED_STR:
-                            user_color = "yellow"
-                        elif user_status == self.ENFORCED_STR:
-                            user_color = "LawnGreen"
-                        
-                        row_html += "<td>%d</td><td bgcolor=\"%s\">%s</td>" % (user_len, user_color, user_status)
-                    else:
-                        row_html += "<td>0</td><td>N/A</td>"
-            
-            row_html += "</tr>"
-            htmlContent += row_html
+        row_html = "<tr><td>%d</td><td>%s</td><td><a href=\"%s\">%s</a></td>" % (
+            logEntry._id, logEntry._method, logEntry._url, logEntry._url)
 
-        htmlContent += "</tbody></table></div></body></html>"
-        f = open(fileToSave.getAbsolutePath(), 'w')
-        f.writelines(htmlContent)
-        f.close()
-        
-    def exportToCSV(self):
-        parentFrame = JFrame()
-        fileChooser = JFileChooser()
-        fileChooser.setSelectedFile(File("AutorizeReport.csv"))
-        fileChooser.setDialogTitle("Save Autorize Report")
-        userSelection = fileChooser.showSaveDialog(parentFrame)
-        if userSelection == JFileChooser.APPROVE_OPTION:
-            fileToSave = fileChooser.getSelectedFile()
+        orig_len = len(logEntry._originalrequestResponse.getResponse()) if logEntry._originalrequestResponse else 0
+        row_html += "<td>%d</td>" % orig_len
 
-        enforcementStatusFilter = self.exportES.getSelectedItem()
-        
-        csvContent = "ID,Method,URL,Original Length,Unauth Length,Unauth Status"
-        
-        if hasattr(self._extender, 'userTab') and self._extender.userTab:
-            for user_id in sorted(self._extender.userTab.user_tabs.keys()):
-                user_name = self._extender.userTab.user_tabs[user_id]['user_name']
-                csvContent += ",{} Length,{} Status".format(user_name, user_name)
-        
-        csvContent += "\n"
+        unauth_len = 0
+        if logEntry._unauthorizedRequestResponse:
+            unauth_len = len(logEntry._unauthorizedRequestResponse.getResponse())
 
-        unique_CSV_lines = set()
-        for i in range(0, self._log.size()):
-            logEntry = self._log.get(i)
-            
-            if self.removeDuplicates.isSelected():
-                user_statuses = []
-                for user_id in sorted(logEntry.get_all_users()):
-                    user_data = logEntry.get_user_enforcement(user_id)
-                    if user_data:
-                        user_statuses.append(user_data['enforcementStatus'])
-                
-                lineData = ",{},{},{},{}".format(logEntry._method, logEntry._url, 
-                                                logEntry._enfocementStatusUnauthorized, 
-                                                ",".join(user_statuses))
-                if lineData in unique_CSV_lines:
-                    continue
+        unauth_color = ""
+        if logEntry._enfocementStatusUnauthorized == BYPASSSED_STR:
+            unauth_color = "red"
+        elif logEntry._enfocementStatusUnauthorized == IS_ENFORCED_STR:
+            unauth_color = "yellow"
+        elif logEntry._enfocementStatusUnauthorized == ENFORCED_STR:
+            unauth_color = "LawnGreen"
+
+        row_html += "<td>%d</td><td bgcolor=\"%s\">%s</td>" % (unauth_len, unauth_color, logEntry._enfocementStatusUnauthorized)
+
+        if hasattr(extender, 'userTab') and extender.userTab:
+            for user_id in sorted(extender.userTab.user_tabs.keys()):
+                user_data = logEntry.get_user_enforcement(user_id)
+                if user_data and user_data['requestResponse']:
+                    user_len = len(user_data['requestResponse'].getResponse())
+                    user_status = user_data['enforcementStatus']
+
+                    user_color = ""
+                    if user_status == BYPASSSED_STR:
+                        user_color = "red"
+                    elif user_status == IS_ENFORCED_STR:
+                        user_color = "yellow"
+                    elif user_status == ENFORCED_STR:
+                        user_color = "LawnGreen"
+
+                    row_html += "<td>%d</td><td bgcolor=\"%s\">%s</td>" % (user_len, user_color, user_status)
                 else:
-                    unique_CSV_lines.add(lineData)
+                    row_html += "<td>0</td><td>N/A</td>"
 
-            if not self.shouldIncludeRow(logEntry, enforcementStatusFilter):
+        row_html += "</tr>"
+        htmlContent += row_html
+
+    htmlContent += "</tbody></table></div></body></html>"
+    return htmlContent
+
+
+def build_csv_report(extender, enforcementStatusFilter, removeDuplicates):
+    log = extender._log
+
+    csvContent = "ID,Method,URL,Original Length,Unauth Length,Unauth Status"
+
+    if hasattr(extender, 'userTab') and extender.userTab:
+        for user_id in sorted(extender.userTab.user_tabs.keys()):
+            user_name = extender.userTab.user_tabs[user_id]['user_name']
+            csvContent += ",{} Length,{} Status".format(user_name, user_name)
+
+    csvContent += "\n"
+
+    unique_CSV_lines = set()
+    for i in range(0, log.size()):
+        logEntry = log.get(i)
+
+        if removeDuplicates:
+            user_statuses = []
+            for user_id in sorted(logEntry.get_all_users()):
+                user_data = logEntry.get_user_enforcement(user_id)
+                if user_data:
+                    user_statuses.append(user_data['enforcementStatus'])
+
+            lineData = ",{},{},{},{}".format(logEntry._method, logEntry._url,
+                                            logEntry._enfocementStatusUnauthorized,
+                                            ",".join(user_statuses))
+            if lineData in unique_CSV_lines:
                 continue
+            else:
+                unique_CSV_lines.add(lineData)
 
-            orig_len = len(logEntry._originalrequestResponse.getResponse()) if logEntry._originalrequestResponse else 0
-            unauth_len = len(logEntry._unauthorizedRequestResponse.getResponse()) if logEntry._unauthorizedRequestResponse else 0
-            
-            url_safe = '"{}"'.format(str(logEntry._url).replace('"', '""'))
-            
-            csv_row = '{},{},{},{},{},"{}"'.format(
-                logEntry._id, logEntry._method, url_safe, orig_len, unauth_len, logEntry._enfocementStatusUnauthorized)
-            
-            # User data
-            if hasattr(self._extender, 'userTab') and self._extender.userTab:
-                for user_id in sorted(self._extender.userTab.user_tabs.keys()):
-                    user_data = logEntry.get_user_enforcement(user_id)
-                    if user_data and user_data['requestResponse']:
-                        user_len = len(user_data['requestResponse'].getResponse())
-                        user_status = user_data['enforcementStatus']
-                        csv_row += ',{},"{}"'.format(user_len, user_status)
-                    else:
-                        csv_row += ',0,"N/A"'
-            
-            csv_row += "\n"
-            csvContent += csv_row
+        if not _should_include_row(extender, logEntry, enforcementStatusFilter):
+            continue
 
-        f = open(fileToSave.getAbsolutePath(), 'w')
-        f.writelines(csvContent)
-        f.close()
+        orig_len = len(logEntry._originalrequestResponse.getResponse()) if logEntry._originalrequestResponse else 0
+        unauth_len = len(logEntry._unauthorizedRequestResponse.getResponse()) if logEntry._unauthorizedRequestResponse else 0
+
+        url_safe = '"{}"'.format(str(logEntry._url).replace('"', '""'))
+
+        csv_row = '{},{},{},{},{},"{}"'.format(
+            logEntry._id, logEntry._method, url_safe, orig_len, unauth_len, logEntry._enfocementStatusUnauthorized)
+
+        if hasattr(extender, 'userTab') and extender.userTab:
+            for user_id in sorted(extender.userTab.user_tabs.keys()):
+                user_data = logEntry.get_user_enforcement(user_id)
+                if user_data and user_data['requestResponse']:
+                    user_len = len(user_data['requestResponse'].getResponse())
+                    user_status = user_data['enforcementStatus']
+                    csv_row += ',{},"{}"'.format(user_len, user_status)
+                else:
+                    csv_row += ',0,"N/A"'
+
+        csv_row += "\n"
+        csvContent += csv_row
+
+    return csvContent
